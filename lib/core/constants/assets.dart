@@ -7,6 +7,8 @@ abstract class Assets {
   static const String headerLogo = 'assets/images/img_header.png';
   static const String cardLogo = 'assets/images/recentlyItem.png';
   static const String suraNumberIcn = 'assets/images/suraNum.png';
+  static const String hadethBackgroundCard =
+      'assets/images/HadithCardBackGround.png';
 
   static const String splashBackground = 'assets/images/splashScreen.png';
   static const String quranIcon = 'assets/icons/ic_quran.png';
