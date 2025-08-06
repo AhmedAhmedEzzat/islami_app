@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:islami1/core/constants/theme_manager.dart';
+import 'package:islami1/core/services/shared_prefs_helper.dart';
+import 'package:islami1/modules/layuot/quran/quran_details_view.dart';
 import 'package:islami1/modules/splash/splash_view.dart';
 
 import 'modules/layuot/layout_view.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  LocalStorageServices.init();
   runApp(MyApp());
 }
 
@@ -20,6 +24,7 @@ class MyApp extends StatelessWidget {
       routes: {
         SplashView.routeName: (context) => const SplashView(),
         LayoutView.routeName: (context) => const LayoutView(),
+        QuranDetailsView.routeName: (context) => const QuranDetailsView(),
       },
     );
   }

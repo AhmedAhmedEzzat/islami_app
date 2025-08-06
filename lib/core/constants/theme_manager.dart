@@ -6,6 +6,16 @@ abstract class ThemeManager {
   static ThemeData themeData = ThemeData(
     primaryColor: ColorsPallete.primaryColor,
     scaffoldBackgroundColor: Colors.transparent,
+    appBarTheme: AppBarTheme(
+      backgroundColor: ColorsPallete.quranDetailsColor,
+      iconTheme: IconThemeData(color: ColorsPallete.primaryColor),
+      titleTextStyle: TextStyle(
+        color: ColorsPallete.primaryColor,
+        fontSize: 20,
+        fontWeight: FontWeight.w700,
+        fontFamily: 'Janna',
+      ),
+    ),
 
     bottomNavigationBarTheme: BottomNavigationBarThemeData(
       type: BottomNavigationBarType.fixed,
