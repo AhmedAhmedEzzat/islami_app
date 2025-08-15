@@ -10,17 +10,25 @@ import 'package:islami1/modules/layuot/quran/widgets/sura_list_widget.dart';
 import '../../../core/constants/assets.dart';
 
 class QuranView extends StatefulWidget {
-  QuranView({super.key});
+  const QuranView({super.key});
 
   @override
   State<QuranView> createState() => _QuranViewState();
 }
 
 class _QuranViewState extends State<QuranView> {
+  String searchText = '';
+  List<String> recentSuraIndexList = [];
+  List<SuraDataModel> recentSuraList = [];
+  List<SuraDataModel> suraList = [];
+  List<SuraDataModel> filteredSuraList = [];
+
   @override
   void initState() {
     super.initState();
     loadRecentSura();
+    // Initialize with all surahs
+    filteredSuraList = List.from(Constants.suraDataLists);
   }
 
   @override
@@ -33,15 +41,21 @@ class _QuranViewState extends State<QuranView> {
         ),
       ),
       child: SingleChildScrollView(
-        physics: ClampingScrollPhysics(),
+        physics: const ClampingScrollPhysics(),
         child: Column(
-          spacing: 20,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Image.asset(Assets.headerLogo),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: TextFormField(
+                onChanged: (value) {
+                  setState(() {
+                    searchText = value;
+                    searchSura();
+                  });
+                },
+                style: Theme.of(context).textTheme.bodyLarge,
                 cursorColor: ColorsPallete.primaryColor,
                 decoration: InputDecoration(
                   hintText: 'Sura Name',
@@ -58,7 +72,6 @@ class _QuranViewState extends State<QuranView> {
                     borderRadius: BorderRadius.circular(20),
                     borderSide: BorderSide(color: ColorsPallete.primaryColor),
                   ),
-
                   prefixIcon: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: ImageIcon(
@@ -69,29 +82,44 @@ class _QuranViewState extends State<QuranView> {
                 ),
               ),
             ),
-            recentSuraList.isNotEmpty
-                ? RecentlySuraWidget(suraDataModel: recentSuraList)
-                : Center(
-                    child: Text(
-                      'No Recent Sura',
-                      style: TextStyle(
-                        color: ColorsPallete.primaryColor,
-                        fontSize: 18,
-                      ),
-                    ),
-                  ),
-            SuraListWidget(onSurahTap: onSurahTap),
+            _buildContentSection(),
           ],
         ),
       ),
     );
   }
 
-  List<String> recentSuraIndexList = [];
+  Widget _buildContentSection() {
+    if (searchText.isNotEmpty) {
+      return SuraListWidget(
+        onSurahTap: onSurahTap,
+        suraDataModels: filteredSuraList,
+      );
+    } else {
+      return Column(
+        children: [
+          if (recentSuraList.isNotEmpty)
+            RecentlySuraWidget(suraDataModel: recentSuraList)
+          else
+            Center(
+              child: Text(
+                'No Recent Sura',
+                style: TextStyle(
+                  color: ColorsPallete.primaryColor,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+          SuraListWidget(
+            onSurahTap: onSurahTap,
+            suraDataModels: Constants.suraDataLists,
+          ),
+        ],
+      );
+    }
+  }
 
-  List<SuraDataModel> recentSuraList = [];
-
-  onSurahTap(int index) {
+  void onSurahTap(int index) {
     _cachingRecentSura(index);
     Navigator.pushNamed(
       context,
@@ -100,31 +128,40 @@ class _QuranViewState extends State<QuranView> {
     );
   }
 
-  _cachingRecentSura(int index) {
-    var indexString = index.toString();
+  void _cachingRecentSura(int index) {
+    final indexString = index.toString();
+
     if (recentSuraIndexList.contains(indexString)) {
-      return;
+      recentSuraIndexList.remove(indexString);
     }
-    if (recentSuraIndexList.length == 5) {
-      recentSuraIndexList.removeLast();
-    }
+
     recentSuraIndexList.insert(0, indexString);
+
+    if (recentSuraIndexList.length > 5) {
+      recentSuraIndexList = recentSuraIndexList.sublist(0, 5);
+    }
+
     LocalStorageServices.setStringList(
       'recent-sura-index',
       recentSuraIndexList,
     );
+
     loadRecentSura();
+  }
+
+  void loadRecentSura() {
+    recentSuraIndexList =
+        LocalStorageServices.getStringList('recent-sura-index') ?? [];
+    recentSuraList = recentSuraIndexList
+        .map((index) => Constants.suraDataLists[int.parse(index)])
+        .toList();
     setState(() {});
   }
 
-  loadRecentSura() {
-    recentSuraIndexList = [];
-    recentSuraList = [];
-    recentSuraIndexList =
-        LocalStorageServices.getStringList('recent-sura-index') ?? [];
-    for (var index in recentSuraIndexList) {
-      int indexInt = int.parse(index);
-      recentSuraList.add(Constants.suraDataLists[indexInt]);
-    }
+  void searchSura() {
+    filteredSuraList = Constants.suraDataLists.where((sura) {
+      return sura.suraNameEN.toLowerCase().contains(searchText.toLowerCase()) ||
+          sura.suraNameAR.contains(searchText);
+    }).toList();
   }
 }
