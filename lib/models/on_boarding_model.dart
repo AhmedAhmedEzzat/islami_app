@@ -1,41 +1,15 @@
-import 'package:islami1/core/constants/assets.dart';
+import '../core/constants/assets.dart';
 
-class OnBoardingData {
-  String imagePath;
-  String title;
-  String? description;
+/// Onboarding slides. The copy lives in the ARB files; this only holds the
+/// artwork and an identifier the view maps to localized strings.
+enum OnBoardingSlide {
+  welcome(Assets.onBoarding1),
+  readListen(Assets.onBoarding2),
+  ahadeth(Assets.onBoarding3),
+  tasbeh(Assets.onBoarding4),
+  timesRadio(Assets.onBoarding5);
 
-  OnBoardingData({
-    required this.imagePath,
-    required this.title,
-    this.description,
-  });
+  const OnBoardingSlide(this.imagePath);
 
-  static List<OnBoardingData> onBoardingList = [
-    OnBoardingData(
-      imagePath: Assets.onBoarding1,
-      title: 'Welcome To Islmi App',
-    ),
-    OnBoardingData(
-      imagePath: Assets.onBoarding2,
-      title: 'Welcome To Islmi App',
-      description: 'We Are Very Excited To Have You In Our Community',
-    ),
-    OnBoardingData(
-      imagePath: Assets.onBoarding3,
-      title: 'Reading the Quran',
-      description: 'Read, and your Lord is the Most Generous',
-    ),
-    OnBoardingData(
-      imagePath: Assets.onBoarding4,
-      title: 'Bearish',
-      description: 'Praise the name of your Lord, the Most High',
-    ),
-    OnBoardingData(
-      imagePath: Assets.onBoarding5,
-      title: 'Holy Quran Radio',
-      description:
-          'You can listen to the Holy Quran Radio through the application for free and easily',
-    ),
-  ];
+  final String imagePath;
 }

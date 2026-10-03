@@ -1,0 +1,17 @@
+flutter_launcher_icons:
+  image_path: "assets/brand/icon.png"
+  android: "ic_launcher"
+  ios: true
+  remove_alpha_ios: true
+  min_sdk_android: 24
+  adaptive_icon_background: "#1B5E20"
+  adaptive_icon_foreground: "assets/brand/icon_foreground.png"
+  # Without a monochrome layer the icon looks broken for anyone using
+  # Android 13+ themed icons.
+  adaptive_icon_monochrome: "assets/brand/icon_foreground.png"
+  web:
+    generate: false
+  windows:
+    generate: false
+  macos:
+    generate: false

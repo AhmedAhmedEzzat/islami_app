@@ -1,0 +1,21 @@
+flutter_native_splash:
+  color: "#1B5E20"
+  color_dark: "#0F1B10"
+  image: assets/brand/splash.png
+  image_dark: assets/brand/splash.png
+  android: true
+  ios: true
+  web: false
+  android_gravity: center
+  ios_content_mode: center
+
+  # Android 12+ draws its own splash from windowSplashScreenBackground and
+  # ignores android:windowBackground entirely, so it must be configured
+  # separately or this device (API 34) still flashes white.
+  android_12:
+    color: "#1B5E20"
+    color_dark: "#0F1B10"
+    image: assets/brand/splash_android12.png
+    image_dark: assets/brand/splash_android12.png
+    icon_background_color: "#1B5E20"
+    icon_background_color_dark: "#0F1B10"

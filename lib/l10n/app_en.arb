@@ -1,0 +1,574 @@
+{
+  "@@locale": "en",
+  "tabQuran": "Quran",
+  "tryAgain": "Try again",
+  "settings": "Settings",
+  "cancel": "Cancel",
+  "play": "Play",
+  "pause": "Pause",
+  "stop": "Stop",
+  "quranTitle": "Quran",
+  "searchSuraHint": "Search sura name",
+  "clearSearch": "Clear search",
+  "noSuraMatches": "No sura matches \"{query}\"",
+  "@noSuraMatches": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "results": "Results",
+  "allSuras": "All suras",
+  "continueReading": "Continue reading",
+  "verseCount": "{count, plural, =1{1 verse} other{{count} verses}}",
+  "@verseCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "suraLoadError": "Could not load this sura.",
+  "noSuraSelected": "No sura was selected.",
+  "noSuraText": "This sura has no text bundled.",
+  "shareSura": "Share sura",
+  "listenTo": "Listen to {sura}",
+  "@listenTo": {
+    "placeholders": {
+      "sura": {
+        "type": "String"
+      }
+    }
+  },
+  "recitationOffline": "Recitation needs an internet connection.",
+  "playRecitation": "Play recitation",
+  "pauseRecitation": "Pause recitation",
+  "verseNumber": "Verse {number}",
+  "@verseNumber": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "hadethTitle": "Hadeth",
+  "hadethLoadError": "Could not load the ahadeth.",
+  "noHadeth": "No ahadeth are bundled with the app.",
+  "tapToRead": "Tap to read",
+  "shareHadeth": "Share hadeth",
+  "tasbehTitle": "Tasbeh",
+  "ofTotal": "of {total}",
+  "@ofTotal": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "countOf": "Count {count} of {total}",
+  "@countOf": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "roundsCompleted": "{count, plural, =0{No rounds yet} =1{1 round completed} other{{count} rounds completed}}",
+  "@roundsCompleted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "undo": "Undo",
+  "reset": "Reset",
+  "resetTasbehTitle": "Reset tasbeh?",
+  "resetTasbehBody": "This clears your count and completed rounds.",
+  "radioTitle": "Quran Radio",
+  "radioUnreachable": "Could not reach this station. Check your connection.",
+  "playStation": "Play station",
+  "pauseStation": "Pause station",
+  "mute": "Mute",
+  "unmute": "Unmute",
+  "prayerTimesTitle": "Prayer Times",
+  "azkarSection": "Azkar",
+  "prayerTimesError": "Could not work out prayer times.",
+  "usingDefaultLocation": "Using default location (Cairo)",
+  "nextPrayerIn": "{prayer} in {countdown}",
+  "@nextPrayerIn": {
+    "placeholders": {
+      "prayer": {
+        "type": "String"
+      },
+      "countdown": {
+        "type": "String"
+      }
+    }
+  },
+  "prayerFajr": "Fajr",
+  "prayerSunrise": "Sunrise",
+  "prayerDhuhr": "Dhuhr",
+  "prayerAsr": "Asr",
+  "prayerMaghrib": "Maghrib",
+  "prayerIsha": "Isha",
+  "morningAzkar": "Morning Azkar",
+  "eveningAzkar": "Evening Azkar",
+  "azkarLoadError": "Could not load these azkar.",
+  "noAzkar": "No azkar are bundled with the app.",
+  "azkarDone": "Done",
+  "azkarRemaining": "{count, plural, =1{1 left} other{{count} left}}",
+  "@azkarRemaining": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resetCounts": "Reset counts",
+  "appearance": "Appearance",
+  "themeLight": "Light",
+  "themeAuto": "Auto",
+  "themeDark": "Dark",
+  "quranTextSize": "Quran text size",
+  "recitationSection": "Recitation",
+  "prayerTimesSection": "Prayer times",
+  "languageSection": "Language",
+  "languageSystem": "System",
+  "languageEnglish": "English",
+  "languageArabic": "العربية",
+  "methodEgyptian": "Egyptian General Authority",
+  "methodMwl": "Muslim World League",
+  "methodUmmAlQura": "Umm al-Qura, Makkah",
+  "methodKarachi": "University of Islamic Sciences, Karachi",
+  "methodNorthAmerica": "ISNA, North America",
+  "methodDubai": "Dubai",
+  "skip": "Skip",
+  "back": "Back",
+  "next": "Next",
+  "finish": "Finish",
+  "onboard1Title": "Welcome to Sakina",
+  "onboard1Body": "Your quiet companion for Quran, dhikr and prayer.",
+  "onboard2Title": "Read and listen",
+  "onboard2Body": "All 114 suras, with recitation you can play as you follow along.",
+  "onboard3Title": "Forty ahadeth",
+  "onboard3Body": "Short readings to return to whenever you have a moment.",
+  "onboard4Title": "Tasbeh",
+  "onboard4Body": "Keep your count of سبحان الله، الحمد لله، الله أكبر.",
+  "onboard5Title": "Prayer times and radio",
+  "onboard5Body": "Accurate times for where you are, and live Quran radio for free.",
+  "pageOf": "Page {current} of {total}",
+  "@pageOf": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "resumedAtPage": "Continuing from page {page}",
+  "@resumedAtPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "startFromBeginning": "Start over",
+  "bookmarkedPage": "Your place is saved on this page",
+  "notificationsSection": "Notifications",
+  "prayerNotificationsToggle": "Prayer time notifications",
+  "prayerNotificationsSubtitle": "A notification at each of the five prayers",
+  "notificationsDenied": "Notifications are blocked. Allow them for Sakina in your phone settings.",
+  "notificationsInexact": "Exact alarms are off, so notifications may arrive a few minutes late.",
+  "prayerNotificationTitle": "Time for {prayer}",
+  "@prayerNotificationTitle": {
+    "placeholders": {
+      "prayer": {
+        "type": "String"
+      }
+    }
+  },
+  "prayerNotificationBody": "It is now time for {prayer} prayer.",
+  "@prayerNotificationBody": {
+    "placeholders": {
+      "prayer": {
+        "type": "String"
+      }
+    }
+  },
+  "prayerChannelName": "Prayer times",
+  "prayerChannelDescription": "A notification when each prayer time begins",
+  "verseOfTotal": "Verse {current} of {total}",
+  "@verseOfTotal": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "basmalaPlaying": "Basmala",
+  "previousVerse": "Previous verse",
+  "nextVerse": "Next verse",
+  "repeatOff": "Repeat off",
+  "repeatVerse": "Repeat verse",
+  "repeatSura": "Repeat sura",
+  "translationTitle": "Translation",
+  "translationSource": "Saheeh International",
+  "tafsirTitle": "Tafsir",
+  "tafsirMuyassar": "Al-Muyassar",
+  "tafsirJalalayn": "Al-Jalalayn",
+  "tafsirUnavailable": "Tafsir needs an internet connection the first time it is opened.",
+  "playFromHere": "Play from this verse",
+  "addBookmark": "Bookmark",
+  "removeBookmark": "Remove bookmark",
+  "bookmarkAdded": "Bookmark added",
+  "copyVerse": "Copy",
+  "copied": "Copied",
+  "shareVerse": "Share",
+  "shareAsImage": "Share as image",
+  "sajdaVerse": "Verse of prostration",
+  "juzLabel": "Juz {n}",
+  "@juzLabel": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "hizbLabel": "Hizb {n}",
+  "@hizbLabel": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "surasTab": "Suras",
+  "juzTab": "Juz",
+  "bookmarksTab": "Bookmarks",
+  "meccan": "Meccan",
+  "medinan": "Medinan",
+  "noBookmarks": "No bookmarks yet. Tap any verse while reading to add one.",
+  "searchQuranHint": "Search the Quran",
+  "searchSuras": "Suras",
+  "searchVerses": "Verses",
+  "searchMinChars": "Type at least 2 letters",
+  "searchResultCount": "{count, plural, =0{No results} =1{1 result} other{{count} results}}",
+  "@searchResultCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "searchPreparing": "Preparing search…",
+  "verseRef": "{sura} · {ayah}",
+  "@verseRef": {
+    "placeholders": {
+      "sura": {
+        "type": "String"
+      },
+      "ayah": {
+        "type": "int"
+      }
+    }
+  },
+  "reciterLabel": "Reciter",
+  "hizbStart": "Hizb {n}",
+  "@hizbStart": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "hizbQuarter": "¼ Hizb {n}",
+  "@hizbQuarter": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "hizbHalf": "½ Hizb {n}",
+  "@hizbHalf": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "hizbThreeQuarters": "¾ Hizb {n}",
+  "@hizbThreeQuarters": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "startsAt": "{sura}, verse {ayah}",
+  "@startsAt": {
+    "placeholders": {
+      "sura": {
+        "type": "String"
+      },
+      "ayah": {
+        "type": "int"
+      }
+    }
+  },
+  "searchTitle": "Search",
+  "openSura": "Open sura",
+  "reminderTitle": "{prayer} soon",
+  "@reminderTitle": {
+    "placeholders": {
+      "prayer": {
+        "type": "String"
+      }
+    }
+  },
+  "reminderBody": "{minutes, plural, =1{{prayer} begins in 1 minute.} other{{prayer} begins in {minutes} minutes.}}",
+  "@reminderBody": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      },
+      "prayer": {
+        "type": "String"
+      }
+    }
+  },
+  "kahfTitle": "Jumu'ah Mubarak",
+  "kahfBody": "Remember to read Surat Al-Kahf today.",
+  "today": "Today",
+  "changeLocation": "Change",
+  "locationTitle": "Location",
+  "useMyLocation": "Use my current location",
+  "searchCityHint": "Search for a city",
+  "noCityFound": "No city found. Check the spelling, or your connection.",
+  "manualLocation": "Chosen by hand",
+  "defaultLocation": "Default location (Cairo)",
+  "locating": "Finding your location…",
+  "nextPrayer": "Next prayer",
+  "timeRemaining": "Time remaining",
+  "qiblaTitle": "Qibla",
+  "qiblaBearing": "Qibla is {degrees}° from north",
+  "@qiblaBearing": {
+    "placeholders": {
+      "degrees": {
+        "type": "int"
+      }
+    }
+  },
+  "qiblaFacing": "You are facing the Qibla",
+  "qiblaTurn": "Turn until the arrow points up",
+  "qiblaNoSensor": "This phone has no compass. Use the bearing above with a real compass.",
+  "qiblaCalibrate": "Wave your phone in a figure 8 to calibrate the compass.",
+  "qiblaDistance": "{km} km to the Kaaba",
+  "@qiblaDistance": {
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "monthlyTimetable": "Monthly timetable",
+  "prayerTracker": "Prayer tracker",
+  "trackerToday": "Today's prayers",
+  "trackerStreak": "{days, plural, =0{No streak yet} =1{1 day streak} other{{days} day streak}}",
+  "@trackerStreak": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "trackerMonth": "{percent}% this month",
+  "@trackerMonth": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "trackerThisWeek": "This week",
+  "trackerHint": "Tap a prayer when you have prayed it.",
+  "notifyPrayer": "Notify",
+  "notificationsOffHint": "Turn on prayer notifications first.",
+  "enable": "Turn on",
+  "prayerSettingsSection": "Calculation",
+  "madhabTitle": "Asr calculation",
+  "madhabShafi": "Standard (Shafi'i, Maliki, Hanbali)",
+  "madhabHanafi": "Hanafi",
+  "highLatitudeTitle": "High-latitude rule",
+  "highLatMiddle": "Middle of the night",
+  "highLatSeventh": "One-seventh of the night",
+  "highLatTwilight": "Twilight angle",
+  "adjustmentsTitle": "Adjust times",
+  "adjustmentsHint": "Add or subtract minutes to match your local mosque.",
+  "minutesShort": "{n} min",
+  "@minutesShort": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "reminderTitleSetting": "Reminder before prayer",
+  "reminderOff": "Off",
+  "fridayKahfSetting": "Friday Al-Kahf reminder",
+  "methodKuwait": "Kuwait",
+  "methodQatar": "Qatar",
+  "methodSingapore": "Singapore",
+  "methodTurkey": "Diyanet, Turkey",
+  "methodTehran": "Tehran",
+  "methodMoonsighting": "Moonsighting Committee",
+  "hisnTitle": "Hisn al-Muslim",
+  "searchAzkarHint": "Search the adhkar",
+  "allChapters": "All chapters",
+  "featuredAzkar": "Daily adhkar",
+  "azkarMorningEvening": "Morning & evening",
+  "azkarSleep": "Before sleep",
+  "azkarWaking": "On waking",
+  "azkarAfterPrayer": "After prayer",
+  "azkarAdhan": "The adhan",
+  "azkarLeavingHome": "Leaving home",
+  "azkarEnteringHome": "Entering home",
+  "azkarEnteringMosque": "Entering the mosque",
+  "azkarDistress": "Distress & anxiety",
+  "azkarIstikhara": "Istikhara",
+  "azkarSource": "Source: Hisn al-Muslim (hisnmuslim.com)",
+  "azkarCompleted": "All done. May Allah accept it.",
+  "tapToCount": "Tap to count",
+  "calendarTitle": "Islamic calendar",
+  "upcomingEvents": "Upcoming",
+  "eventsThisMonth": "This month",
+  "inDays": "{days, plural, =0{Today} =1{Tomorrow} other{In {days} days}}",
+  "@inDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "eventNewYear": "Islamic New Year",
+  "eventAshura": "Day of Ashura",
+  "eventRamadan": "Ramadan begins",
+  "eventLastTen": "Last ten nights of Ramadan",
+  "eventEidFitr": "Eid al-Fitr",
+  "eventDhulHijjah": "First ten days of Dhul-Hijjah",
+  "eventArafah": "Day of Arafah",
+  "eventEidAdha": "Eid al-Adha",
+  "whiteDays": "White days (fasting 13–15)",
+  "hijriDisclaimer": "Hijri dates follow the Umm al-Qura calendar and may differ by a day from local moon sighting. Adjust in Settings.",
+  "hijriAdjustment": "Hijri date adjustment",
+  "hijriAdjustmentValue": "{days, plural, =0{No adjustment} other{{days} days}}",
+  "@hijriAdjustmentValue": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "namesTitle": "The 99 Names of Allah",
+  "namesSource": "Source: api.aladhan.com",
+  "ramadanDay": "Ramadan, day {day}",
+  "@ramadanDay": {
+    "placeholders": {
+      "day": {
+        "type": "int"
+      }
+    }
+  },
+  "imsak": "Imsak",
+  "iftar": "Iftar",
+  "duasTitle": "Duas from the Quran",
+  "rabbanaGroup": "Rabbana duas",
+  "prophetsGroup": "Supplications of the prophets",
+  "searchHadethHint": "Search the ahadeth",
+  "favourites": "Favourites",
+  "addFavourite": "Add to favourites",
+  "removeFavourite": "Remove from favourites",
+  "noFavourites": "No favourites yet. Tap the heart on a hadeth to keep it here.",
+  "noHadethMatches": "No hadeth matches your search.",
+  "tabHome": "Home",
+  "tabPrayer": "Prayer",
+  "tabAzkar": "Adhkar",
+  "tabMore": "More",
+  "greetingMorning": "Good morning",
+  "greetingEvening": "Good evening",
+  "assalamu": "Assalamu alaikum",
+  "verseOfTheDay": "Verse of the day",
+  "hadethOfTheDay": "Hadith of the day",
+  "continueWhereLeft": "Continue where you left off",
+  "quickAccess": "Quick access",
+  "nextEvent": "{event} {when}",
+  "@nextEvent": {
+    "placeholders": {
+      "event": {
+        "type": "String"
+      },
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "morningAzkarNow": "Morning adhkar",
+  "eveningAzkarNow": "Evening adhkar",
+  "zakatTitle": "Zakat calculator",
+  "zakatCash": "Cash and savings",
+  "zakatGoldGrams": "Gold (grams)",
+  "zakatGoldPrice": "Gold price per gram",
+  "zakatSilverGrams": "Silver (grams)",
+  "zakatSilverPrice": "Silver price per gram",
+  "zakatBusiness": "Trade goods",
+  "zakatReceivable": "Money owed to you",
+  "zakatDebts": "Debts due now",
+  "zakatNisabBasis": "Nisab based on",
+  "zakatNisabGold": "Gold (85 g)",
+  "zakatNisabSilver": "Silver (595 g)",
+  "zakatNetWealth": "Zakatable wealth",
+  "zakatNisab": "Nisab",
+  "zakatDue": "Zakat due (2.5%)",
+  "zakatBelowNisab": "Below the nisab: no zakat is due.",
+  "zakatNeedPrice": "Enter the gold or silver price to work out the nisab.",
+  "zakatHawlNote": "Zakat is due on wealth held for a full lunar year (hawl). This calculator is a guide; consult a scholar for your situation.",
+  "aboutTitle": "About Sakina",
+  "aboutSources": "Sources",
+  "shareApp": "Share the app",
+  "version": "Version {v}",
+  "@version": {
+    "placeholders": {
+      "v": {
+        "type": "String"
+      }
+    }
+  },
+  "fastTomorrow": "Tomorrow is {weekday}, a sunnah day to fast",
+  "@fastTomorrow": {
+    "placeholders": {
+      "weekday": {
+        "type": "String"
+      }
+    }
+  },
+  "iftarIn": "Iftar in {countdown}",
+  "@iftarIn": {
+    "placeholders": {
+      "countdown": {
+        "type": "String"
+      }
+    }
+  },
+  "shareAppText": "Sakina — a quiet companion for Quran, dhikr and prayer."
+}

@@ -1,5 +1,5 @@
-name: islami1
-description: "A new Flutter project."
+name: sakina
+description: "Sakina - a Quran, hadeth, dhikr, radio and prayer times companion."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -30,18 +30,35 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-  carousel_slider: ^5.1.1
   shared_preferences: ^2.5.3
-  dots_indicator: ^4.0.1
-  font_awesome_flutter: ^10.9.0
+  just_audio: ^0.10.6
+  adhan: ^2.0.0+1
+  hijri: ^3.0.1
+  intl: ^0.20.2
+  geolocator: ^14.0.3
+  flutter_bloc: ^9.1.1
+  share_plus: ^13.3.0
+  audio_session: ^0.2.4
+  flutter_local_notifications: ^22.3.1
+  timezone: ^0.11.1
+  flutter_timezone: ^5.1.0
+  http: ^1.6.0
+  path_provider: ^2.1.6
+  geocoding: ^5.0.0
+  flutter_compass: ^0.8.1
+  package_info_plus: ^10.2.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.8
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -56,6 +73,9 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
 
+  # Generates AppLocalizations from lib/l10n/*.arb
+  generate: true
+
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
@@ -65,9 +85,12 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
-    - assets/fonts/
-    - assets/files/
+    - assets/quran/
+    - assets/quran/ar/
+    - assets/quran/en/
+    - assets/names/
     - assets/hadeth/
+    - assets/azkar/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
@@ -84,5 +107,13 @@ flutter:
   fonts:
     - family: Janna
       fonts:
-        - asset: assets/fonts/ArbFONTS-Janna-LT-Bold.ttf
         - asset: assets/fonts/ArbFONTS-Janna-LT-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/ArbFONTS-Janna-LT-Bold.ttf
+          weight: 700
+    # Amiri Quran (SIL Open Font License, see assets/fonts/OFL-AmiriQuran.txt)
+    # covers every mark in the Uthmani text, including the end-of-verse and
+    # sajda signs that Janna lacks.
+    - family: AmiriQuran
+      fonts:
+        - asset: assets/fonts/AmiriQuran-Regular.ttf
