@@ -11,7 +11,7 @@ import '../../../core/widgets/app_background.dart';
 import '../../../models/hadeth_data_model.dart';
 import 'hadeth_details_view.dart';
 
-/// The bundled ahadeth: searchable, with favourites.
+/// An-Nawawi's Forty and Ibn Rajab's additions: searchable, with favourites.
 class HadethView extends StatefulWidget {
   const HadethView({super.key});
 
@@ -116,15 +116,49 @@ class _HadethViewState extends State<HadethView> {
                       padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.xl),
                       itemCount: shown.length,
                       separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
-                      itemBuilder: (context, i) => _HadethTile(
-                        hadeth: shown[i],
-                        isFavourite: favourites.contains(shown[i].number),
-                      ),
+                      itemBuilder: (context, i) {
+                        final tile = _HadethTile(
+                          hadeth: shown[i],
+                          isFavourite: favourites.contains(shown[i].number),
+                        );
+                        // A header wherever the book changes, so Ibn Rajab's
+                        // additions never read as part of An-Nawawi's Forty.
+                        final startsSection = i == 0 || shown[i - 1].collection != shown[i].collection;
+                        if (!startsSection) return tile;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _SectionHeader(shown[i].collection),
+                            tile,
+                          ],
+                        );
+                      },
                     ),
             ),
           ],
         );
       },
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader(this.collection);
+
+  final HadethCollection collection;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.sm, bottom: AppSpacing.sm),
+      child: Text(
+        switch (collection) {
+          HadethCollection.nawawi => l10n.nawawiSection,
+          HadethCollection.ibnRajab => l10n.ibnRajabSection,
+        },
+        style: context.texts.titleSmall?.copyWith(color: context.colors.primary),
+      ),
     );
   }
 }

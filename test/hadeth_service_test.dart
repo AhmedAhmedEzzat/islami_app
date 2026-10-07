@@ -1,39 +1,79 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakina/core/services/hadeth_service.dart';
+import 'package:sakina/core/utils/arabic_text.dart';
+import 'package:sakina/models/hadeth_data_model.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  group('HadethService.parse', () {
-    test('takes the first line as the title and the rest as content', () {
-      final hadeth = HadethService.parse('Title\nline one\nline two')!;
-      expect(hadeth.title, 'Title');
-      expect(hadeth.content, ['line one', 'line two']);
-    });
-
-    test('ignores the BOM and blank separator lines', () {
-      final hadeth = HadethService.parse('﻿Title\n\n  \nbody\n')!;
-      expect(hadeth.title, 'Title');
-      expect(hadeth.content, ['body']);
-    });
-
-    test('returns null for an empty file rather than throwing', () {
-      expect(HadethService.parse('   \n\n'), isNull);
-    });
-
-    test('handles a title-only file without a range error', () {
-      final hadeth = HadethService.parse('Only a title')!;
-      expect(hadeth.content, isEmpty);
-    });
+  test('parse reads one entry per hadeth, with an optional translation', () {
+    final all = HadethService.parse(
+      '{"hadeth":[{"n":1,"c":"nawawi","title":"t","ar":["a","b"],"en":"e"},'
+      '{"n":43,"c":"ibn_rajab","title":"u","ar":["c"],"en":null}]}',
+    );
+    expect(all.map((h) => h.number), [1, 43]);
+    expect(all.first.content, ['a', 'b']);
+    expect(all.first.english, 'e');
+    expect(all.last.english, isNull);
+    expect(all.last.collection, HadethCollection.ibnRajab);
   });
 
-  test('all 50 hadeth assets load and have a title', () async {
-    for (var id = 1; id <= HadethService.hadethCount; id++) {
-      final raw = await rootBundle.loadString('assets/hadeth/h$id.txt');
-      final hadeth = HadethService.parse(raw);
-      expect(hadeth, isNotNull, reason: 'h$id.txt parsed to nothing');
-      expect(hadeth!.title.trim(), isNotEmpty, reason: 'h$id has no title');
-    }
+  group('the bundled asset', () {
+    late List<HadethDataModel> all;
+    setUpAll(
+      () async => all = HadethService.parse(
+        await rootBundle.loadString(HadethService.asset),
+      ),
+    );
+
+    test(
+      'numbers 1..50: 42 of An-Nawawi with English, then 8 of Ibn Rajab',
+      () {
+        expect(
+          all.map((h) => h.number),
+          List.generate(HadethService.hadethCount, (i) => i + 1),
+        );
+        final nawawi = all
+            .where((h) => h.collection == HadethCollection.nawawi)
+            .toList();
+        expect(nawawi.map((h) => h.number), List.generate(42, (i) => i + 1));
+        for (final h in nawawi) {
+          expect(
+            h.english,
+            isNotEmpty,
+            reason: 'hadith ${h.number} has no translation',
+          );
+        }
+        expect(
+          all.skip(42).every((h) => h.collection == HadethCollection.ibnRajab),
+          isTrue,
+        );
+      },
+    );
+
+    test('every hadeth has a title and text, with no markup left in it', () {
+      for (final h in all) {
+        expect(h.title, startsWith('الحديث '));
+        expect(h.content, isNotEmpty, reason: 'hadith ${h.number}');
+        for (final p in h.content) {
+          expect(p, isNot(contains('<')), reason: 'hadith ${h.number}');
+          expect(
+            p,
+            isNot(contains('ـ')),
+            reason: 'tatweel in hadith ${h.number}',
+          );
+        }
+      }
+    });
+
+    test('the text is what each number should be', () {
+      String plain(int n) =>
+          ArabicText.normalizeForSearch(all[n - 1].content.join(' '));
+      expect(plain(1), contains('انما الاعمال بالنيات'));
+      expect(plain(40), contains('كن في الدنيا كانك غريب'));
+      expect(plain(42), contains('يا ابن ادم'));
+      expect(all[0].english, contains('Actions are'));
+    });
   });
 }

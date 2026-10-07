@@ -11,12 +11,17 @@ so it can be regenerated and audited rather than trusted:
   Verse metadata  juz / page / hizb quarter / sajda, from the same response
   Azkar           Hisn al-Muslim, from the official hisnmuslim.com API
   99 Names        api.aladhan.com
+  Ahadeth         An-Nawawi's Forty (42), Arabic and English, from the
+                  fawazahmed0/hadith-api editions (text from sunnah.com).
+                  Ibn Rajab's 8 additions come from the original project's
+                  files in tool/content/ibn_rajab/ (not yet sourced).
 
 Usage:  python3 tool/build_content_assets.py
 Downloads are cached in .content_cache/ (gitignored).
 """
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -170,9 +175,101 @@ def build_names():
     print('99 names: ok')
 
 
+_UNITS = ['', 'الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع', 'الثامن', 'التاسع']
+_COMPOUND = ['', 'الحادي', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع', 'الثامن', 'التاسع']
+_TENS = {1: 'عشر', 2: 'العشرون', 3: 'الثلاثون', 4: 'الأربعون', 5: 'الخمسون'}
+
+
+def arabic_ordinal_title(n):
+    """'الحديث الأول' … 'الحديث الخمسون'."""
+    tens, units = divmod(n, 10)
+    if tens == 0:
+        word = _UNITS[units]
+    elif n == 10:
+        word = 'العاشر'
+    elif tens == 1:
+        word = f'{_COMPOUND[units]} عشر'
+    elif units == 0:
+        word = _TENS[tens]
+    else:
+        word = f'{_COMPOUND[units]} و{_TENS[tens]}'
+    return f'الحديث {word}'
+
+
+def _fold(s):
+    """Letters only, for comparing a generated title with a legacy one."""
+    s = re.sub('[ً-ْٰـ﻿]', '', s)
+    s = re.sub('[إأآٱ]', 'ا', s)
+    return re.sub('[^ء-ي]', '', s)
+
+
+# Defects in the source, each checked to still be there before it is fixed, so
+# a corrected upstream fails loudly here instead of being patched twice.
+_NAWAWI_AR_FIXES = {
+    # Ibn Majah's number is missing; 3976, as in the original project's file.
+    12: [('ابن ماجه [رقم:]', 'ابن ماجه [رقم:3976]')],
+    # At-Tirmidhi 2676, not 266 (a dropped digit; the original file has 2676).
+    28: [('[رقم:266]', '[رقم:2676]')],
+    # Unbalanced quotation marks.
+    16: [('لَا تَغْضَبْ" .', 'لَا تَغْضَبْ.')],
+    19: [('مَعَ الْعُسْرِ يُسْرًا', 'مَعَ الْعُسْرِ يُسْرًا"')],
+    33: [('فِي "الصَّحِيحَيْنِ', 'فِي "الصَّحِيحَيْنِ"')],
+    39: [('["السنن]', '["السنن"]')],
+}
+
+
+def _paragraphs(text):
+    text = re.sub(r'[​-‏‪-‮﻿]', '', text)
+    text = re.sub(r'\s*<br\s*/?>\s*', '\n', text)
+    paras = [re.sub(r'[ \t]+', ' ', p).strip() for p in text.split('\n')]
+    return [p for p in paras if p]
+
+
+def build_hadeth():
+    base = 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions'
+    ar = fetch(f'{base}/ara-nawawi.json', 'fz-ara-nawawi.json')['hadiths']
+    en = fetch(f'{base}/eng-nawawi.json', 'fz-eng-nawawi.json')['hadiths']
+    assert len(ar) == len(en) == 42
+    assert [h['hadithnumber'] for h in ar] == [h['hadithnumber'] for h in en] == list(range(1, 43))
+
+    out = []
+    for a, e in zip(ar, en):
+        n = a['hadithnumber']
+        text = a['text']
+        for bad, good in _NAWAWI_AR_FIXES.get(n, []):
+            assert text.count(bad) == 1, f'nawawi {n}: expected exactly one {bad!r}'
+            text = text.replace(bad, good)
+        paras = _paragraphs(text)
+        assert paras and all('<' not in p and '>' not in p for p in paras), n
+        assert sum(p.count('"') for p in paras) % 2 == 0, f'nawawi {n}: unbalanced quotes'
+        english = ' '.join(_paragraphs(e['text']))
+        assert english, n
+        out.append({'n': n, 'c': 'nawawi', 'title': arabic_ordinal_title(n), 'ar': paras, 'en': english})
+
+    legacy_dir = os.path.join(ROOT, 'tool', 'content', 'ibn_rajab')
+    for n in range(43, 51):
+        with open(os.path.join(legacy_dir, f'h{n}.txt'), encoding='utf-8-sig') as f:
+            lines = [l.strip() for l in f.read().replace('\r', '').split('\n') if l.strip()]
+        title = arabic_ordinal_title(n)
+        assert _fold(lines[0]) == _fold(title), f'h{n}: legacy title {lines[0]!r} is not {title!r}'
+        # Tatweel is decoration only; removing it changes no letter.
+        body = [p for p in (re.sub(r'ـ', '', l) for l in lines[1:]) if p]
+        out.append({'n': n, 'c': 'ibn_rajab', 'title': title, 'ar': body, 'en': None})
+
+    write('hadeth/hadeth.json', json.dumps({
+        'source': {
+            'nawawi': 'Forty Hadith of an-Nawawi, fawazahmed0/hadith-api (sunnah.com)',
+            'ibn_rajab': "Ibn Rajab's additions, the original project's files (unverified)",
+        },
+        'hadeth': out,
+    }, ensure_ascii=False, separators=(',', ':')))
+    print(f'ahadeth: {sum(h["c"] == "nawawi" for h in out)} nawawi, {sum(h["c"] == "ibn_rajab" for h in out)} ibn rajab')
+
+
 if __name__ == '__main__':
     build_quran()
     build_search_text()
     build_hisn()
     build_names()
+    build_hadeth()
     sys.exit(0)

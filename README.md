@@ -15,7 +15,7 @@ The bottom bar is **Home · Quran · Prayer · Adhkar · More**.
 | **Quran** | All 114 suras plus Juz and hizb-quarter indexes, bookmarks, and **full-text search** in Arabic (diacritics-insensitive) and English. A sura opens as a **mushaf** turned page by page, right to left. Pages are filled like a printed copy, so a verse can run across a page break. Each page shows its juz and hizb. Your page is remembered. Tap a verse for **tafsir** (Al-Muyassar, Al-Jalalayn), the English translation, bookmarking, copying, or **sharing as an image**. Recitation by 12 reciters plays verse by verse, highlights the verse being recited, and can repeat a verse or the sura. Sajda verses are marked. |
 | **Prayer** | Prayer times for your location or a city you pick: 12 calculation methods, Shafi'i/Hanafi Asr, high-latitude rules and per-prayer minute adjustments. Day-by-day browsing, a monthly timetable, a **Qibla compass**, a **prayer tracker** with a streak, and adhkar shortcuts. |
 | **Adhkar** | The full **Hisn al-Muslim** (132 chapters, 267 adhkar) with counters, plus the **tasbeh**: a progress ring to 33, three dhikr, rounds, undo, haptics and a confirmed reset. |
-| **More** | Hadeth (search and favourites), Duas from the Quran (Rabbana and the prophets' supplications), the **99 Names of Allah**, **Quran radio** (10 live stations), the **Islamic calendar** with occasions and White Days, Qibla, prayer tracker, a **Zakat calculator**, Settings, About and Share. |
+| **More** | **An-Nawawi's Forty** in Arabic and English, with Ibn Rajab's 8 additions (search and favourites), Duas from the Quran (Rabbana and the prophets' supplications), the **99 Names of Allah**, **Quran radio** (10 live stations), the **Islamic calendar** with occasions and White Days, Qibla, prayer tracker, a **Zakat calculator**, Settings, About and Share. |
 
 **Notifications** (off by default): an adhan-time alert for each prayer you
 choose, an optional reminder N minutes before, and an optional Friday reminder
@@ -70,6 +70,7 @@ python3 tool/build_content_assets.py   # downloads into .content_cache/, writes 
 | Juz, hizb, sajda | Tanzil metadata |
 | Adhkar | Hisn al-Muslim (hisnmuslim.com) |
 | 99 Names | api.aladhan.com |
+| An-Nawawi's Forty | Arabic and English, fawazahmed0/hadith-api (text from sunnah.com); six source defects fixed by the script, each asserted |
 | Tafsir | Al-Muyassar and Al-Jalalayn, fetched on demand and cached |
 | Recitation | everyayah.com, streamed per verse |
 | Quran font | Amiri Quran (SIL OFL, `assets/fonts/OFL-AmiriQuran.txt`) |
@@ -81,8 +82,10 @@ against the metadata. `QuranService` also checks it at runtime in debug builds.
 The Quranic duas and the verses of the day are stored only as references.
 Their tests check that each reference really says what it was chosen for.
 
-The 50 ahadeth are the original project's files and have not been checked
-against a source.
+An-Nawawi's 42 ahadeth are generated from the source above. Ibn Rajab's 8
+additions (43–50) are still the original project's files
+(`tool/content/ibn_rajab/`), tatweel removed, and have not been checked against
+a source; the app says so under each one.
 
 ## Brand artwork
 

@@ -46,7 +46,7 @@ class HadethDetailsView extends StatelessWidget {
             icon: const Icon(Icons.share_outlined),
             onPressed: () => SharePlus.instance.share(
               ShareParams(
-                text: '${hadeth.title}\n\n${hadeth.content.join('\n')}',
+                text: hadeth.fullText,
               ),
             ),
           ),
@@ -77,6 +77,27 @@ class HadethDetailsView extends StatelessWidget {
                 ),
               ),
             ),
+          if (hadeth.english case final english?) ...[
+            const Divider(height: AppSpacing.xl),
+            Text(
+              context.l10n.translationTitle,
+              style: context.texts.titleSmall?.copyWith(color: context.colors.primary),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              english,
+              textDirection: TextDirection.ltr,
+              style: context.texts.bodyLarge?.copyWith(color: context.colors.onSurface, height: 1.6),
+            ),
+          ],
+          const SizedBox(height: AppSpacing.lg),
+          Text(
+            switch (hadeth.collection) {
+              HadethCollection.nawawi => context.l10n.hadethSourceNawawi,
+              HadethCollection.ibnRajab => context.l10n.hadethSourceIbnRajab,
+            },
+            style: context.texts.bodySmall?.copyWith(color: context.colors.outline),
+          ),
           const SizedBox(height: AppSpacing.xxl),
         ],
       ),

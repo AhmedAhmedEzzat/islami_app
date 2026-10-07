@@ -52,7 +52,7 @@
       }
     }
   },
-  "hadethTitle": "Hadeth",
+  "hadethTitle": "An-Nawawi's Forty",
   "hadethLoadError": "Could not load the ahadeth.",
   "noHadeth": "No ahadeth are bundled with the app.",
   "tapToRead": "Tap to read",
@@ -155,7 +155,7 @@
   "onboard1Body": "Your quiet companion for Quran, dhikr and prayer.",
   "onboard2Title": "Read and listen",
   "onboard2Body": "All 114 suras, with recitation you can play as you follow along.",
-  "onboard3Title": "Forty ahadeth",
+  "onboard3Title": "An-Nawawi's Forty",
   "onboard3Body": "Short readings to return to whenever you have a moment.",
   "onboard4Title": "Tasbeh",
   "onboard4Body": "Keep your count of سبحان الله، الحمد لله، الله أكبر.",
@@ -570,5 +570,17 @@
       }
     }
   },
-  "shareAppText": "Sakina — a quiet companion for Quran, dhikr and prayer."
+  "shareAppText": "Sakina — a quiet companion for Quran, dhikr and prayer.",
+  "nawawiSection": "An-Nawawi's Forty",
+  "ibnRajabSection": "Ibn Rajab's additions",
+  "hadethNumber": "Hadith {number}",
+  "@hadethNumber": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "hadethSourceNawawi": "Source: Forty Hadith of an-Nawawi, sunnah.com",
+  "hadethSourceIbnRajab": "From Ibn Rajab's Jami' al-Ulum wal-Hikam. This text has not yet been checked against a printed source."
 }

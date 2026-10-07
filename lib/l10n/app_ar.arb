@@ -24,7 +24,7 @@
   "playRecitation": "تشغيل التلاوة",
   "pauseRecitation": "إيقاف التلاوة",
   "verseNumber": "الآية {number}",
-  "hadethTitle": "الأحاديث",
+  "hadethTitle": "الأربعون النووية",
   "hadethLoadError": "تعذّر تحميل الأحاديث.",
   "noHadeth": "لا توجد أحاديث في التطبيق.",
   "tapToRead": "اضغط للقراءة",
@@ -86,7 +86,7 @@
   "onboard1Body": "رفيقك الهادئ للقرآن والذكر والصلاة.",
   "onboard2Title": "اقرأ واستمع",
   "onboard2Body": "كل السور ال114، مع تلاوة يمكنك الاستماع إليها أثناء المتابعة.",
-  "onboard3Title": "أربعون حديثًا",
+  "onboard3Title": "الأربعون النووية",
   "onboard3Body": "قراءات قصيرة تعود إليها كلما سنحت لك لحظة.",
   "onboard4Title": "التسبيح",
   "onboard4Body": "احفظ عدد تسبيحك: سبحان الله، الحمد لله، الله أكبر.",
@@ -287,5 +287,10 @@
   "version": "الإصدار {v}",
   "fastTomorrow": "غدًا يوم {weekday}، ويُسنّ صيامه",
   "iftarIn": "الإفطار بعد {countdown}",
-  "shareAppText": "سكينة — رفيقك الهادئ للقرآن والذكر والصلاة."
+  "shareAppText": "سكينة — رفيقك الهادئ للقرآن والذكر والصلاة.",
+  "nawawiSection": "الأربعون النووية",
+  "ibnRajabSection": "زيادات ابن رجب",
+  "hadethNumber": "الحديث {number}",
+  "hadethSourceNawawi": "المصدر: الأربعون النووية، موقع sunnah.com",
+  "hadethSourceIbnRajab": "من «جامع العلوم والحكم» لابن رجب. لم يُراجَع هذا النص بعد على مصدر مطبوع."
 }
