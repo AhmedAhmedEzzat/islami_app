@@ -20,6 +20,9 @@ The bottom bar is **Home · Quran · Prayer · Adhkar · More**.
 **Notifications** (off by default): an adhan-time alert for each prayer you
 choose, an optional reminder N minutes before, and an optional Friday reminder
 to read Al-Kahf.
+Fasting reminders, each with its own switch: the evening before Monday and
+Thursday, before the White Days and before Arafah and Ashura, and suhoor and
+iftar during Ramadan. None is sent before Eid or the days of Tashreeq.
 
 **Settings**: language, theme (light, dark or follow the phone), Quran text size,
 reciter, calculation method, madhab, high-latitude rule, prayer adjustments,

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../services/prayer_config.dart';
+import '../services/prayer_notification_service.dart';
 import '../services/prayer_times_service.dart';
 
 /// User preferences that affect the whole app.
@@ -21,6 +22,7 @@ class SettingsState {
     this.notifiedPrayers = defaultNotifiedPrayers,
     this.fridayKahf = true,
     this.hijriOffset = 0,
+    this.fastingAlerts = defaultFastingAlerts,
   });
 
   final ThemeMode themeMode;
@@ -58,6 +60,16 @@ class SettingsState {
   /// Days added to every Hijri date, -2..2, to match local moon sighting.
   final int hijriOffset;
 
+  /// Which fasting reminders are on. They post only while [prayerNotifications] is.
+  final Set<FastingAlert> fastingAlerts;
+
+  static const Set<FastingAlert> defaultFastingAlerts = {
+    FastingAlert.mondayThursday,
+    FastingAlert.whiteDays,
+    FastingAlert.ramadan,
+    FastingAlert.arafahAshura,
+  };
+
   static const double minFontScale = 0.8;
   static const double maxFontScale = 2.0;
 
@@ -92,6 +104,7 @@ class SettingsState {
     Set<PrayerName>? notifiedPrayers,
     bool? fridayKahf,
     int? hijriOffset,
+    Set<FastingAlert>? fastingAlerts,
     // Distinguishes "leave unchanged" from "back to the system language".
     bool clearLocale = false,
   }) {
@@ -109,6 +122,7 @@ class SettingsState {
       notifiedPrayers: notifiedPrayers ?? this.notifiedPrayers,
       fridayKahf: fridayKahf ?? this.fridayKahf,
       hijriOffset: hijriOffset ?? this.hijriOffset,
+      fastingAlerts: fastingAlerts ?? this.fastingAlerts,
     );
   }
 
@@ -127,7 +141,8 @@ class SettingsState {
         other.reminderMinutes == reminderMinutes &&
         setEquals(other.notifiedPrayers, notifiedPrayers) &&
         other.fridayKahf == fridayKahf &&
-        other.hijriOffset == hijriOffset;
+        other.hijriOffset == hijriOffset &&
+        setEquals(other.fastingAlerts, fastingAlerts);
   }
 
   @override
@@ -145,5 +160,6 @@ class SettingsState {
     Object.hashAllUnordered(notifiedPrayers),
     fridayKahf,
     hijriOffset,
+    Object.hashAllUnordered(fastingAlerts),
   );
 }

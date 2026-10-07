@@ -582,5 +582,24 @@
     }
   },
   "hadethSourceNawawi": "Source: Forty Hadith of an-Nawawi, sunnah.com",
-  "hadethSourceIbnRajab": "From Ibn Rajab's Jami' al-Ulum wal-Hikam. This text has not yet been checked against a printed source."
+  "hadethSourceIbnRajab": "From Ibn Rajab's Jami' al-Ulum wal-Hikam. This text has not yet been checked against a printed source.",
+  "fastMondayThursdayTitle": "Sunnah fast tomorrow",
+  "fastMondayBody": "Tomorrow is Monday, a day the Prophet ﷺ used to fast.",
+  "fastThursdayBody": "Tomorrow is Thursday, a day the Prophet ﷺ used to fast.",
+  "fastWhiteDaysTitle": "The White Days start tomorrow",
+  "fastWhiteDaysBody": "The 13th, 14th and 15th of the Hijri month: a sunnah fast.",
+  "fastArafahTitle": "Tomorrow is the Day of Arafah",
+  "fastArafahBody": "Fasting it expiates the sins of the year before and the year after.",
+  "fastAshuraTitle": "Tomorrow is Ashura",
+  "fastAshuraBody": "Fasting it expiates the sins of the year before.",
+  "suhoorTitle": "Suhoor",
+  "suhoorBody": "Half an hour until Imsak. Eat suhoor, for there is blessing in it.",
+  "iftarNotificationTitle": "Time for iftar",
+  "iftarNotificationBody": "May Allah accept your fast.",
+  "fastingNotificationsHeader": "Fasting reminders",
+  "fastMondayThursdaySetting": "Monday and Thursday",
+  "fastMondayThursdaySubtitle": "The evening before",
+  "fastWhiteDaysSetting": "White Days (13th-15th)",
+  "fastRamadanSetting": "Ramadan: suhoor and iftar",
+  "fastArafahAshuraSetting": "Arafah and Ashura"
 }

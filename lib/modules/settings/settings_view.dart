@@ -284,6 +284,33 @@ class SettingsView extends StatelessWidget {
                     ? cubit.setFridayKahf
                     : null,
               ),
+              Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 0),
+                child: Text(
+                  context.l10n.fastingNotificationsHeader,
+                  style: context.texts.labelLarge?.copyWith(color: context.colors.onSurfaceVariant),
+                ),
+              ),
+              for (final (alert, icon, title, subtitle) in [
+                (
+                  FastingAlert.mondayThursday,
+                  Icons.event_repeat_outlined,
+                  context.l10n.fastMondayThursdaySetting,
+                  context.l10n.fastMondayThursdaySubtitle,
+                ),
+                (FastingAlert.whiteDays, Icons.brightness_3_outlined, context.l10n.fastWhiteDaysSetting, null),
+                (FastingAlert.ramadan, Icons.restaurant_outlined, context.l10n.fastRamadanSetting, null),
+                (FastingAlert.arafahAshura, Icons.wb_twilight_outlined, context.l10n.fastArafahAshuraSetting, null),
+              ])
+                SwitchListTile(
+                  value: state.fastingAlerts.contains(alert),
+                  title: Text(title),
+                  subtitle: subtitle == null ? null : Text(subtitle),
+                  secondary: Icon(icon),
+                  onChanged: state.prayerNotifications
+                      ? (_) => cubit.toggleFastingAlert(alert)
+                      : null,
+                ),
 
               _SectionHeader(context.l10n.languageSection),
               Padding(

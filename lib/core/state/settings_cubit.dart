@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../constants/prefs_keys.dart';
 import '../services/prayer_config.dart';
+import '../services/prayer_notification_service.dart';
 import '../services/prayer_times_service.dart';
 import '../services/shared_prefs_helper.dart';
 import 'settings_state.dart';
@@ -46,6 +47,9 @@ class SettingsCubit extends Cubit<SettingsState> {
         ),
         fridayKahf: LocalStorageServices.getBool(PrefsKeys.fridayKahf) ?? true,
         hijriOffset: LocalStorageServices.getInt(PrefsKeys.hijriOffset) ?? 0,
+        fastingAlerts: _decodeFasting(
+          LocalStorageServices.getString(PrefsKeys.fastingAlerts),
+        ),
       ),
     );
   }
@@ -130,6 +134,16 @@ class SettingsCubit extends Cubit<SettingsState> {
     await LocalStorageServices.setBool(PrefsKeys.fridayKahf, enabled);
   }
 
+  Future<void> toggleFastingAlert(FastingAlert alert) async {
+    final next = Set<FastingAlert>.from(state.fastingAlerts);
+    next.contains(alert) ? next.remove(alert) : next.add(alert);
+    emit(state.copyWith(fastingAlerts: next));
+    await LocalStorageServices.setString(
+      PrefsKeys.fastingAlerts,
+      next.map((a) => a.name).join(','),
+    );
+  }
+
   Future<void> setHijriOffset(int days) async {
     final clamped = days.clamp(-2, 2);
     emit(state.copyWith(hijriOffset: clamped));
@@ -142,6 +156,14 @@ class SettingsCubit extends Cubit<SettingsState> {
     return {
       for (final name in stored.split(','))
         ...PrayerName.values.where((p) => p.name == name),
+    };
+  }
+
+  static Set<FastingAlert> _decodeFasting(String? stored) {
+    if (stored == null) return SettingsState.defaultFastingAlerts;
+    return {
+      for (final name in stored.split(','))
+        ...FastingAlert.values.where((a) => a.name == name),
     };
   }
 

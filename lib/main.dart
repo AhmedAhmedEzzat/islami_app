@@ -66,6 +66,8 @@ void _reschedule(SettingsState state) {
     prayers: state.notifiedPrayers,
     reminderMinutes: state.reminderMinutes,
     fridayKahf: state.fridayKahf,
+    fasting: state.fastingAlerts,
+    hijriOffset: state.hijriOffset,
   );
 }
 
@@ -107,7 +109,9 @@ class SakinaApp extends StatelessWidget {
             a.locale != b.locale ||
             !setEquals(a.notifiedPrayers, b.notifiedPrayers) ||
             a.reminderMinutes != b.reminderMinutes ||
-            a.fridayKahf != b.fridayKahf,
+            a.fridayKahf != b.fridayKahf ||
+            a.hijriOffset != b.hijriOffset ||
+            !setEquals(a.fastingAlerts, b.fastingAlerts),
         listener: (_, state) => _reschedule(state),
         child: BlocBuilder<SettingsCubit, SettingsState>(
           builder: (context, state) {

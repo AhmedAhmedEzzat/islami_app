@@ -8,10 +8,36 @@ import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../l10n/gen/app_localizations.dart';
+import 'islamic_calendar.dart';
 import 'prayer_config.dart';
 import 'prayer_times_service.dart';
 
-enum AlertKind { prayer, reminder, kahf }
+enum AlertKind {
+  prayer,
+  reminder,
+  kahf,
+
+  /// The evening before a Monday or Thursday.
+  mondayThursday,
+
+  /// The evening before the 13th, the first of the White Days.
+  whiteDays,
+
+  /// The evening before the Day of Arafah.
+  arafah,
+
+  /// The evening before Ashura.
+  ashura,
+
+  /// Suhoor, half an hour before Imsak, on each day of Ramadan.
+  suhoor,
+
+  /// Iftar, at Maghrib, on each day of Ramadan.
+  iftar,
+}
+
+/// The fasting reminders a user can turn on, each with its own switch.
+enum FastingAlert { mondayThursday, whiteDays, ramadan, arafahAshura }
 
 /// One notification the schedule will post.
 @immutable
@@ -21,7 +47,7 @@ class ScheduledAlert {
   final int id;
   final AlertKind kind;
 
-  /// Null for the Al-Kahf reminder.
+  /// Null for everything but the prayer alerts and their reminders.
   final PrayerName? prayer;
   final DateTime time;
 }
@@ -120,8 +146,18 @@ abstract final class PrayerNotificationService {
   ///   prayers   1000 + day * 10 + prayer
   ///   reminders 2000 + day * 10 + prayer
   ///   Al-Kahf   3000 + day
+  ///   fasting   4000 + day * 10 + slot (0 the evening before, 1 suhoor, 2 iftar)
   static const int _reminderBase = 2000;
   static const int _kahfBase = 3000;
+  static const int _fastingBase = 4000;
+
+  /// When the evening-before reminders arrive, after Isha in most places.
+  static const int eveningHour = 21;
+
+  /// Imsak is ten minutes before Fajr, as on the Home screen's Ramadan card;
+  /// suhoor is called half an hour before that.
+  static const Duration imsakBeforeFajr = Duration(minutes: 10);
+  static const Duration suhoorBeforeImsak = Duration(minutes: 30);
 
   /// Cancels every notification this service scheduled.
   static Future<void> cancelAll() async {
@@ -132,6 +168,9 @@ abstract final class PrayerNotificationService {
         await _plugin.cancel(id: _reminderBase + day * 10 + p);
       }
       await _plugin.cancel(id: _kahfBase + day);
+      for (var slot = 0; slot < 3; slot++) {
+        await _plugin.cancel(id: _fastingBase + day * 10 + slot);
+      }
     }
   }
 
@@ -151,6 +190,8 @@ abstract final class PrayerNotificationService {
     },
     int reminderMinutes = 0,
     bool fridayKahf = false,
+    Set<FastingAlert> fasting = const {},
+    int hijriOffset = 0,
   }) {
     final result = <ScheduledAlert>[];
     final today = DateTime(now.year, now.month, now.day);
@@ -187,10 +228,58 @@ abstract final class PrayerNotificationService {
           result.add(ScheduledAlert(_kahfBase + day, AlertKind.kahf, null, morning));
         }
       }
+
+      final eveKind = _fastTomorrow(date, fasting, hijriOffset);
+      if (eveKind != null) {
+        final evening = DateTime(date.year, date.month, date.day, eveningHour);
+        if (evening.isAfter(now)) {
+          result.add(ScheduledAlert(_fastingBase + day * 10, eveKind, null, evening));
+        }
+      }
+
+      if (fasting.contains(FastingAlert.ramadan) &&
+          IslamicCalendar.ramadanDay(date, offset: hijriOffset) != null) {
+        final suhoor = times.entry(PrayerName.fajr).time.subtract(imsakBeforeFajr + suhoorBeforeImsak);
+        final iftar = times.entry(PrayerName.maghrib).time;
+        if (suhoor.isAfter(now)) {
+          result.add(ScheduledAlert(_fastingBase + day * 10 + 1, AlertKind.suhoor, null, suhoor));
+        }
+        if (iftar.isAfter(now)) {
+          result.add(ScheduledAlert(_fastingBase + day * 10 + 2, AlertKind.iftar, null, iftar));
+        }
+      }
     }
 
     result.sort((a, b) => a.time.compareTo(b.time));
     return result;
+  }
+
+  /// What to remind about on the evening of [eve], for the fast the next day:
+  /// at most one reminder an evening, the rarer occasion first.
+  ///
+  /// Nothing before a day on which fasting is forbidden (the two Eids and the
+  /// days of Tashreeq, 11th-13th Dhul-Hijjah), so the 13th of Dhul-Hijjah is
+  /// not called a White Day. Nothing for Mondays, Thursdays or White Days in
+  /// Ramadan, which is fasted anyway.
+  static AlertKind? _fastTomorrow(DateTime eve, Set<FastingAlert> fasting, int hijriOffset) {
+    if (fasting.isEmpty) return null;
+    final tomorrow = eve.add(const Duration(days: 1));
+    final h = IslamicCalendar.of(tomorrow, offset: hijriOffset);
+    final forbidden = (h.hMonth == 10 && h.hDay == 1) || (h.hMonth == 12 && h.hDay >= 10 && h.hDay <= 13);
+    if (forbidden || h.hMonth == 9) return null;
+
+    if (fasting.contains(FastingAlert.arafahAshura)) {
+      if (h.hMonth == 12 && h.hDay == 9) return AlertKind.arafah;
+      if (h.hMonth == 1 && h.hDay == 10) return AlertKind.ashura;
+    }
+    if (fasting.contains(FastingAlert.whiteDays) && h.hDay == 13) {
+      return AlertKind.whiteDays;
+    }
+    if (fasting.contains(FastingAlert.mondayThursday) &&
+        (tomorrow.weekday == DateTime.monday || tomorrow.weekday == DateTime.thursday)) {
+      return AlertKind.mondayThursday;
+    }
+    return null;
   }
 
   /// Rebuilds the full schedule. Safe to call often.
@@ -201,6 +290,8 @@ abstract final class PrayerNotificationService {
     Set<PrayerName>? prayers,
     int reminderMinutes = 0,
     bool fridayKahf = false,
+    Set<FastingAlert> fasting = const {},
+    int hijriOffset = 0,
   }) async {
     if (kIsWeb) return;
     await init();
@@ -236,6 +327,8 @@ abstract final class PrayerNotificationService {
       prayers: prayers ?? notifiedPrayers.toSet(),
       reminderMinutes: reminderMinutes,
       fridayKahf: fridayKahf,
+      fasting: fasting,
+      hijriOffset: hijriOffset,
     );
 
     for (final alert in alerts) {
@@ -250,6 +343,17 @@ abstract final class PrayerNotificationService {
           l10n.reminderBody(reminderMinutes, name),
         ),
         AlertKind.kahf => (l10n.kahfTitle, l10n.kahfBody),
+        AlertKind.mondayThursday => (
+          l10n.fastMondayThursdayTitle,
+          alert.time.add(const Duration(days: 1)).weekday == DateTime.monday
+              ? l10n.fastMondayBody
+              : l10n.fastThursdayBody,
+        ),
+        AlertKind.whiteDays => (l10n.fastWhiteDaysTitle, l10n.fastWhiteDaysBody),
+        AlertKind.arafah => (l10n.fastArafahTitle, l10n.fastArafahBody),
+        AlertKind.ashura => (l10n.fastAshuraTitle, l10n.fastAshuraBody),
+        AlertKind.suhoor => (l10n.suhoorTitle, l10n.suhoorBody),
+        AlertKind.iftar => (l10n.iftarNotificationTitle, l10n.iftarNotificationBody),
       };
       await _plugin.zonedSchedule(
         id: alert.id,
