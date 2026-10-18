@@ -711,8 +711,9 @@
   "adhanHelpGrant": "Check permissions",
   "ok": "OK",
   "focusHint": "Tip: tap the page to read full screen",
+  "listenTitle": "Listen and download",
   "offlineRecitations": "Offline recitations",
-  "offlineRecitationsSubtitle": "Download reciters to listen without internet",
+  "offlineRecitationsSubtitle": "Play any sura with any reciter, or save it for offline listening",
   "surasDownloaded": "{n} suras downloaded",
   "@surasDownloaded": {
     "placeholders": {
