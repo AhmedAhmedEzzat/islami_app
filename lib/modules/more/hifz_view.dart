@@ -208,9 +208,9 @@ class _HifzViewState extends State<HifzView> {
     return switch (entry?.status) {
       null => l10n.hifzNotStarted,
       HifzStatus.learning => l10n.hifzLearning,
-      HifzStatus.memorised => l10n.hifzNextRevision(
-        MaterialLocalizations.of(context).formatMediumDate(entry!.due ?? DateTime.now()),
-      ),
+      HifzStatus.memorised when entry!.due?.isAfter(DateUtils.dateOnly(DateTime.now())) ?? false =>
+        l10n.hifzNextRevision(MaterialLocalizations.of(context).formatMediumDate(entry.due!)),
+      HifzStatus.memorised => l10n.hifzRevisionDue,
     };
   }
 }

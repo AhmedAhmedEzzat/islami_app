@@ -412,6 +412,7 @@
   "yearLabel": "السنة",
   "daysFromToday": "{days, plural, =0{اليوم} =1{غدًا} =2{بعد يومين} few{بعد {days} أيام} other{بعد {days} يومًا}}",
   "daysAgo": "{days, plural, =1{أمس} =2{قبل يومين} few{قبل {days} أيام} other{قبل {days} يومًا}}",
+  "hifzRevisionDue": "محفوظة · حان موعد مراجعتها",
   "offlineRecitations": "التلاوات المحفوظة",
   "offlineRecitationsSubtitle": "شغّل أي سورة بأي قارئ أو احفظها للاستماع دون إنترنت",
   "surasDownloaded": "{n} سورة محفوظة",

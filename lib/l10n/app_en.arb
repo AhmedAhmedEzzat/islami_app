@@ -768,6 +768,7 @@
   "daysAgo": "{days, plural, =1{Yesterday} other{{days} days ago}}",
   "@daysFromToday": {"placeholders": {"days": {"type": "int"}}},
   "@daysAgo": {"placeholders": {"days": {"type": "int"}}},
+  "hifzRevisionDue": "Memorised · due for revision",
   "offlineRecitations": "Offline recitations",
   "offlineRecitationsSubtitle": "Play any sura with any reciter, or save it for offline listening",
   "surasDownloaded": "{n} suras downloaded",
