@@ -775,5 +775,9 @@
   "downloadFailedRetry": "Download failed. Tap to retry",
   "downloadForOffline": "Download for offline listening",
   "widgetNextPrayer": "Next prayer",
-  "widgetStale": "Open Sakina to refresh prayer times"
+  "widgetStale": "Open Sakina to refresh prayer times",
+  "khatmaReminderTitle": "Today's Quran portion",
+  "khatmaReminderBody": "Keep your khatma on track: read today's pages",
+  "khatmaReminderSetting": "Daily khatma reminder",
+  "khatmaReminderSubtitle": "Half an hour after Isha, while a khatma is under way"
 }

@@ -26,6 +26,7 @@ class SettingsState {
     this.prayerSound = PrayerSound.adhan,
     this.mushafView = true,
     this.adhkarReminders = true,
+    this.khatmaReminders = true,
   });
 
   final ThemeMode themeMode;
@@ -77,6 +78,9 @@ class SettingsState {
   /// [prayerNotifications] is on.
   final bool adhkarReminders;
 
+  /// A daily reminder of the khatma portion, while a khatma is under way.
+  final bool khatmaReminders;
+
   static const Set<FastingAlert> defaultFastingAlerts = {
     FastingAlert.mondayThursday,
     FastingAlert.whiteDays,
@@ -122,6 +126,7 @@ class SettingsState {
     PrayerSound? prayerSound,
     bool? mushafView,
     bool? adhkarReminders,
+    bool? khatmaReminders,
     // Distinguishes "leave unchanged" from "back to the system language".
     bool clearLocale = false,
   }) {
@@ -143,6 +148,7 @@ class SettingsState {
       prayerSound: prayerSound ?? this.prayerSound,
       mushafView: mushafView ?? this.mushafView,
       adhkarReminders: adhkarReminders ?? this.adhkarReminders,
+      khatmaReminders: khatmaReminders ?? this.khatmaReminders,
     );
   }
 
@@ -165,7 +171,8 @@ class SettingsState {
         setEquals(other.fastingAlerts, fastingAlerts) &&
         other.prayerSound == prayerSound &&
         other.mushafView == mushafView &&
-        other.adhkarReminders == adhkarReminders;
+        other.adhkarReminders == adhkarReminders &&
+        other.khatmaReminders == khatmaReminders;
   }
 
   @override
@@ -187,5 +194,6 @@ class SettingsState {
     prayerSound,
     mushafView,
     adhkarReminders,
+    khatmaReminders,
   );
 }

@@ -332,6 +332,15 @@ class SettingsView extends StatelessWidget {
                     : null,
               ),
               SwitchListTile(
+                value: state.khatmaReminders,
+                title: Text(context.l10n.khatmaReminderSetting),
+                subtitle: Text(context.l10n.khatmaReminderSubtitle),
+                secondary: const Icon(Icons.flag_outlined),
+                onChanged: state.prayerNotifications
+                    ? cubit.setKhatmaReminders
+                    : null,
+              ),
+              SwitchListTile(
                 value: state.fridayKahf,
                 title: Text(context.l10n.fridayKahfSetting),
                 secondary: const Icon(Icons.menu_book_outlined),

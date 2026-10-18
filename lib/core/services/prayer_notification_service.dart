@@ -41,6 +41,9 @@ enum AlertKind {
 
   /// Evening adhkar, [adhkarAfterPrayer] after Asr.
   eveningAdhkar,
+
+  /// The day's khatma portion, [khatmaAfterIsha] after Isha.
+  khatma,
 }
 
 /// The fasting reminders a user can turn on, each with its own switch.
@@ -200,10 +203,16 @@ abstract final class PrayerNotificationService {
   ///   Al-Kahf   3000 + day
   ///   fasting   4000 + day * 10 + slot (0 the evening before, 1 suhoor, 2 iftar)
   ///   adhkar    5000 + day * 10 + slot (0 morning, 1 evening)
+  ///   khatma    6000 + day
   static const int _reminderBase = 2000;
   static const int _kahfBase = 3000;
   static const int _fastingBase = 4000;
   static const int _adhkarBase = 5000;
+  static const int _khatmaBase = 6000;
+
+  /// The khatma reminder comes this long after Isha, when the day's work is
+  /// usually done.
+  static const Duration khatmaAfterIsha = Duration(minutes: 30);
 
   /// The adhkar reminders come this long after Fajr and Asr: the time for the
   /// morning adhkar runs from Fajr to sunrise, the evening's from Asr to
@@ -233,6 +242,7 @@ abstract final class PrayerNotificationService {
       for (var slot = 0; slot < 2; slot++) {
         await _plugin.cancel(id: _adhkarBase + day * 10 + slot);
       }
+      await _plugin.cancel(id: _khatmaBase + day);
     }
   }
 
@@ -255,6 +265,7 @@ abstract final class PrayerNotificationService {
     Set<FastingAlert> fasting = const {},
     int hijriOffset = 0,
     bool adhkar = false,
+    bool khatma = false,
   }) {
     final result = <ScheduledAlert>[];
     final today = DateTime(now.year, now.month, now.day);
@@ -309,6 +320,13 @@ abstract final class PrayerNotificationService {
           if (time.isAfter(now)) {
             result.add(ScheduledAlert(_adhkarBase + day * 10 + slot, kind, null, time));
           }
+        }
+      }
+
+      if (khatma) {
+        final time = times.entry(PrayerName.isha).time.add(khatmaAfterIsha);
+        if (time.isAfter(now)) {
+          result.add(ScheduledAlert(_khatmaBase + day, AlertKind.khatma, null, time));
         }
       }
 
@@ -380,6 +398,7 @@ abstract final class PrayerNotificationService {
     int hijriOffset = 0,
     PrayerSound sound = PrayerSound.adhan,
     bool adhkar = false,
+    bool khatma = false,
   }) async {
     if (kIsWeb) return;
     await init();
@@ -402,6 +421,7 @@ abstract final class PrayerNotificationService {
       fasting: fasting,
       hijriOffset: hijriOffset,
       adhkar: adhkar,
+      khatma: khatma,
     );
 
     final missingSounds = <String>{};
@@ -430,6 +450,7 @@ abstract final class PrayerNotificationService {
         AlertKind.iftar => (l10n.iftarNotificationTitle, l10n.iftarNotificationBody),
         AlertKind.morningAdhkar => (l10n.morningAdhkarTitle, l10n.morningAdhkarBody),
         AlertKind.eveningAdhkar => (l10n.eveningAdhkarTitle, l10n.eveningAdhkarBody),
+        AlertKind.khatma => (l10n.khatmaReminderTitle, l10n.khatmaReminderBody),
       };
       Future<void> schedule(String channel) => _plugin.zonedSchedule(
         id: alert.id,

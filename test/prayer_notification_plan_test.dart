@@ -117,6 +117,17 @@ void main() {
     expect(ids.toSet().length, ids.length);
   });
 
+  test('the khatma reminder comes daily, half an hour after Isha', () {
+    final plan = PrayerNotificationService.plan(coordinates: cairo, now: monday, khatma: true, adhkar: true);
+    final khatma = ofKind(plan, AlertKind.khatma).toList();
+    expect(khatma, hasLength(days));
+    final isha = ofKind(plan, AlertKind.prayer).firstWhere((a) => a.prayer == PrayerName.isha);
+    expect(khatma.first.time.difference(isha.time), PrayerNotificationService.khatmaAfterIsha);
+    final ids = plan.map((a) => a.id).toList();
+    expect(ids.toSet().length, ids.length);
+    expect(ofKind(planAt(monday), AlertKind.khatma), isEmpty);
+  });
+
   test('no adhkar reminders unless asked for', () {
     final plan = planAt(monday);
     expect(ofKind(plan, AlertKind.morningAdhkar), isEmpty);

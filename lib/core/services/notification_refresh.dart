@@ -7,6 +7,7 @@ import 'package:workmanager/workmanager.dart';
 
 import '../state/settings_cubit.dart';
 import '../state/settings_state.dart';
+import 'khatma.dart';
 import 'prayer_notification_service.dart';
 import 'prayer_widget.dart';
 import 'shared_prefs_helper.dart';
@@ -37,6 +38,8 @@ abstract final class NotificationRefresh {
       hijriOffset: state.hijriOffset,
       sound: state.prayerSound,
       adhkar: state.adhkarReminders,
+      // Only while a khatma is under way.
+      khatma: state.khatmaReminders && Khatma.isActive,
     );
   }
 

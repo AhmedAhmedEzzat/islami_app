@@ -94,6 +94,12 @@ abstract final class Khatma {
     }
   }
 
+  /// A plan is running and not yet complete.
+  static bool get isActive {
+    final plan = notifier.value;
+    return plan != null && !plan.isComplete;
+  }
+
   /// Re-reads storage, for tests and for after storage is first ready.
   static void reload() => notifier.value = _read();
 

@@ -383,5 +383,9 @@
   "downloadFailedRetry": "فشل التحميل، المس لإعادة المحاولة",
   "downloadForOffline": "تحميل للاستماع دون إنترنت",
   "widgetNextPrayer": "الصلاة القادمة",
-  "widgetStale": "افتح سكينة لتحديث مواقيت الصلاة"
+  "widgetStale": "افتح سكينة لتحديث مواقيت الصلاة",
+  "khatmaReminderTitle": "ورد اليوم من القرآن",
+  "khatmaReminderBody": "حافظ على ختمتك: اقرأ صفحات اليوم",
+  "khatmaReminderSetting": "تذكير يومي بالختمة",
+  "khatmaReminderSubtitle": "بعد العشاء بنصف ساعة، ما دامت لديك ختمة"
 }

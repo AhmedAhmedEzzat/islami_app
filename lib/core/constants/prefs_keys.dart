@@ -28,6 +28,7 @@ abstract final class PrefsKeys {
   static const String prayerSound = 'settings.prayerSound';
   static const String mushafView = 'settings.mushafView';
   static const String adhkarReminders = 'settings.adhkarReminders';
+  static const String khatmaReminders = 'settings.khatmaReminders';
   static const String lastMushafPage = 'quran.lastMushafPage';
   static const String khatma = 'quran.khatma';
   static const String focusHintShown = 'quran.focusHintShown';

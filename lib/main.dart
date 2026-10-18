@@ -12,6 +12,7 @@ import 'core/constants/prefs_keys.dart';
 import 'core/state/bookmarks_cubit.dart';
 import 'core/state/quran_player_cubit.dart';
 import 'core/state/radio_cubit.dart';
+import 'core/services/khatma.dart';
 import 'core/services/notification_refresh.dart';
 import 'core/services/prayer_notification_service.dart';
 import 'core/services/hadeth_favourites.dart';
@@ -52,6 +53,13 @@ Future<void> main() async {
   _reschedule(settings.state);
   // And again every day in the background, for when the app is not opened.
   NotificationRefresh.init();
+  // Starting, ending or finishing a khatma turns its reminder on or off.
+  var khatmaActive = Khatma.isActive;
+  Khatma.notifier.addListener(() {
+    if (Khatma.isActive == khatmaActive) return;
+    khatmaActive = Khatma.isActive;
+    _reschedule(settings.state);
+  });
   final isFirstTime = LocalStorageServices.getBool(PrefsKeys.firstTime) ?? true;
 
   runApp(SakinaApp(settings: settings, isFirstTime: isFirstTime));
@@ -107,7 +115,8 @@ class SakinaApp extends StatelessWidget {
             a.hijriOffset != b.hijriOffset ||
             !setEquals(a.fastingAlerts, b.fastingAlerts) ||
             a.prayerSound != b.prayerSound ||
-            a.adhkarReminders != b.adhkarReminders,
+            a.adhkarReminders != b.adhkarReminders ||
+            a.khatmaReminders != b.khatmaReminders,
         listener: (_, state) => _reschedule(state),
         child: BlocBuilder<SettingsCubit, SettingsState>(
           builder: (context, state) {
