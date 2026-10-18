@@ -53,6 +53,7 @@ class SettingsCubit extends Cubit<SettingsState> {
         prayerSound: _decodePrayerSound(
           LocalStorageServices.getString(PrefsKeys.prayerSound),
         ),
+        mushafView: LocalStorageServices.getBool(PrefsKeys.mushafView) ?? true,
       ),
     );
   }
@@ -150,6 +151,11 @@ class SettingsCubit extends Cubit<SettingsState> {
   Future<void> setPrayerSound(PrayerSound sound) async {
     emit(state.copyWith(prayerSound: sound));
     await LocalStorageServices.setString(PrefsKeys.prayerSound, sound.name);
+  }
+
+  Future<void> setMushafView(bool on) async {
+    emit(state.copyWith(mushafView: on));
+    await LocalStorageServices.setBool(PrefsKeys.mushafView, on);
   }
 
   Future<void> setHijriOffset(int days) async {

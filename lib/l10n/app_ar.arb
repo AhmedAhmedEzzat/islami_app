@@ -320,5 +320,11 @@
   "adhanChannelDescription": "الأذان عند دخول وقت كل صلاة",
   "fajrAdhanChannelName": "أذان الفجر",
   "silentChannelName": "مواقيت الصلاة (صامت)",
-  "stopAdhan": "إيقاف الأذان"
+  "stopAdhan": "إيقاف الأذان",
+  "mushafViewTooltip": "صفحات المصحف",
+  "flowingViewTooltip": "نص متصل (قابل للتكبير)",
+  "mushafPageTitle": "صفحة {page}",
+  "goToPage": "انتقل إلى صفحة",
+  "goToPageHint": "من ١ إلى ٦٠٤",
+  "go": "انتقال"
 }

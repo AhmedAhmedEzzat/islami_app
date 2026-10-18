@@ -24,6 +24,7 @@ class SettingsState {
     this.hijriOffset = 0,
     this.fastingAlerts = defaultFastingAlerts,
     this.prayerSound = PrayerSound.adhan,
+    this.mushafView = true,
   });
 
   final ThemeMode themeMode;
@@ -66,6 +67,10 @@ class SettingsState {
 
   /// What the prayer-time notification sounds like.
   final PrayerSound prayerSound;
+
+  /// The Quran opens as the printed 604-page mushaf; false for flowing text
+  /// that can be enlarged.
+  final bool mushafView;
 
   static const Set<FastingAlert> defaultFastingAlerts = {
     FastingAlert.mondayThursday,
@@ -110,6 +115,7 @@ class SettingsState {
     int? hijriOffset,
     Set<FastingAlert>? fastingAlerts,
     PrayerSound? prayerSound,
+    bool? mushafView,
     // Distinguishes "leave unchanged" from "back to the system language".
     bool clearLocale = false,
   }) {
@@ -129,6 +135,7 @@ class SettingsState {
       hijriOffset: hijriOffset ?? this.hijriOffset,
       fastingAlerts: fastingAlerts ?? this.fastingAlerts,
       prayerSound: prayerSound ?? this.prayerSound,
+      mushafView: mushafView ?? this.mushafView,
     );
   }
 
@@ -149,7 +156,8 @@ class SettingsState {
         other.fridayKahf == fridayKahf &&
         other.hijriOffset == hijriOffset &&
         setEquals(other.fastingAlerts, fastingAlerts) &&
-        other.prayerSound == prayerSound;
+        other.prayerSound == prayerSound &&
+        other.mushafView == mushafView;
   }
 
   @override
@@ -169,5 +177,6 @@ class SettingsState {
     hijriOffset,
     Object.hashAllUnordered(fastingAlerts),
     prayerSound,
+    mushafView,
   );
 }
