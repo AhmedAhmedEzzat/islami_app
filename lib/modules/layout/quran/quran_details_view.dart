@@ -21,6 +21,7 @@ import '../../../core/state/settings_cubit.dart';
 import '../../../core/state/settings_state.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_background.dart';
+import '../../../core/widgets/text_prompt_dialog.dart';
 import '../../../models/quran_open_request.dart';
 import '../../../models/sura_data_model.dart';
 import '../layout_scope.dart';
@@ -267,32 +268,15 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
   }
 
   Future<void> _askForPage() async {
-    final controller = TextEditingController();
-    final page = await showDialog<int>(
-      context: context,
-      builder: (context) {
-        void submit() => Navigator.pop(context, int.tryParse(controller.text));
-        return AlertDialog(
-          title: Text(context.l10n.goToPage),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: InputDecoration(hintText: context.l10n.goToPageHint),
-            onSubmitted: (_) => submit(),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
-            ),
-            FilledButton(onPressed: submit, child: Text(context.l10n.go)),
-          ],
-        );
-      },
+    final text = await showTextPrompt(
+      context,
+      title: context.l10n.goToPage,
+      confirm: context.l10n.go,
+      hint: context.l10n.goToPageHint,
+      numeric: true,
+      maxLength: 3,
     );
-    controller.dispose();
+    final page = int.tryParse(text ?? '');
     if (page == null || page < 1 || page > MushafLayout.pageCount) return;
     _mushafKey.currentState?.goTo(page);
   }

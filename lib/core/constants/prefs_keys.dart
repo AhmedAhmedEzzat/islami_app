@@ -58,6 +58,10 @@ abstract final class PrefsKeys {
   static String qada(String prayer) => 'qada.$prayer';
   static const String tasbehZikrIndex = 'tasbeh.zikrIndex';
   static const String tasbehRounds = 'tasbeh.rounds';
+  static const String tasbehTarget = 'tasbeh.target';
+  static const String tasbehCustom = 'tasbeh.custom';
+  static const String tasbehToday = 'tasbeh.today';
+  static const String tasbehTodayDate = 'tasbeh.todayDate';
   static const String bookmarks = 'quran.bookmarks';
   static const String lastRead = 'quran.lastRead';
 

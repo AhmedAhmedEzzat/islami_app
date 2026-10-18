@@ -116,4 +116,41 @@ void main() {
 
     expect(_count(tester), '0');
   });
+
+  testWidgets('a dhikr the user adds is selected, and stays put after a round', (tester) async {
+    await tester.pumpWidget(_wrap());
+    await tester.tap(find.widgetWithText(ActionChip, 'Add dhikr'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'أستغفر الله');
+    await tester.tap(find.widgetWithText(FilledButton, 'Add'));
+    await tester.pumpAndSettle();
+
+    final chip = tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'أستغفر الله'));
+    expect(chip.selected, isTrue);
+
+    await _tapCounter(tester, times: 33);
+    expect(_rounds(tester), '1 round completed');
+    expect(tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'أستغفر الله')).selected, isTrue);
+  });
+
+  testWidgets("today's total counts every tap, and undo takes one back", (tester) async {
+    await tester.pumpWidget(_wrap());
+    await _tapCounter(tester, times: 4);
+    expect(find.text('Today: 4'), findsOneWidget);
+    await tester.tap(find.byKey(TasbehView.undoKey));
+    await tester.pump();
+    expect(find.text('Today: 3'), findsOneWidget);
+  });
+
+  testWidgets('a larger target makes a longer round', (tester) async {
+    await tester.pumpWidget(_wrap());
+    await tester.tap(find.widgetWithText(TextButton, '33'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ListTile, '100'));
+    await tester.pumpAndSettle();
+
+    await _tapCounter(tester, times: 33);
+    expect(_count(tester), '33');
+    expect(_rounds(tester), 'No rounds yet');
+  });
 }

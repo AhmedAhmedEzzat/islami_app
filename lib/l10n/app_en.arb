@@ -817,5 +817,32 @@
   "qadaDays": "Days",
   "qadaAdd": "Add",
   "qadaMadeUp": "Made one up",
-  "qadaMissed": "Add a missed prayer"
+  "qadaMissed": "Add a missed prayer",
+  "tasbehAdd": "Add dhikr",
+  "tasbehAddHint": "For example: أستغفر الله",
+  "tasbehRemove": "Remove \"{zikr}\"?",
+  "@tasbehRemove": {
+    "placeholders": {
+      "zikr": {
+        "type": "String"
+      }
+    }
+  },
+  "tasbehTarget": "Count per round",
+  "tasbehTargetValue": "{n}",
+  "@tasbehTargetValue": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "tasbehToday": "Today: {n}",
+  "@tasbehToday": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  }
 }

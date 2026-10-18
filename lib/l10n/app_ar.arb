@@ -418,5 +418,11 @@
   "qadaDays": "عدد الأيام",
   "qadaAdd": "إضافة",
   "qadaMadeUp": "قضيت صلاة",
-  "qadaMissed": "إضافة صلاة فائتة"
+  "qadaMissed": "إضافة صلاة فائتة",
+  "tasbehAdd": "إضافة ذكر",
+  "tasbehAddHint": "مثال: أستغفر الله",
+  "tasbehRemove": "حذف «{zikr}»؟",
+  "tasbehTarget": "العدد في كل دورة",
+  "tasbehTargetValue": "{n}",
+  "tasbehToday": "اليوم: {n}"
 }
