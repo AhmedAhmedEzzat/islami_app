@@ -24,4 +24,10 @@ void main() {
       expect(QuranPlayerCubit.playlistAyahs(112, 0, 4), [0, 1, 2, 3, 4]);
     });
   });
+
+  test('for memorising, each verse repeats before the next; the basmala once', () {
+    expect(QuranPlayerCubit.playlistAyahs(112, 1, 2, repeatEach: 3), [0, 1, 1, 1, 2, 2, 2]);
+    expect(QuranPlayerCubit.playlistAyahs(1, 6, 7, repeatEach: 2), [6, 6, 7, 7]);
+    expect(QuranPlayerCubit.playlistAyahs(1, 7, 7, repeatEach: 0), [7], reason: 'at least once');
+  });
 }

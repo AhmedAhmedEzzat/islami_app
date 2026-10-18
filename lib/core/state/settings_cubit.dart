@@ -59,6 +59,7 @@ class SettingsCubit extends Cubit<SettingsState> {
         muezzinId: LocalStorageServices.getString(PrefsKeys.muezzin) ?? 'default',
         continuousRecitation: LocalStorageServices.getBool(PrefsKeys.continuousRecitation) ?? true,
         sunnahAlerts: _decodeSunnah(LocalStorageServices.getString(PrefsKeys.sunnahAlerts)),
+        verseRepeat: LocalStorageServices.getInt(PrefsKeys.verseRepeat) ?? 1,
       ),
     );
   }
@@ -188,6 +189,11 @@ class SettingsCubit extends Cubit<SettingsState> {
     next.contains(alert) ? next.remove(alert) : next.add(alert);
     emit(state.copyWith(sunnahAlerts: next));
     await LocalStorageServices.setString(PrefsKeys.sunnahAlerts, next.map((a) => a.name).join(','));
+  }
+
+  Future<void> setVerseRepeat(int times) async {
+    emit(state.copyWith(verseRepeat: times));
+    await LocalStorageServices.setInt(PrefsKeys.verseRepeat, times);
   }
 
   Future<void> setHijriOffset(int days) async {

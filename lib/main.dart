@@ -98,7 +98,8 @@ class SakinaApp extends StatelessWidget {
           create: (ctx) {
             final radio = ctx.read<RadioCubit>();
             final player = QuranPlayerCubit(radio: radio)
-              ..continuous = () => settings.state.continuousRecitation;
+              ..continuous = (() => settings.state.continuousRecitation)
+              ..repeatEach = (() => settings.state.verseRepeat);
             // The sleep timer silences whichever is playing.
             SleepTimer.onFire = () {
               player.pause();

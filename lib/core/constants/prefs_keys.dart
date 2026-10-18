@@ -32,6 +32,7 @@ abstract final class PrefsKeys {
   static const String muezzin = 'settings.muezzin';
   static const String continuousRecitation = 'settings.continuousRecitation';
   static const String sunnahAlerts = 'settings.sunnahAlerts';
+  static const String verseRepeat = 'settings.verseRepeat';
   static const String reviewFirstUse = 'review.firstUse';
   static const String reviewLastAsked = 'review.lastAsked';
   static const String reviewMoments = 'review.moments';

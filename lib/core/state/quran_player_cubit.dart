@@ -105,13 +105,32 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
   /// Builds the playlist for [sura] starting at [fromAyah]. Pure, so the
   /// basmala rules can be tested without audio.
   @visibleForTesting
-  static List<int> playlistAyahs(int sura, int fromAyah, int totalAyahs) {
+  static List<int> playlistAyahs(int sura, int fromAyah, int totalAyahs, {int repeatEach = 1}) {
     final start = fromAyah.clamp(1, totalAyahs);
     final needsBasmala = start == 1 && sura != 1 && sura != 9;
     return [
       if (needsBasmala) 0,
-      for (var a = start; a <= totalAyahs; a++) a,
+      // For memorising: each verse several times before the next.
+      for (var a = start; a <= totalAyahs; a++)
+        for (var r = 0; r < repeatEach.clamp(1, 20); r++) a,
     ];
+  }
+
+  /// How many times each verse is recited, for memorising. Set from `main()`
+  /// to read the user's setting.
+  int Function() repeatEach = () => 1;
+
+  /// Rebuilds the playlist with a new [repeatEach], from the verse playing.
+  Future<void> restartFromCurrentVerse() async {
+    final sura = state.suraId;
+    final ayah = state.ayah;
+    if (sura == null || ayah == null) return;
+    await playFrom(
+      suraId: sura,
+      fromAyah: ayah == 0 ? 1 : ayah,
+      totalAyahs: state.totalAyahs,
+      reciterId: _reciterId,
+    );
   }
 
   /// Starts [suraId] at [fromAyah] (1-based).
@@ -131,7 +150,7 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
 
     final reciter = Reciters.byId(reciterId);
     _reciterId = reciter.id;
-    _ayahAt = playlistAyahs(sura, fromAyah, totalAyahs);
+    _ayahAt = playlistAyahs(sura, fromAyah, totalAyahs, repeatEach: repeatEach());
     _lastIndex = null;
 
     emit(
@@ -196,12 +215,26 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
     _player.playing ? await _player.pause() : unawaited(_player.play());
   }
 
+  /// The next verse, skipping the rest of this one's repeats.
   Future<void> nextVerse() async {
-    if (_player.hasNext) await _player.seekToNext();
+    final i = _player.currentIndex;
+    if (i == null) return;
+    final next = _ayahAt.indexWhere((a) => a != _ayahAt[i], i);
+    if (next != -1) await _player.seek(Duration.zero, index: next);
   }
 
+  /// The first recitation of the verse before this one.
   Future<void> previousVerse() async {
-    if (_player.hasPrevious) await _player.seekToPrevious();
+    final i = _player.currentIndex;
+    if (i == null) return;
+    final current = _ayahAt[i];
+    final before = _ayahAt.lastIndexWhere((a) => a != current, i);
+    if (before == -1) return;
+    var start = before;
+    while (start > 0 && _ayahAt[start - 1] == _ayahAt[before]) {
+      start--;
+    }
+    await _player.seek(Duration.zero, index: start);
   }
 
   Future<void> seek(Duration position) => _player.seek(position);

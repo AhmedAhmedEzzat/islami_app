@@ -857,5 +857,14 @@
   "qiyamSetting": "Night prayer (Qiyam)",
   "qiyamSubtitle": "When the last third of the night begins",
   "qiyamTitle": "The last third of the night",
-  "qiyamBody": "Our Lord descends and says: who is calling upon Me, that I may answer him?"
+  "qiyamBody": "Our Lord descends and says: who is calling upon Me, that I may answer him?",
+  "verseRepeat": "Repeat each verse",
+  "verseRepeatTimes": "{n, plural, =1{Once} =2{Twice} other{{n} times}}",
+  "@verseRepeatTimes": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  }
 }

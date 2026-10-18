@@ -30,6 +30,7 @@ class SettingsState {
     this.muezzinId = 'default',
     this.continuousRecitation = true,
     this.sunnahAlerts = defaultSunnahAlerts,
+    this.verseRepeat = 1,
   });
 
   final ThemeMode themeMode;
@@ -93,6 +94,11 @@ class SettingsState {
   /// Which sunnah reminders are on. They post only while [prayerNotifications] is.
   final Set<SunnahAlert> sunnahAlerts;
 
+  /// Times each verse is recited before the next, for memorising.
+  final int verseRepeat;
+
+  static const List<int> verseRepeatChoices = [1, 2, 3, 5, 10];
+
   /// Friday is on from the start; the daily ones, one of them at night, are
   /// for the user to choose.
   static const Set<SunnahAlert> defaultSunnahAlerts = {SunnahAlert.jumuah};
@@ -146,6 +152,7 @@ class SettingsState {
     String? muezzinId,
     bool? continuousRecitation,
     Set<SunnahAlert>? sunnahAlerts,
+    int? verseRepeat,
     // Distinguishes "leave unchanged" from "back to the system language".
     bool clearLocale = false,
   }) {
@@ -171,6 +178,7 @@ class SettingsState {
       muezzinId: muezzinId ?? this.muezzinId,
       continuousRecitation: continuousRecitation ?? this.continuousRecitation,
       sunnahAlerts: sunnahAlerts ?? this.sunnahAlerts,
+      verseRepeat: verseRepeat ?? this.verseRepeat,
     );
   }
 
@@ -197,7 +205,8 @@ class SettingsState {
         other.khatmaReminders == khatmaReminders &&
         other.muezzinId == muezzinId &&
         other.continuousRecitation == continuousRecitation &&
-        setEquals(other.sunnahAlerts, sunnahAlerts);
+        setEquals(other.sunnahAlerts, sunnahAlerts) &&
+        other.verseRepeat == verseRepeat;
   }
 
   @override
@@ -223,5 +232,6 @@ class SettingsState {
     muezzinId,
     continuousRecitation,
     Object.hashAllUnordered(sunnahAlerts),
+    verseRepeat,
   ]);
 }
