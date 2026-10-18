@@ -79,26 +79,47 @@ abstract final class TafsirService {
     return list == null ? null : _memory[key] = list;
   }
 
+  /// Downloads under way, so a verse sheet opened while [downloadAll] is
+  /// fetching the same sura waits for it instead of racing it.
+  static final Map<String, Future<List<String>?>> _inFlight = {};
+  static int _writes = 0;
+
   /// Downloads [sura] and saves it to [file], if there is one.
-  static Future<List<String>?> _fetch(Tafsir tafsir, int sura, File? file) async {
+  static Future<List<String>?> _fetch(Tafsir tafsir, int sura, File? file) {
+    final key = '${tafsir.edition}-$sura';
+    // A block body: returning the removed future would make it wait on itself.
+    return _inFlight[key] ??= _download(tafsir, sura, file).whenComplete(() {
+      _inFlight.remove(key);
+    });
+  }
+
+  static Future<List<String>?> _download(Tafsir tafsir, int sura, File? file) async {
+    final List<String> list;
     try {
       final response = await _client
           .get(Uri.parse('https://api.alquran.cloud/v1/surah/$sura/${tafsir.edition}'))
           .timeout(const Duration(seconds: 20));
       if (response.statusCode != 200) return null;
-      final list = parseResponse(utf8.decode(response.bodyBytes));
-      if (list == null) return null;
-      // Written whole and then renamed, so a cut-off write never looks saved.
-      if (file != null) {
-        final part = File('${file.path}.part');
-        await part.writeAsString(jsonEncode(list));
-        await part.rename(file.path);
-      }
-      return list;
+      final parsed = parseResponse(utf8.decode(response.bodyBytes));
+      if (parsed == null) return null;
+      list = parsed;
     } catch (e) {
       debugPrint('Tafsir ${tafsir.edition}-$sura unavailable: $e');
       return null;
     }
+    // Written whole under a name of its own and then renamed, so a cut-off
+    // write never looks saved. Not saving still leaves the text to show.
+    if (file != null) {
+      final part = File('${file.path}.${_writes++}.part');
+      try {
+        await part.writeAsString(jsonEncode(list));
+        await part.rename(file.path);
+      } catch (e) {
+        debugPrint('Tafsir ${tafsir.edition}-$sura not saved: $e');
+        if (part.existsSync()) await part.delete();
+      }
+    }
+    return list;
   }
 
   /// How many suras have every tafsir saved on the device.

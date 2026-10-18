@@ -225,7 +225,8 @@ class _VerseSheetState extends State<VerseSheet> {
             final list = snap.data;
             if (list == null || widget.ayah > list.length) {
               return Text(
-                l10n.tafsirUnavailable,
+                // Saving it all for later is a phone feature.
+                TafsirService.supported ? l10n.tafsirUnavailable : l10n.tafsirUnavailableWeb,
                 style: context.texts.bodyMedium?.copyWith(
                   color: scheme.onSurfaceVariant,
                 ),

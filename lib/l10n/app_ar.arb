@@ -371,6 +371,8 @@
   "offlineTafsirDone": "حُفظ التفسير للقراءة دون إنترنت",
   "offlineTafsirFailed": "توقف التحميل. تحقق من الاتصال وحاول مجددًا.",
   "deleteTafsirConfirm": "حذف التفسير المحفوظ؟ ستُحمَّل كل سورة من جديد عند فتحها.",
+  "tafsirUnavailableWeb": "يحتاج التفسير إلى اتصال بالإنترنت.",
+  "listenSubtitleWeb": "شغّل أي سورة بأي قارئ",
   "offlineRecitations": "التلاوات المحفوظة",
   "offlineRecitationsSubtitle": "شغّل أي سورة بأي قارئ أو احفظها للاستماع دون إنترنت",
   "surasDownloaded": "{n} سورة محفوظة",

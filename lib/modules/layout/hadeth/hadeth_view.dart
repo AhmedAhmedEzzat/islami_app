@@ -191,7 +191,7 @@ class _HadethTile extends StatelessWidget {
                 radius: 16,
                 backgroundColor: scheme.secondaryContainer,
                 child: Text(
-                  '${hadeth.number}',
+                  '${hadeth.numberInBook}',
                   style: context.texts.labelMedium?.copyWith(color: scheme.onSecondaryContainer),
                 ),
               ),

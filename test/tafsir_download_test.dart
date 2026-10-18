@@ -75,6 +75,24 @@ void main() {
     expect(dir.listSync().where((f) => f.path.endsWith('.part')), isEmpty);
   });
 
+  test('the same sura asked for twice at once is fetched once, for both', () async {
+    var requests = 0;
+    TafsirService.configure(
+      dir: dir,
+      client: MockClient((r) async {
+        requests++;
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        return _ok(r);
+      }),
+    );
+    final results = await Future.wait([
+      for (var i = 0; i < 6; i++) TafsirService.forSura(Tafsir.muyassar, 2),
+    ]);
+    expect(results, everyElement(['/v1/surah/2/ar.muyassar']));
+    expect(requests, 1);
+    expect(dir.listSync().where((f) => f.path.endsWith('.part')), isEmpty);
+  });
+
   test('cancel stops the run and deleteAll clears the cache', () async {
     TafsirService.configure(
       dir: dir,

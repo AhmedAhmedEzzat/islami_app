@@ -34,9 +34,12 @@ class HadethDataModel {
 
   final HadethCollection collection;
 
-  /// Its number in the book (1..42 An-Nawawi, 43..50 Ibn Rajab), a stable id
-  /// for favourites.
+  /// A stable id, kept for favourites: its number in the book for
+  /// An-Nawawi (1..42) and Ibn Rajab (43..50), and 101..140 for the Qudsi.
   final int number;
+
+  /// The number to show: the Qudsi count from 1 again, like their titles.
+  int get numberInBook => collection == HadethCollection.qudsi ? number - 100 : number;
 
   String get fullText => [
     title,

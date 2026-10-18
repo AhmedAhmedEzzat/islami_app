@@ -10,6 +10,7 @@ import '../../core/state/settings_cubit.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../core/utils/l10n_ext.dart';
+import '../../core/utils/on_screen.dart';
 
 /// Listen to any sura with any reciter, and keep recitations on the phone:
 /// pick a reciter, play a sura (it carries on in the now-playing bar), or
@@ -22,7 +23,13 @@ class ListenView extends StatefulWidget {
 }
 
 class _ListenViewState extends State<ListenView> {
-  late Reciter _reciter = Reciters.byId(context.read<SettingsCubit>().state.reciterId);
+  // Opens on whoever is reciting now, so the playing sura's button pauses
+  // it rather than starting it over with someone else.
+  late Reciter _reciter = Reciters.byId(
+    context.read<QuranPlayerCubit>().state.suraId != null
+        ? context.read<QuranPlayerCubit>().reciterId
+        : context.read<SettingsCubit>().state.reciterId,
+  );
 
   String _name(Reciter r) => context.isArabic ? r.nameAr : r.nameEn;
 
@@ -92,7 +99,9 @@ class _ListenViewState extends State<ListenView> {
     return BlocListener<QuranPlayerCubit, QuranPlayerState>(
       listenWhen: (a, b) => a.errorKey != b.errorKey && b.errorKey != null,
       listener: (context, state) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.recitationOffline)));
+        if (isOnScreen(context)) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.recitationOffline)));
+        }
         context.read<QuranPlayerCubit>().clearError();
       },
       child: Scaffold(
@@ -185,7 +194,9 @@ class _ListenViewState extends State<ListenView> {
                     Builder(
                       builder: (context) {
                         final current = player.isLoaded(sura.suraID);
-                        final playing = current && player.isPlaying;
+                        // Another reciter picked here means the button starts afresh.
+                        final playing =
+                            current && player.isPlaying && context.read<QuranPlayerCubit>().reciterId == _reciter.id;
                         final ayahs = int.parse(sura.suraVersesNumber);
                         return ListTile(
                           selected: current,

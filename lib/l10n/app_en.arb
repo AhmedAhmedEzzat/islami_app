@@ -719,6 +719,8 @@
   "offlineTafsirFailed": "Download stopped. Check the connection and try again.",
   "deleteTafsirConfirm": "Delete the saved tafsir? Each sura downloads again when you open it.",
   "@offlineTafsirSaved": {"placeholders": {"saved": {"type": "int"}, "total": {"type": "int"}}},
+  "tafsirUnavailableWeb": "Tafsir needs an internet connection.",
+  "listenSubtitleWeb": "Play any sura with any reciter",
   "offlineRecitations": "Offline recitations",
   "offlineRecitationsSubtitle": "Play any sura with any reciter, or save it for offline listening",
   "surasDownloaded": "{n} suras downloaded",

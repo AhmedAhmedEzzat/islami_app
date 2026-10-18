@@ -9,6 +9,7 @@ import '../../core/services/prayer_times_service.dart';
 import '../../core/utils/prayer_labels.dart';
 import '../../core/constants/muezzins.dart';
 import '../../core/services/prayer_notification_service.dart';
+import '../../core/services/recitation_downloads.dart';
 import '../more/listen_view.dart';
 import 'prayer_notifications_prompt.dart';
 import 'tafsir_download_tile.dart';
@@ -132,7 +133,11 @@ class SettingsView extends StatelessWidget {
               ListTile(
                 leading: const Icon(Icons.headphones_outlined),
                 title: Text(context.l10n.listenTitle),
-                subtitle: Text(context.l10n.offlineRecitationsSubtitle),
+                subtitle: Text(
+                  RecitationDownloads.supported
+                      ? context.l10n.offlineRecitationsSubtitle
+                      : context.l10n.listenSubtitleWeb,
+                ),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => Navigator.push(
                   context,
