@@ -28,6 +28,7 @@ abstract final class PrefsKeys {
   static const String prayerSound = 'settings.prayerSound';
   static const String mushafView = 'settings.mushafView';
   static const String lastMushafPage = 'quran.lastMushafPage';
+  static const String khatma = 'quran.khatma';
   static const String hadethFavourites = 'hadeth.favourites';
   static const String zakatInputs = 'zakat.inputs';
 

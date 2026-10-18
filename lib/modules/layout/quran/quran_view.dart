@@ -19,12 +19,12 @@ import 'widgets/recentily_sura_widget.dart';
 import 'widgets/sura_list_widget.dart';
 
 /// Opens [sura] in the Quran tab's own navigator, optionally at [ayah].
-Future<void> openSura(BuildContext context, SuraDataModel sura, {int? ayah}) {
+Future<void> openSura(BuildContext context, SuraDataModel sura, {int? ayah, int? page}) {
   RecentSuras.remember(sura);
   return Navigator.pushNamed(
     context,
     QuranDetailsView.routeName,
-    arguments: QuranOpenRequest(sura, ayah: ayah),
+    arguments: QuranOpenRequest(sura, ayah: ayah, page: page),
   );
 }
 

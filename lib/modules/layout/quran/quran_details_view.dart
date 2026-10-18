@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../core/constants/constants.dart';
 import '../../../core/constants/prefs_keys.dart';
+import '../../../core/services/khatma.dart';
 import '../../../core/services/mushaf_layout.dart';
 import '../../../core/services/quran_meta.dart';
 import '../../../core/services/quran_service.dart';
@@ -46,6 +47,7 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
   /// The sura on screen. In the mushaf it follows the pages as they turn.
   SuraDataModel? _sura;
   int? _initialAyah;
+  int? _initialPage;
 
   final GlobalKey<MadaniMushafState> _mushafKey = GlobalKey();
   MushafLayout? _layout;
@@ -72,6 +74,7 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
     }
     _sura = sura;
     _initialAyah = QuranOpenRequest.ayahOf(args);
+    _initialPage = QuranOpenRequest.pageOf(args);
     _load(sura.suraID);
   }
 
@@ -87,9 +90,16 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
         _verses = verses;
         _layout = layout;
         final ayah = (_initialAyah ?? MushafPage.savedPosition(suraId) + 1).clamp(1, verses.length);
-        _page = layout.pageOf(VerseRef(int.parse(suraId), ayah));
+        _page = _initialPage ?? layout.pageOf(VerseRef(int.parse(suraId), ayah));
+        // The flowing view has no pages; it opens at the page's first verse.
+        if (_initialPage != null && _initialAyah == null) {
+          final first = layout.firstWord(_page);
+          if ('${first.sura}' == suraId) _initialAyah = first.ayah;
+        }
         _isLoading = false;
       });
+      // The opening page is read as much as any page turned to.
+      if (context.read<SettingsCubit>().state.mushafView) Khatma.notePage(_page);
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -111,6 +121,11 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
     final shown = suras.contains(current) ? current : suras.first;
 
     LocalStorageServices.setInt(PrefsKeys.lastMushafPage, page);
+    if (Khatma.notePage(page)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${context.l10n.khatmaComplete}. ${context.l10n.khatmaCompleteBody}')),
+      );
+    }
     // Each sura on the page remembers its first verse here, for "continue
     // reading" and for reopening the sura at this page. A sura always starts
     // on a fresh line, so no line holds two.

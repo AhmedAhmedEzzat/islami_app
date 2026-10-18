@@ -623,5 +623,75 @@
   },
   "goToPage": "Go to page",
   "goToPageHint": "1 to 604",
-  "go": "Go"
+  "go": "Go",
+  "khatmaTitle": "Khatma",
+  "khatmaStart": "Start a khatma",
+  "khatmaStartSubtitle": "Read the whole Quran with a daily portion",
+  "khatmaFinishIn": "Finish the Quran in",
+  "daysCount": "{n} days",
+  "@daysCount": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "khatmaPerDay": "About {n} pages a day",
+  "@khatmaPerDay": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "khatmaBegin": "Begin",
+  "khatmaDayOf": "Day {day} of {days}",
+  "@khatmaDayOf": {
+    "placeholders": {
+      "day": {
+        "type": "int"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "khatmaProgress": "Page {page} of {total} · {percent}%",
+  "@khatmaProgress": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "khatmaToday": "Today: pages {from}–{to} ({left} left)",
+  "@khatmaToday": {
+    "placeholders": {
+      "from": {
+        "type": "int"
+      },
+      "to": {
+        "type": "int"
+      },
+      "left": {
+        "type": "int"
+      }
+    }
+  },
+  "khatmaTodayDone": "Today's portion is done. Well done!",
+  "khatmaRead": "Read",
+  "khatmaReadAhead": "Read more",
+  "khatmaChangePlan": "Change plan",
+  "khatmaEnd": "End khatma",
+  "khatmaComplete": "You completed the Quran",
+  "khatmaCompleteBody": "May Allah accept it from you.",
+  "khatmaStartAgain": "Start another",
+  "khatmaDismiss": "Dismiss",
+  "moreOptions": "More options"
 }

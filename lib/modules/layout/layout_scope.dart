@@ -23,8 +23,9 @@ class LayoutScope extends InheritedWidget {
 
   final void Function(int tab) selectTab;
 
-  /// Switches to the Quran tab and opens [sura], optionally at [ayah].
-  final void Function(SuraDataModel sura, {int? ayah}) openSura;
+  /// Switches to the Quran tab and opens [sura], optionally at [ayah] or at
+  /// a mushaf [page].
+  final void Function(SuraDataModel sura, {int? ayah, int? page}) openSura;
 
   static LayoutScope? maybeOf(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<LayoutScope>();

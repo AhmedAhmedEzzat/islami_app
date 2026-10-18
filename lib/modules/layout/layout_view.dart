@@ -139,17 +139,17 @@ class _LayoutViewState extends State<LayoutView> {
   }
 
   /// Opens [sura] in the Quran tab, from wherever the request came from.
-  void _openSura(SuraDataModel sura, {int? ayah}) {
+  void _openSura(SuraDataModel sura, {int? ayah, int? page}) {
     _selectTab(AppTab.quran);
     // Already looking at it — pushing again would stack a duplicate.
-    if (ayah == null && _observers[AppTab.quran].showsSura(sura.suraID)) return;
+    if (ayah == null && page == null && _observers[AppTab.quran].showsSura(sura.suraID)) return;
     RecentSuras.remember(sura);
     _withNavigator(AppTab.quran, (navigator) {
       navigator
         ..popUntil((route) => route.isFirst)
         ..pushNamed(
           QuranDetailsView.routeName,
-          arguments: QuranOpenRequest(sura, ayah: ayah),
+          arguments: QuranOpenRequest(sura, ayah: ayah, page: page),
         );
     });
   }

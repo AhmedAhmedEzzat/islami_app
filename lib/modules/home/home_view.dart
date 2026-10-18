@@ -7,10 +7,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 
 import '../../core/constants/assets.dart';
+import '../../core/constants/constants.dart';
 import '../../core/constants/daily_verses.dart';
 import '../../core/constants/quran_duas.dart';
 import '../../core/services/hadeth_service.dart';
 import '../../core/services/islamic_calendar.dart';
+import '../../core/services/mushaf_layout.dart';
 import '../../core/services/notification_refresh.dart';
 import '../../core/services/prayer_times_service.dart';
 import '../../core/services/quran_service.dart';
@@ -39,6 +41,7 @@ import '../more/calendar_view.dart';
 import '../more/duas_view.dart';
 import '../more/names_view.dart';
 import '../settings/settings_view.dart';
+import 'khatma_card.dart';
 
 /// The first tab: today at a glance and one tap to everything daily.
 class HomeView extends StatefulWidget {
@@ -115,13 +118,21 @@ class _HomeViewState extends State<HomeView> {
     ),
   );
 
-  void _openSura(SuraDataModel sura, {int? ayah}) {
+  void _openSura(SuraDataModel sura, {int? ayah, int? page}) {
     final scope = LayoutScope.maybeOf(context);
     if (scope != null) {
-      scope.openSura(sura, ayah: ayah);
+      scope.openSura(sura, ayah: ayah, page: page);
     } else {
-      openSura(context, sura, ayah: ayah);
+      openSura(context, sura, ayah: ayah, page: page);
     }
+  }
+
+  /// Opens the mushaf at a 1-based [page].
+  Future<void> _openPage(int page) async {
+    final layout = await MushafLayout.load();
+    if (!mounted) return;
+    final p = page.clamp(1, MushafLayout.pageCount);
+    _openSura(Constants.suraDataLists[layout.firstWord(p).sura - 1], page: p);
   }
 
   @override
@@ -201,6 +212,8 @@ class _HomeViewState extends State<HomeView> {
                   );
                 },
               ),
+              const SizedBox(height: AppSpacing.sm),
+              KhatmaCard(now: _now, onOpenPage: _openPage),
               const SizedBox(height: AppSpacing.lg),
               _SectionTitle(l10n.quickAccess),
               _QuickGrid(
