@@ -18,6 +18,8 @@ so it can be regenerated and audited rather than trusted:
                   fawazahmed0/hadith-api editions (text from sunnah.com).
                   Ibn Rajab's 8 additions come from the original project's
                   files in tool/content/ibn_rajab/ (not yet sourced).
+                  Forty Hadith Qudsi, Arabic and English, from the same
+                  hadith-api (public domain), numbered 101..140.
 
 Usage:  python3 tool/build_content_assets.py
 Downloads are cached in .content_cache/ (gitignored).
@@ -405,14 +407,31 @@ def build_hadeth():
         body = [p for p in (re.sub(r'ـ', '', l) for l in lines[1:]) if p]
         out.append({'n': n, 'c': 'ibn_rajab', 'title': title, 'ar': body, 'en': None})
 
+    # Forty Hadith Qudsi. Numbered from 101 so favourites, which are kept by
+    # number, can never mix them up with An-Nawawi's or Ibn Rajab's.
+    ar = fetch(f'{base}/ara-qudsi.json', 'fz-ara-qudsi.json')['hadiths']
+    en = fetch(f'{base}/eng-qudsi.json', 'fz-eng-qudsi.json')['hadiths']
+    assert len(ar) == len(en) == 40
+    assert [h['hadithnumber'] for h in ar] == [h['hadithnumber'] for h in en] == list(range(1, 41))
+    for a, e in zip(ar, en):
+        n = a['hadithnumber']
+        paras = [p for p in (re.sub(r'ـ', '', p) for p in _paragraphs(a['text'])) if p]
+        assert paras and all('<' not in p and '>' not in p for p in paras), f'qudsi {n}'
+        english = ' '.join(_paragraphs(e['text']))
+        assert english, f'qudsi {n}'
+        title = arabic_ordinal_title(n).replace('الحديث ', 'الحديث القدسي ', 1)
+        out.append({'n': 100 + n, 'c': 'qudsi', 'title': title, 'ar': paras, 'en': english})
+
     write('hadeth/hadeth.json', json.dumps({
         'source': {
             'nawawi': 'Forty Hadith of an-Nawawi, fawazahmed0/hadith-api (sunnah.com)',
             'ibn_rajab': "Ibn Rajab's additions, the original project's files (unverified)",
+            'qudsi': 'Forty Hadith Qudsi, fawazahmed0/hadith-api (public domain)',
         },
         'hadeth': out,
     }, ensure_ascii=False, separators=(',', ':')))
-    print(f'ahadeth: {sum(h["c"] == "nawawi" for h in out)} nawawi, {sum(h["c"] == "ibn_rajab" for h in out)} ibn rajab')
+    print(f'ahadeth: {sum(h["c"] == "nawawi" for h in out)} nawawi, '
+          f'{sum(h["c"] == "ibn_rajab" for h in out)} ibn rajab, {sum(h["c"] == "qudsi" for h in out)} qudsi')
 
 
 if __name__ == '__main__':

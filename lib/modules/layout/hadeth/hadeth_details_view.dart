@@ -95,6 +95,7 @@ class HadethDetailsView extends StatelessWidget {
             switch (hadeth.collection) {
               HadethCollection.nawawi => context.l10n.hadethSourceNawawi,
               HadethCollection.ibnRajab => context.l10n.hadethSourceIbnRajab,
+              HadethCollection.qudsi => context.l10n.hadethSourceQudsi,
             },
             style: context.texts.bodySmall?.copyWith(color: context.colors.outline),
           ),

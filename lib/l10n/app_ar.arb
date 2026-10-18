@@ -24,7 +24,7 @@
   "playRecitation": "تشغيل التلاوة",
   "pauseRecitation": "إيقاف التلاوة",
   "verseNumber": "الآية {number}",
-  "hadethTitle": "الأربعون النووية",
+  "hadethTitle": "الأحاديث",
   "hadethLoadError": "تعذّر تحميل الأحاديث.",
   "noHadeth": "لا توجد أحاديث في التطبيق.",
   "tapToRead": "اضغط للقراءة",
@@ -447,5 +447,7 @@
   "paperAuto": "تلقائي (كريمي نهارًا وداكن ليلًا)",
   "paperWhite": "أبيض",
   "paperSepia": "بني فاتح (مريح للعين)",
-  "paperNight": "ليلي"
+  "paperNight": "ليلي",
+  "qudsiSection": "الأربعون القدسية",
+  "hadethSourceQudsi": "المصدر: الأربعون القدسية، مجموعة hadith-api"
 }

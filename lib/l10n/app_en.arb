@@ -52,7 +52,7 @@
       }
     }
   },
-  "hadethTitle": "An-Nawawi's Forty",
+  "hadethTitle": "Hadith",
   "hadethLoadError": "Could not load the ahadeth.",
   "noHadeth": "No ahadeth are bundled with the app.",
   "tapToRead": "Tap to read",
@@ -874,5 +874,7 @@
   "paperAuto": "Automatic (cream by day, dark at night)",
   "paperWhite": "White",
   "paperSepia": "Sepia (easy on the eyes)",
-  "paperNight": "Night"
+  "paperNight": "Night",
+  "qudsiSection": "Forty Hadith Qudsi",
+  "hadethSourceQudsi": "Source: Forty Hadith Qudsi, fawazahmed0/hadith-api"
 }

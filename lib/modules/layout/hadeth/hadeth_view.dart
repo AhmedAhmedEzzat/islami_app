@@ -11,7 +11,8 @@ import '../../../core/widgets/app_background.dart';
 import '../../../models/hadeth_data_model.dart';
 import 'hadeth_details_view.dart';
 
-/// An-Nawawi's Forty and Ibn Rajab's additions: searchable, with favourites.
+/// An-Nawawi's Forty, Ibn Rajab's additions and the Forty Hadith Qudsi:
+/// searchable, with favourites.
 class HadethView extends StatefulWidget {
   const HadethView({super.key});
 
@@ -156,6 +157,7 @@ class _SectionHeader extends StatelessWidget {
         switch (collection) {
           HadethCollection.nawawi => l10n.nawawiSection,
           HadethCollection.ibnRajab => l10n.ibnRajabSection,
+          HadethCollection.qudsi => l10n.qudsiSection,
         },
         style: context.texts.titleSmall?.copyWith(color: context.colors.primary),
       ),
