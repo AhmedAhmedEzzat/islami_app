@@ -7,7 +7,9 @@ import '../../core/constants/reciters.dart';
 import '../../core/services/prayer_config.dart';
 import '../../core/services/prayer_times_service.dart';
 import '../../core/utils/prayer_labels.dart';
+import '../../core/services/recitation_downloads.dart';
 import '../../core/services/prayer_notification_service.dart';
+import '../more/downloads_view.dart';
 import '../../core/state/settings_cubit.dart';
 import '../../core/state/settings_state.dart';
 import '../../core/theme/app_colors.dart';
@@ -109,6 +111,17 @@ class SettingsView extends StatelessWidget {
                   if (picked != null) cubit.setReciter(picked);
                 },
               ),
+              if (RecitationDownloads.supported)
+                ListTile(
+                  leading: const Icon(Icons.download_for_offline_outlined),
+                  title: Text(context.l10n.offlineRecitations),
+                  subtitle: Text(context.l10n.offlineRecitationsSubtitle),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute<void>(builder: (_) => const DownloadsView()),
+                  ),
+                ),
 
               _SectionHeader(context.l10n.prayerTimesSection),
               ListTile(

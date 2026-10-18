@@ -31,6 +31,9 @@ abstract final class PrefsKeys {
   static const String lastMushafPage = 'quran.lastMushafPage';
   static const String khatma = 'quran.khatma';
   static const String focusHintShown = 'quran.focusHintShown';
+
+  /// The suras of a reciter saved for offline listening, as numbers.
+  static String recitationDownloads(String reciterId) => 'recitation.downloads.$reciterId';
   static const String hadethFavourites = 'hadeth.favourites';
   static const String zakatInputs = 'zakat.inputs';
 

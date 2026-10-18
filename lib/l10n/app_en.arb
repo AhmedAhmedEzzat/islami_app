@@ -710,5 +710,68 @@
   "adhanHelpVolume": "Check the notification volume, and that Do Not Disturb is off.",
   "adhanHelpGrant": "Check permissions",
   "ok": "OK",
-  "focusHint": "Tip: tap the page to read full screen"
+  "focusHint": "Tip: tap the page to read full screen",
+  "offlineRecitations": "Offline recitations",
+  "offlineRecitationsSubtitle": "Download reciters to listen without internet",
+  "surasDownloaded": "{n} suras downloaded",
+  "@surasDownloaded": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "surasDownloadedOf": "{done} of {total} suras downloaded",
+  "@surasDownloadedOf": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "storageUsed": "Using {size} on this phone",
+  "@storageUsed": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadWholeQuran": "Download the whole Quran",
+  "downloadWholeQuranWarning": "This is a large download, often more than 1 GB. Use Wi-Fi, and keep the app open until it finishes. You can stop at any time and continue later.",
+  "download": "Download",
+  "stopDownloads": "Stop downloading",
+  "deleteAll": "Delete all",
+  "delete": "Delete",
+  "deleteAllDownloads": "Delete every downloaded recitation of {reciter}?",
+  "@deleteAllDownloads": {
+    "placeholders": {
+      "reciter": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteSuraDownload": "Delete the downloaded recitation of {sura}?",
+  "@deleteSuraDownload": {
+    "placeholders": {
+      "sura": {
+        "type": "String"
+      }
+    }
+  },
+  "keepAppOpenWhileDownloading": "Keep the app open while downloading. Finished suras stay saved if you leave.",
+  "ayahsCount": "{n} verses",
+  "@ayahsCount": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "downloadedTapToRemove": "Saved on this phone. Tap to remove",
+  "downloadFailedRetry": "Download failed. Tap to retry",
+  "downloadForOffline": "Download for offline listening"
 }

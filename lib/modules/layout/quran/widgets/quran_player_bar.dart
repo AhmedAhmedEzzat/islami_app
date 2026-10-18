@@ -9,6 +9,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/l10n_ext.dart';
 import '../../../../models/sura_data_model.dart';
+import '../../../more/downloads_view.dart';
 
 /// Recitation controls pinned under the mushaf.
 class QuranPlayerBar extends StatelessWidget {
@@ -85,6 +86,7 @@ class QuranPlayerBar extends StatelessWidget {
                         ),
                       ),
                     ),
+                    SuraDownloadButton(reciter: reciter, sura: int.parse(sura.suraID)),
                     // Previous/next follow reading direction: in an Arabic
                     // mushaf "next" points left.
                     IconButton(
