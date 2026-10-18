@@ -71,6 +71,7 @@ abstract final class PrefsKeys {
   static const String tasbehTodayDate = 'tasbeh.todayDate';
   static const String bookmarks = 'quran.bookmarks';
   static const String verseNotes = 'quran.notes';
+  static const String hifz = 'quran.hifz';
   static const String lastRead = 'quran.lastRead';
 
   /// Per-sura reading position, stored as the index of the first verse on the

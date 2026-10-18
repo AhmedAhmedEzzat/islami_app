@@ -12,6 +12,7 @@ import 'package:sakina/core/state/settings_cubit.dart';
 import 'package:sakina/core/theme/app_theme.dart';
 import 'package:sakina/l10n/gen/app_localizations.dart';
 import 'package:sakina/modules/home/home_view.dart';
+import 'package:sakina/modules/more/hifz_view.dart';
 import 'package:sakina/modules/more/listen_view.dart';
 import 'package:sakina/modules/more/more_view.dart';
 import 'package:sakina/modules/more/zakat_view.dart';
@@ -72,6 +73,7 @@ void main() {
     'Zakat': () => const ZakatView(),
     'Settings': () => const SettingsView(),
     'Listen': () => const ListenView(),
+    'Memorisation': () => const HifzView(),
   };
 
   for (final locale in const [Locale('en'), Locale('ar')]) {

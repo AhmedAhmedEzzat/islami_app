@@ -16,6 +16,7 @@ import '../layout/time/qibla_view.dart';
 import '../layout/time/tracker_view.dart';
 import '../settings/settings_view.dart';
 import 'calendar_view.dart';
+import 'hifz_view.dart';
 import 'listen_view.dart';
 import 'duas_view.dart';
 import 'names_view.dart';
@@ -78,6 +79,16 @@ class MoreView extends StatelessWidget {
         l10n.zakatTitle,
         () => push(const ZakatView()),
       ),
+      (
+        Icons.psychology_outlined,
+        l10n.hifzTitle,
+        () => push(const HifzView()),
+      ),
+      (
+        Icons.headphones_outlined,
+        l10n.listenTitle,
+        () => push(const ListenView()),
+      ),
     ];
 
     return AppBackground(
@@ -135,11 +146,6 @@ class MoreView extends StatelessWidget {
                       builder: (_) => const SettingsView(),
                     ),
                   ),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.headphones_outlined),
-                  title: Text(l10n.listenTitle),
-                  onTap: () => push(const ListenView()),
                 ),
                 // The store page needs an App Store id on iOS, which the app
                 // does not have yet; Google Play needs none.
