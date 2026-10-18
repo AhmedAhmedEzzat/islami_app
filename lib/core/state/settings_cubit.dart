@@ -60,6 +60,10 @@ class SettingsCubit extends Cubit<SettingsState> {
         continuousRecitation: LocalStorageServices.getBool(PrefsKeys.continuousRecitation) ?? true,
         sunnahAlerts: _decodeSunnah(LocalStorageServices.getString(PrefsKeys.sunnahAlerts)),
         verseRepeat: LocalStorageServices.getInt(PrefsKeys.verseRepeat) ?? 1,
+        mushafPaper: MushafPaper.values.firstWhere(
+          (p) => p.name == LocalStorageServices.getString(PrefsKeys.mushafPaper),
+          orElse: () => MushafPaper.auto,
+        ),
       ),
     );
   }
@@ -194,6 +198,11 @@ class SettingsCubit extends Cubit<SettingsState> {
   Future<void> setVerseRepeat(int times) async {
     emit(state.copyWith(verseRepeat: times));
     await LocalStorageServices.setInt(PrefsKeys.verseRepeat, times);
+  }
+
+  Future<void> setMushafPaper(MushafPaper paper) async {
+    emit(state.copyWith(mushafPaper: paper));
+    await LocalStorageServices.setString(PrefsKeys.mushafPaper, paper.name);
   }
 
   Future<void> setHijriOffset(int days) async {

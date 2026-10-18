@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/services/mushaf_layout.dart';
 import '../../../../core/services/quran_meta.dart';
 import '../../../../core/services/quran_service.dart';
+import '../../../../core/state/settings_cubit.dart';
+import '../../../../core/state/settings_state.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/arabic_text.dart';
@@ -222,20 +225,42 @@ class _Paper {
   /// Verse rosettes and margin marks.
   final Color accent;
 
-  static _Paper of(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark
-      ? const _Paper(
-          paper: Color(0xFF1C1B17),
-          ink: Color(0xFFEDE6D3),
-          frame: Color(0xFF7FA88A),
-          accent: Color(0xFFD9B26A),
-        )
-      : const _Paper(
-          paper: Color(0xFFFFFBF0),
-          ink: Color(0xFF1F1B14),
-          frame: Color(0xFF2E6B4A),
-          accent: Color(0xFF9A6B1F),
-        );
+  static const _cream = _Paper(
+    paper: Color(0xFFFFFBF0),
+    ink: Color(0xFF1F1B14),
+    frame: Color(0xFF2E6B4A),
+    accent: Color(0xFF9A6B1F),
+  );
+  static const _white = _Paper(
+    paper: Color(0xFFFFFFFF),
+    ink: Color(0xFF141414),
+    frame: Color(0xFF2E6B4A),
+    accent: Color(0xFF9A6B1F),
+  );
+  static const _sepia = _Paper(
+    paper: Color(0xFFF3E7CF),
+    ink: Color(0xFF3A2E1F),
+    frame: Color(0xFF7A5A30),
+    accent: Color(0xFF8A561B),
+  );
+  static const _night = _Paper(
+    paper: Color(0xFF1C1B17),
+    ink: Color(0xFFEDE6D3),
+    frame: Color(0xFF7FA88A),
+    accent: Color(0xFFD9B26A),
+  );
+
+  /// The reader's chosen paper; "auto" is cream by day and dark at night,
+  /// following the app's theme.
+  static _Paper of(BuildContext context) {
+    final choice = context.select<SettingsCubit, MushafPaper>((c) => c.state.mushafPaper);
+    return switch (choice) {
+      MushafPaper.white => _white,
+      MushafPaper.sepia => _sepia,
+      MushafPaper.night => _night,
+      MushafPaper.auto => Theme.of(context).brightness == Brightness.dark ? _night : _cream,
+    };
+  }
 }
 
 /// One printed page: running heads, a ruled frame holding its fifteen lines,

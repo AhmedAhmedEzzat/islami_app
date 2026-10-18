@@ -5,6 +5,9 @@ import '../services/prayer_config.dart';
 import '../services/prayer_notification_service.dart';
 import '../services/prayer_times_service.dart';
 
+/// The mushaf's paper: [auto] is cream by day and dark at night.
+enum MushafPaper { auto, white, sepia, night }
+
 /// User preferences that affect the whole app.
 @immutable
 class SettingsState {
@@ -31,6 +34,7 @@ class SettingsState {
     this.continuousRecitation = true,
     this.sunnahAlerts = defaultSunnahAlerts,
     this.verseRepeat = 1,
+    this.mushafPaper = MushafPaper.auto,
   });
 
   final ThemeMode themeMode;
@@ -99,6 +103,8 @@ class SettingsState {
 
   static const List<int> verseRepeatChoices = [1, 2, 3, 5, 10];
 
+  final MushafPaper mushafPaper;
+
   /// Friday is on from the start; the daily ones, one of them at night, are
   /// for the user to choose.
   static const Set<SunnahAlert> defaultSunnahAlerts = {SunnahAlert.jumuah};
@@ -153,6 +159,7 @@ class SettingsState {
     bool? continuousRecitation,
     Set<SunnahAlert>? sunnahAlerts,
     int? verseRepeat,
+    MushafPaper? mushafPaper,
     // Distinguishes "leave unchanged" from "back to the system language".
     bool clearLocale = false,
   }) {
@@ -179,6 +186,7 @@ class SettingsState {
       continuousRecitation: continuousRecitation ?? this.continuousRecitation,
       sunnahAlerts: sunnahAlerts ?? this.sunnahAlerts,
       verseRepeat: verseRepeat ?? this.verseRepeat,
+      mushafPaper: mushafPaper ?? this.mushafPaper,
     );
   }
 
@@ -206,7 +214,8 @@ class SettingsState {
         other.muezzinId == muezzinId &&
         other.continuousRecitation == continuousRecitation &&
         setEquals(other.sunnahAlerts, sunnahAlerts) &&
-        other.verseRepeat == verseRepeat;
+        other.verseRepeat == verseRepeat &&
+        other.mushafPaper == mushafPaper;
   }
 
   @override
@@ -233,5 +242,6 @@ class SettingsState {
     continuousRecitation,
     Object.hashAllUnordered(sunnahAlerts),
     verseRepeat,
+    mushafPaper,
   ]);
 }

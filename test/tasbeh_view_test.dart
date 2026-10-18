@@ -144,7 +144,7 @@ void main() {
 
   testWidgets('a larger target makes a longer round', (tester) async {
     await tester.pumpWidget(_wrap());
-    await tester.tap(find.widgetWithText(TextButton, '33'));
+    await tester.tap(find.widgetWithText(TextButton, 'Target: 33'));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(ListTile, '100'));
     await tester.pumpAndSettle();

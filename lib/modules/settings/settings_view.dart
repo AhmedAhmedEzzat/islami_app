@@ -95,6 +95,21 @@ class SettingsView extends StatelessWidget {
                 ),
               ),
 
+              ListTile(
+                leading: const Icon(Icons.auto_stories_outlined),
+                title: Text(context.l10n.mushafPaperSetting),
+                subtitle: Text(_paperLabel(context, state.mushafPaper)),
+                onTap: () async {
+                  final picked = await _pick<MushafPaper>(
+                    context,
+                    context.l10n.mushafPaperSetting,
+                    {for (final p in MushafPaper.values) p: _paperLabel(context, p)},
+                    state.mushafPaper,
+                  );
+                  if (picked != null) cubit.setMushafPaper(picked);
+                },
+              ),
+
               _SectionHeader(context.l10n.recitationSection),
               ListTile(
                 leading: const Icon(Icons.record_voice_over_outlined),
@@ -462,6 +477,13 @@ class SettingsView extends StatelessWidget {
         'twilight' => context.l10n.highLatTwilight,
         _ => context.l10n.highLatMiddle,
       };
+
+  static String _paperLabel(BuildContext context, MushafPaper paper) => switch (paper) {
+    MushafPaper.auto => context.l10n.paperAuto,
+    MushafPaper.white => context.l10n.paperWhite,
+    MushafPaper.sepia => context.l10n.paperSepia,
+    MushafPaper.night => context.l10n.paperNight,
+  };
 
   static String _muezzinName(BuildContext context, Muezzin m) => m == Muezzins.standard
       ? context.l10n.muezzinDefault

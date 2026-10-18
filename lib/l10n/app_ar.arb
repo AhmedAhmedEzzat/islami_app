@@ -423,7 +423,7 @@
   "tasbehAddHint": "مثال: أستغفر الله",
   "tasbehRemove": "حذف «{zikr}»؟",
   "tasbehTarget": "العدد في كل دورة",
-  "tasbehTargetValue": "{n}",
+  "tasbehTargetValue": "العدد: {n}",
   "tasbehToday": "اليوم: {n}",
   "sunnahRemindersHeader": "تذكير بالسنن",
   "jumuahSetting": "يوم الجمعة",
@@ -442,5 +442,10 @@
   "verseRepeatTimes": "{n, plural, =1{مرة واحدة} =2{مرتان} few{{n} مرات} other{{n} مرة}}",
   "readingToday": "صفحة اليوم",
   "readingWeek": "صفحة هذا الأسبوع",
-  "readingStreak": "يوم متتالٍ"
+  "readingStreak": "يوم متتالٍ",
+  "mushafPaperSetting": "لون صفحات المصحف",
+  "paperAuto": "تلقائي (كريمي نهارًا وداكن ليلًا)",
+  "paperWhite": "أبيض",
+  "paperSepia": "بني فاتح (مريح للعين)",
+  "paperNight": "ليلي"
 }

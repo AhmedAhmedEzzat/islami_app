@@ -829,7 +829,7 @@
     }
   },
   "tasbehTarget": "Count per round",
-  "tasbehTargetValue": "{n}",
+  "tasbehTargetValue": "Target: {n}",
   "@tasbehTargetValue": {
     "placeholders": {
       "n": {
@@ -869,5 +869,10 @@
   },
   "readingToday": "pages today",
   "readingWeek": "pages this week",
-  "readingStreak": "days in a row"
+  "readingStreak": "days in a row",
+  "mushafPaperSetting": "Mushaf paper",
+  "paperAuto": "Automatic (cream by day, dark at night)",
+  "paperWhite": "White",
+  "paperSepia": "Sepia (easy on the eyes)",
+  "paperNight": "Night"
 }
