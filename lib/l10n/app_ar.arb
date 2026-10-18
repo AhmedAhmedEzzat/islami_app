@@ -385,7 +385,7 @@
   "deleteAllDownloads": "حذف كل التلاوات المحفوظة للقارئ {reciter}؟",
   "deleteSuraDownload": "حذف تلاوة سورة {sura} المحفوظة؟",
   "keepAppOpenWhileDownloading": "أبقِ التطبيق مفتوحًا أثناء التحميل، وتبقى السور المكتملة محفوظة إن خرجت.",
-  "ayahsCount": "{n} آية",
+  "ayahsCount": "{n, plural, =1{آية واحدة} =2{آيتان} few{{n} آيات} other{{n} آية}}",
   "downloadedTapToRemove": "محفوظة على الهاتف، المس للحذف",
   "downloadFailedRetry": "فشل التحميل، المس لإعادة المحاولة",
   "downloadForOffline": "تحميل للاستماع دون إنترنت",

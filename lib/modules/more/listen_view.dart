@@ -88,129 +88,137 @@ class _ListenViewState extends State<ListenView> {
     final l10n = context.l10n;
     final scheme = context.colors;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.listenTitle)),
-      body: BlocBuilder<QuranPlayerCubit, QuranPlayerState>(
-        // Which sura plays, and whether, is all the list shows of the player.
-        buildWhen: (a, b) => a.suraId != b.suraId || a.isPlaying != b.isPlaying,
-        builder: (context, player) => ValueListenableBuilder<int>(
-          valueListenable: RecitationDownloads.changes,
-          builder: (context, _, _) {
-            final done = RecitationDownloads.downloaded(_reciter.id);
-            final busy = RecitationDownloads.isBusy(_reciter.id);
-            final total = Constants.suraDataLists.length;
+    // Says so when a sura cannot be played, as the sura page does.
+    return BlocListener<QuranPlayerCubit, QuranPlayerState>(
+      listenWhen: (a, b) => a.errorKey != b.errorKey && b.errorKey != null,
+      listener: (context, state) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.recitationOffline)));
+        context.read<QuranPlayerCubit>().clearError();
+      },
+      child: Scaffold(
+        appBar: AppBar(title: Text(l10n.listenTitle)),
+        body: BlocBuilder<QuranPlayerCubit, QuranPlayerState>(
+          // Which sura plays, and whether, is all the list shows of the player.
+          buildWhen: (a, b) => a.suraId != b.suraId || a.isPlaying != b.isPlaying,
+          builder: (context, player) => ValueListenableBuilder<int>(
+            valueListenable: RecitationDownloads.changes,
+            builder: (context, _, _) {
+              final done = RecitationDownloads.downloaded(_reciter.id);
+              final busy = RecitationDownloads.isBusy(_reciter.id);
+              final total = Constants.suraDataLists.length;
 
-            return ListView(
-              padding: const EdgeInsets.only(bottom: AppSpacing.xl),
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.record_voice_over_outlined),
-                  title: Text(l10n.reciterLabel),
-                  subtitle: Text(_name(_reciter)),
-                  trailing: const Icon(Icons.unfold_more),
-                  onTap: _pickReciter,
-                ),
-                if (RecitationDownloads.supported)
-                  Padding(
-                    padding: AppSpacing.pageH,
-                    child: Card(
-                      color: scheme.surfaceContainer,
-                      child: Padding(
-                        padding: const EdgeInsets.all(AppSpacing.lg),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(l10n.surasDownloadedOf(done.length, total), style: context.texts.titleMedium),
-                            const SizedBox(height: AppSpacing.sm),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(AppRadius.pill),
-                              child: LinearProgressIndicator(value: done.length / total, minHeight: 8),
-                            ),
-                            const SizedBox(height: AppSpacing.sm),
-                            FutureBuilder<int>(
-                              // Keyed on the count so the size follows each finished sura.
-                              key: ValueKey('${_reciter.id}-${done.length}'),
-                              future: RecitationDownloads.bytesOnDisk(_reciter),
-                              builder: (context, snap) => Text(
-                                l10n.storageUsed(formatBytes(snap.data ?? 0)),
-                                style: context.texts.labelMedium?.copyWith(color: scheme.onSurfaceVariant),
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.md),
-                            Wrap(
-                              spacing: AppSpacing.sm,
-                              runSpacing: AppSpacing.sm,
-                              children: [
-                                if (busy)
-                                  FilledButton.tonalIcon(
-                                    onPressed: () => RecitationDownloads.cancel(_reciter.id),
-                                    icon: const Icon(Icons.stop_rounded),
-                                    label: Text(l10n.stopDownloads),
-                                  )
-                                else if (done.length < total)
-                                  FilledButton.icon(
-                                    onPressed: _downloadAll,
-                                    icon: const Icon(Icons.download_rounded),
-                                    label: Text(l10n.downloadWholeQuran),
-                                  ),
-                                if (done.isNotEmpty)
-                                  TextButton.icon(
-                                    onPressed: _deleteAll,
-                                    icon: const Icon(Icons.delete_outline),
-                                    label: Text(l10n.deleteAll),
-                                  ),
-                              ],
-                            ),
-                            if (busy) ...[
+              return ListView(
+                padding: const EdgeInsets.only(bottom: AppSpacing.xl),
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.record_voice_over_outlined),
+                    title: Text(l10n.reciterLabel),
+                    subtitle: Text(_name(_reciter)),
+                    trailing: const Icon(Icons.unfold_more),
+                    onTap: _pickReciter,
+                  ),
+                  if (RecitationDownloads.supported)
+                    Padding(
+                      padding: AppSpacing.pageH,
+                      child: Card(
+                        color: scheme.surfaceContainer,
+                        child: Padding(
+                          padding: const EdgeInsets.all(AppSpacing.lg),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(l10n.surasDownloadedOf(done.length, total), style: context.texts.titleMedium),
                               const SizedBox(height: AppSpacing.sm),
-                              Text(
-                                l10n.keepAppOpenWhileDownloading,
-                                style: context.texts.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(AppRadius.pill),
+                                child: LinearProgressIndicator(value: done.length / total, minHeight: 8),
                               ),
+                              const SizedBox(height: AppSpacing.sm),
+                              FutureBuilder<int>(
+                                // Keyed on the count so the size follows each finished sura.
+                                key: ValueKey('${_reciter.id}-${done.length}'),
+                                future: RecitationDownloads.bytesOnDisk(_reciter),
+                                builder: (context, snap) => Text(
+                                  l10n.storageUsed(formatBytes(snap.data ?? 0)),
+                                  style: context.texts.labelMedium?.copyWith(color: scheme.onSurfaceVariant),
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.md),
+                              Wrap(
+                                spacing: AppSpacing.sm,
+                                runSpacing: AppSpacing.sm,
+                                children: [
+                                  if (busy)
+                                    FilledButton.tonalIcon(
+                                      onPressed: () => RecitationDownloads.cancel(_reciter.id),
+                                      icon: const Icon(Icons.stop_rounded),
+                                      label: Text(l10n.stopDownloads),
+                                    )
+                                  else if (done.length < total)
+                                    FilledButton.icon(
+                                      onPressed: _downloadAll,
+                                      icon: const Icon(Icons.download_rounded),
+                                      label: Text(l10n.downloadWholeQuran),
+                                    ),
+                                  if (done.isNotEmpty)
+                                    TextButton.icon(
+                                      onPressed: _deleteAll,
+                                      icon: const Icon(Icons.delete_outline),
+                                      label: Text(l10n.deleteAll),
+                                    ),
+                                ],
+                              ),
+                              if (busy) ...[
+                                const SizedBox(height: AppSpacing.sm),
+                                Text(
+                                  l10n.keepAppOpenWhileDownloading,
+                                  style: context.texts.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+                                ),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                const SizedBox(height: AppSpacing.sm),
-                for (final sura in Constants.suraDataLists)
-                  Builder(
-                    builder: (context) {
-                      final current = player.isLoaded(sura.suraID);
-                      final playing = current && player.isPlaying;
-                      final ayahs = int.parse(sura.suraVersesNumber);
-                      return ListTile(
-                        selected: current,
-                        leading: CircleAvatar(
-                          radius: 16,
-                          backgroundColor: current ? scheme.primary : scheme.secondaryContainer,
-                          child: Text(
-                            sura.suraID,
-                            style: context.texts.labelMedium?.copyWith(color: current ? scheme.onPrimary : null),
-                          ),
-                        ),
-                        title: Text(context.isArabic ? sura.suraNameAR : sura.suraNameEN),
-                        subtitle: Text(l10n.ayahsCount(ayahs)),
-                        onTap: () => _play(sura.suraID, ayahs),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            SuraDownloadButton(reciter: _reciter, sura: int.parse(sura.suraID)),
-                            IconButton(
-                              tooltip: playing ? l10n.pauseRecitation : l10n.playRecitation,
-                              icon: Icon(playing ? Icons.pause_circle : Icons.play_circle_outline),
-                              color: scheme.primary,
-                              onPressed: () => _play(sura.suraID, ayahs),
+                  const SizedBox(height: AppSpacing.sm),
+                  for (final sura in Constants.suraDataLists)
+                    Builder(
+                      builder: (context) {
+                        final current = player.isLoaded(sura.suraID);
+                        final playing = current && player.isPlaying;
+                        final ayahs = int.parse(sura.suraVersesNumber);
+                        return ListTile(
+                          selected: current,
+                          leading: CircleAvatar(
+                            radius: 16,
+                            backgroundColor: current ? scheme.primary : scheme.secondaryContainer,
+                            child: Text(
+                              sura.suraID,
+                              style: context.texts.labelMedium?.copyWith(color: current ? scheme.onPrimary : null),
                             ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-              ],
-            );
-          },
+                          ),
+                          title: Text(context.isArabic ? sura.suraNameAR : sura.suraNameEN),
+                          subtitle: Text(l10n.ayahsCount(ayahs)),
+                          onTap: () => _play(sura.suraID, ayahs),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SuraDownloadButton(reciter: _reciter, sura: int.parse(sura.suraID)),
+                              IconButton(
+                                tooltip: playing ? l10n.pauseRecitation : l10n.playRecitation,
+                                icon: Icon(playing ? Icons.pause_circle : Icons.play_circle_outline),
+                                color: scheme.primary,
+                                onPressed: () => _play(sura.suraID, ayahs),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );

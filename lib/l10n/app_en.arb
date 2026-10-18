@@ -771,7 +771,7 @@
     }
   },
   "keepAppOpenWhileDownloading": "Keep the app open while downloading. Finished suras stay saved if you leave.",
-  "ayahsCount": "{n} verses",
+  "ayahsCount": "{n, plural, =1{1 verse} other{{n} verses}}",
   "@ayahsCount": {
     "placeholders": {
       "n": {
