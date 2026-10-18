@@ -381,5 +381,7 @@
   "ayahsCount": "{n} آية",
   "downloadedTapToRemove": "محفوظة على الهاتف، المس للحذف",
   "downloadFailedRetry": "فشل التحميل، المس لإعادة المحاولة",
-  "downloadForOffline": "تحميل للاستماع دون إنترنت"
+  "downloadForOffline": "تحميل للاستماع دون إنترنت",
+  "widgetNextPrayer": "الصلاة القادمة",
+  "widgetStale": "افتح سكينة لتحديث مواقيت الصلاة"
 }

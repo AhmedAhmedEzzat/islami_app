@@ -65,13 +65,12 @@ class _TimeViewState extends State<TimeView> {
       _location = fresh;
       _locating = false;
     });
-    _rescheduleIfOn();
+    _reschedule();
   }
 
   /// A different location moves every prayer, so the schedule is rebuilt.
-  void _rescheduleIfOn() {
+  void _reschedule() {
     final s = context.read<SettingsCubit>().state;
-    if (!s.prayerNotifications) return;
     NotificationRefresh.reschedule(s, Localizations.localeOf(context));
   }
 
@@ -80,7 +79,7 @@ class _TimeViewState extends State<TimeView> {
     if (changed != true || !mounted) return;
     setState(() => _location = PrayerTimesService.currentLocation());
     if (!_location.isManual) await _refreshLocation();
-    _rescheduleIfOn();
+    _reschedule();
   }
 
   bool get _isToday => DateUtils.isSameDay(_day, _now);

@@ -32,6 +32,9 @@ abstract final class PrefsKeys {
   static const String khatma = 'quran.khatma';
   static const String focusHintShown = 'quran.focusHintShown';
 
+  /// Read natively by the home screen widget as "flutter.widget.prayers".
+  static const String widgetPrayers = 'widget.prayers';
+
   /// The suras of a reciter saved for offline listening, as numbers.
   static String recitationDownloads(String reciterId) => 'recitation.downloads.$reciterId';
   static const String hadethFavourites = 'hadeth.favourites';

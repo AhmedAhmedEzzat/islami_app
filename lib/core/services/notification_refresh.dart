@@ -2,11 +2,13 @@ import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:workmanager/workmanager.dart';
 
 import '../state/settings_cubit.dart';
 import '../state/settings_state.dart';
 import 'prayer_notification_service.dart';
+import 'prayer_widget.dart';
 import 'shared_prefs_helper.dart';
 
 /// Keeps the notification schedule topped up.
@@ -21,7 +23,9 @@ abstract final class NotificationRefresh {
   /// Rebuilds the schedule from [state]. The one place that turns settings
   /// into a [PrayerNotificationService.reschedule] call, so the app and the
   /// background task can never disagree about what to schedule.
-  static Future<void> reschedule(SettingsState state, Locale locale) {
+  static Future<void> reschedule(SettingsState state, Locale locale) async {
+    // The widget shows the times whether or not notifications are on.
+    await PrayerWidget.update(config: state.prayerConfig, locale: locale);
     return PrayerNotificationService.reschedule(
       enabled: state.prayerNotifications,
       locale: locale,
@@ -67,8 +71,8 @@ void notificationRefreshDispatcher() {
     try {
       WidgetsFlutterBinding.ensureInitialized();
       await LocalStorageServices.init();
+      await initializeDateFormatting();
       final state = (SettingsCubit()..load()).state;
-      if (!state.prayerNotifications) return true;
       await NotificationRefresh.reschedule(
         state,
         state.locale ?? PlatformDispatcher.instance.locale,

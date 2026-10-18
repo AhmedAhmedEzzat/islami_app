@@ -90,17 +90,16 @@ class _HomeViewState extends State<HomeView> {
     final fresh = await PrayerTimesService.refreshLocation();
     if (!mounted) return;
     setState(() => _location = fresh);
-    if (!_same(before, fresh.coordinates)) _rescheduleIfOn();
+    if (!_same(before, fresh.coordinates)) _reschedule();
   }
 
   static bool _same(Coordinates a, Coordinates b) =>
       (a.latitude - b.latitude).abs() < 1e-4 &&
       (a.longitude - b.longitude).abs() < 1e-4;
 
-  /// The prayer alerts were planned for the old position.
-  void _rescheduleIfOn() {
+  /// The prayer alerts and the widget's times were for the old position.
+  void _reschedule() {
     final s = context.read<SettingsCubit>().state;
-    if (!s.prayerNotifications) return;
     NotificationRefresh.reschedule(s, Localizations.localeOf(context));
   }
 

@@ -773,5 +773,7 @@
   },
   "downloadedTapToRemove": "Saved on this phone. Tap to remove",
   "downloadFailedRetry": "Download failed. Tap to retry",
-  "downloadForOffline": "Download for offline listening"
+  "downloadForOffline": "Download for offline listening",
+  "widgetNextPrayer": "Next prayer",
+  "widgetStale": "Open Sakina to refresh prayer times"
 }

@@ -490,7 +490,10 @@ abstract final class PrayerNotificationService {
   /// Outside every scheduled range, so a test never replaces a real alert.
   static const int _testId = 999;
 
-  static AppLocalizations _l10n(Locale locale) => lookupAppLocalizations(
+  static AppLocalizations _l10n(Locale locale) => l10nFor(locale);
+
+  /// The app's strings in [locale], or English if it has none.
+  static AppLocalizations l10nFor(Locale locale) => lookupAppLocalizations(
     AppLocalizations.supportedLocales.any((l) => l.languageCode == locale.languageCode)
         ? Locale(locale.languageCode)
         : const Locale('en'),
@@ -551,7 +554,9 @@ abstract final class PrayerNotificationService {
     );
   }
 
-  static String _label(AppLocalizations l10n, PrayerName prayer) {
+  static String _label(AppLocalizations l10n, PrayerName prayer) => labelFor(l10n, prayer);
+
+  static String labelFor(AppLocalizations l10n, PrayerName prayer) {
     return switch (prayer) {
       PrayerName.fajr => l10n.prayerFajr,
       PrayerName.sunrise => l10n.prayerSunrise,

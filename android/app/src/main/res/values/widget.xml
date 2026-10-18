@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="widget_bg_start">#2E7D32</color>
+    <color name="widget_bg_end">#1B5E20</color>
+    <color name="widget_text">#FFFFFF</color>
+    <color name="widget_text_muted">#CCFFFFFF</color>
+    <color name="widget_chip">#33FFFFFF</color>
+
+    <string name="widget_label">Next prayer</string>
+    <string name="widget_description">The next prayer with a countdown, and today\'s prayer times</string>
+    <string name="widget_open_app">Open Sakina to load prayer times</string>
+
+    <style name="WidgetCell">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:gravity">center</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:paddingTop">5dp</item>
+        <item name="android:paddingBottom">5dp</item>
+    </style>
+
+    <style name="WidgetCellName">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:textColor">@color/widget_text_muted</item>
+        <item name="android:textSize">11sp</item>
+    </style>
+
+    <style name="WidgetCellTime">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:textColor">@color/widget_text</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+</resources>
