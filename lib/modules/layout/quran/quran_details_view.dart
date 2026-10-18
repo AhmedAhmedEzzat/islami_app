@@ -10,6 +10,7 @@ import '../../../core/services/mushaf_layout.dart';
 import '../../../core/services/quran_meta.dart';
 import '../../../core/services/quran_service.dart';
 import '../../../core/services/recent_suras.dart';
+import '../../../core/services/review_prompt.dart';
 import '../../../core/services/shared_prefs_helper.dart';
 import '../../../core/state/bookmarks_cubit.dart';
 import '../../../core/state/quran_player_cubit.dart';
@@ -170,7 +171,13 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
     final shown = suras.contains(current) ? current : suras.first;
 
     LocalStorageServices.setInt(PrefsKeys.lastMushafPage, page);
-    if (Khatma.notePage(page) || (facing != null && Khatma.notePage(facing))) {
+    final leftBefore = Khatma.notifier.value?.pagesLeftToday(DateTime.now()) ?? 0;
+    final completed = Khatma.notePage(page) || (facing != null && Khatma.notePage(facing));
+    // Finishing today's portion is a good moment to ask for a rating.
+    if (leftBefore > 0 && Khatma.notifier.value?.pagesLeftToday(DateTime.now()) == 0) {
+      ReviewPrompt.noteGoodMoment();
+    }
+    if (completed) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(

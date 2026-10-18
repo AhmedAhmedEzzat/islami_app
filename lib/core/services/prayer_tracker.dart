@@ -1,5 +1,6 @@
 import '../constants/prefs_keys.dart';
 import 'prayer_times_service.dart';
+import 'review_prompt.dart';
 import 'shared_prefs_helper.dart';
 
 /// Which of the five prayers were logged on each day, one bitmask per day.
@@ -36,10 +37,10 @@ abstract final class PrayerTracker {
   static Future<void> toggle(DateTime day, PrayerName prayer) async {
     final bit = prayers.indexOf(prayer);
     if (bit < 0) return; // Sunrise is not a prayer to log.
-    await LocalStorageServices.setInt(
-      PrefsKeys.prayerLog(_day(day)),
-      maskFor(day) ^ (1 << bit),
-    );
+    final mask = maskFor(day) ^ (1 << bit);
+    await LocalStorageServices.setInt(PrefsKeys.prayerLog(_day(day)), mask);
+    // A full day of prayers is a good moment to ask for a rating.
+    if (mask == _all) await ReviewPrompt.noteGoodMoment();
   }
 
   /// Consecutive days with all five prayers, counting back from [today].

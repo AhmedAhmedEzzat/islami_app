@@ -30,6 +30,10 @@ abstract final class PrefsKeys {
   static const String adhkarReminders = 'settings.adhkarReminders';
   static const String khatmaReminders = 'settings.khatmaReminders';
   static const String muezzin = 'settings.muezzin';
+  static const String reviewFirstUse = 'review.firstUse';
+  static const String reviewLastAsked = 'review.lastAsked';
+  static const String reviewMoments = 'review.moments';
+  static const String reviewAsks = 'review.asks';
   static const String lastMushafPage = 'quran.lastMushafPage';
   static const String khatma = 'quran.khatma';
   static const String focusHintShown = 'quran.focusHintShown';

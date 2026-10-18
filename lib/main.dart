@@ -17,6 +17,7 @@ import 'core/services/notification_refresh.dart';
 import 'core/services/prayer_notification_service.dart';
 import 'core/services/hadeth_favourites.dart';
 import 'core/services/quran_meta.dart';
+import 'core/services/review_prompt.dart';
 import 'core/services/shared_prefs_helper.dart';
 import 'core/state/settings_cubit.dart';
 import 'core/state/settings_state.dart';
@@ -40,6 +41,7 @@ Future<void> main() async {
   // Its notifier was built before storage was ready.
   HadethFavourites.reload();
   await PrayerNotificationService.init();
+  ReviewPrompt.noteLaunch();
   // Recitation and radio are "music" to the OS: they pause for a phone call
   // and resume after, and other apps duck rather than talk over them.
   try {
