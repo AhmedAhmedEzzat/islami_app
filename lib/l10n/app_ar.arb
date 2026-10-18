@@ -409,5 +409,14 @@
   "sleepEndOfSuraShort": "نهاية السورة",
   "sleepTimerOff": "إيقاف المؤقت",
   "continuousRecitation": "المتابعة إلى السورة التالية",
-  "removeDownload": "حذف التحميل"
+  "removeDownload": "حذف التحميل",
+  "qadaTitle": "قضاء الصلوات الفائتة",
+  "qadaNone": "لا صلوات فائتة، المس + لإضافة صلاة فائتة.",
+  "qadaTotal": "بقي {n} صلاة للقضاء، المس − كلما قضيت صلاة.",
+  "qadaAddDays": "إضافة أيام فائتة",
+  "qadaAddDaysHint": "تُضاف الصلوات الخمس لكل يوم، مثلًا الأيام التي تقدّر أنها فاتتك.",
+  "qadaDays": "عدد الأيام",
+  "qadaAdd": "إضافة",
+  "qadaMadeUp": "قضيت صلاة",
+  "qadaMissed": "إضافة صلاة فائتة"
 }

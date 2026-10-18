@@ -801,5 +801,21 @@
   "sleepEndOfSuraShort": "End of sura",
   "sleepTimerOff": "Turn off the timer",
   "continuousRecitation": "Continue to the next sura",
-  "removeDownload": "Remove download"
+  "removeDownload": "Remove download",
+  "qadaTitle": "Missed prayers (qada)",
+  "qadaNone": "Nothing to make up. Tap + to count a missed prayer.",
+  "qadaTotal": "{n} prayers left to make up. Tap − each time you make one up.",
+  "@qadaTotal": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "qadaAddDays": "Add missed days",
+  "qadaAddDaysHint": "Adds all five prayers for each day, for example the days you estimate you missed.",
+  "qadaDays": "Days",
+  "qadaAdd": "Add",
+  "qadaMadeUp": "Made one up",
+  "qadaMissed": "Add a missed prayer"
 }

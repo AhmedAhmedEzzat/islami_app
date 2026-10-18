@@ -52,6 +52,9 @@ abstract final class PrefsKeys {
       'tracker.${day.year}-${day.month.toString().padLeft(2, '0')}-'
       '${day.day.toString().padLeft(2, '0')}';
   static const String tasbehCount = 'tasbeh.count';
+
+  /// Missed prayers still to make up, per prayer name.
+  static String qada(String prayer) => 'qada.$prayer';
   static const String tasbehZikrIndex = 'tasbeh.zikrIndex';
   static const String tasbehRounds = 'tasbeh.rounds';
   static const String bookmarks = 'quran.bookmarks';
