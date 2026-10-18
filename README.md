@@ -44,8 +44,10 @@ day's five prayer times. It keeps working without the app open: the app saves tw
 weeks of times, and the widget moves on by itself at each prayer.
 
 **Settings**: language, theme (light, dark or follow the phone), Quran text size,
-reciter, calculation method, madhab, high-latitude rule, prayer adjustments,
-Hijri date adjustment (±2 days), and notifications.
+mushaf paper, offline tafsir, reciter,
+calculation method, madhab, high-latitude rule, prayer adjustments,
+Hijri date adjustment (±2 days), and notifications (adhan sound and muezzin,
+reminders, fasting, adhkar, khatma and sunnah alerts).
 
 **Arabic and English.** The app follows the phone's language, and you can
 override it in Settings. In Arabic the whole UI mirrors to right-to-left, with
@@ -67,13 +69,22 @@ iOS and desktop configuration is written but **has not been built or tested**,
 because the development machine has no Xcode.
 
 ```bash
-flutter test      # 233 tests
+flutter test      # 266 tests
 flutter analyze   # clean
 ```
 
-`test/new_screens_smoke_test.dart` lays out Home, More, Zakat and Settings at
-the target phone's size and 1.1 font scale, in both languages and both themes,
-so any overflow fails the test.
+`test/new_screens_smoke_test.dart` lays out Home, More, Zakat, Settings, Listen,
+Memorisation and the date converter at the target phone's size and 1.1 font
+scale, in both languages and both themes, so any overflow fails the test.
+
+Prayer times and alerts are worked out in the phone's own timezone, so the
+prayer tests are written to pass in any of them. CI (`.github/workflows/ci.yml`)
+runs `flutter analyze` and the whole suite on every pull request, then the
+prayer tests again under Fiji, Apia, New York and Berlin time. To try another:
+
+```bash
+TZ=Pacific/Auckland flutter test test/prayer_times_service_test.dart test/prayer_notification_plan_test.dart
+```
 
 ## Adhan recordings
 
@@ -179,9 +190,13 @@ The generator resets it, and that window is what flashes white otherwise.
 lib/
   core/
     constants/   asset paths, sura table, reciters, Quranic duas, daily verses, prefs keys
-    services/    quran, search, tafsir, prayer times, notifications, calendar,
-                 azkar, hadeth, zakat, recent suras, local storage
-    state/       cubits: settings, radio, quran player, bookmarks; now-playing derivation
+    services/    quran, mushaf layout, search, tafsir (and its offline download),
+                 prayer times, notifications and their background refresh, home
+                 screen widget, calendar, azkar, hadeth, zakat, khatma, hifz,
+                 qada, prayer tracker, reading stats, recitation downloads,
+                 sleep timer, review prompt, recent suras, local storage
+    state/       cubits: settings, radio, quran player, bookmarks, verse notes;
+                 now-playing derivation
     theme/       Material 3 light/dark, design tokens
     utils/       Arabic text normalisation, prayer labels, l10n helpers
     widgets/     page shell, brand mark, empty/error states
@@ -196,7 +211,9 @@ exposes `LayoutScope` so any screen can switch tabs or open a sura in the Quran
 tab. A single `PopScope` at the layout level routes the system back button,
 because `IndexedStack` keeps hidden tabs mounted and per-tab handlers would
 fight. Back steps out of the current page, then returns to Home, then exits.
-Tabs are built the first time they are opened.
+Tabs are built the first time they are opened. Hidden tabs sit under a disabled
+`TickerMode`, so their animations stop and `isOnScreen(context)` tells a
+listener whether its page is the one in view.
 
 State is held in `flutter_bloc` Cubits. Anything that touches the asset bundle,
 the network or the device sits behind a service in `core/services`, so it can be
@@ -223,6 +240,14 @@ The schedule is rebuilt on every launch and whenever a prayer setting, the
 language or the location changes, so it keeps rolling forward. On Android a background task also rebuilds it every 12
 hours. **On iOS, if the app is not opened for 14 days, notifications stop.** Scheduling at startup uses the
 last cached location, so it never triggers a location prompt.
+
+Times come from the `adhan` package, with two corrections in
+`PrayerTimesService.entriesOn`. Within about four degrees of the 180th meridian
+(Fiji, Tonga, Tuvalu) the package skipped days and sometimes gave Fajr and Isha
+as midnight, so there the times are worked out at 170° and moved by four minutes
+a degree. Where the clock runs a day ahead of the sun (Samoa and Tonga at
+UTC+13, Kiribati at +14) it gave the next day's times, so the date is moved to
+match. Everywhere else the package's times are used unchanged.
 
 Android 14 does not grant exact alarms by default. The app asks, and if refused
 it falls back to inexact alarms, which may arrive a few minutes late. Samsung's
