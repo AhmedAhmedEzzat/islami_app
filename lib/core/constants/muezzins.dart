@@ -1,9 +1,10 @@
 /// An adhan recording the prayer notification can play.
 ///
-/// Recordings are not bundled. Each muezzin is two files the developer drops
-/// into android/app/src/main/res/raw: [sound] for four prayers and
-/// [fajrSound] for Fajr (see README). A missing file falls back to the next
-/// one in line, so choosing a muezzin never loses an alert.
+/// Each muezzin is two raw resources in android/app/src/main/res/raw: [sound]
+/// for four prayers and [fajrSound] for Fajr (see README). Only the default
+/// and the short adhan ship with the app, both public domain; a missing file
+/// falls back to the next one in line, so choosing a muezzin never loses an
+/// alert.
 class Muezzin {
   const Muezzin({required this.id, required this.nameEn, required this.nameAr, required this.sound});
 
@@ -32,6 +33,7 @@ abstract final class Muezzins {
 
   static const List<Muezzin> all = [
     standard,
+    Muezzin(id: 'short', nameEn: 'Short adhan', nameAr: 'أذان قصير', sound: 'adhan_short'),
     Muezzin(id: 'makkah', nameEn: 'Makkah', nameAr: 'أذان مكة', sound: 'adhan_makkah'),
     Muezzin(id: 'madinah', nameEn: 'Madinah', nameAr: 'أذان المدينة', sound: 'adhan_madinah'),
     Muezzin(id: 'aqsa', nameEn: 'Al-Aqsa', nameAr: 'أذان الأقصى', sound: 'adhan_aqsa'),
