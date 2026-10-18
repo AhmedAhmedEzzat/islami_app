@@ -16,6 +16,7 @@ import '../../../core/services/recent_suras.dart';
 import '../../../core/services/review_prompt.dart';
 import '../../../core/services/shared_prefs_helper.dart';
 import '../../../core/state/bookmarks_cubit.dart';
+import '../../../core/state/verse_notes_cubit.dart';
 import '../../../core/state/quran_player_cubit.dart';
 import '../../../core/state/quran_player_state.dart';
 import '../../../core/state/settings_cubit.dart';
@@ -442,6 +443,10 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
         return BlocBuilder<BookmarksCubit, List<Bookmark>>(
           builder: (context, _) {
             final bookmarks = context.read<BookmarksCubit>();
+            final tints = {
+              for (final n in context.watch<VerseNotesCubit>().state)
+                if (n.color != null) n.verse: n.color!.color,
+            };
             return MadaniMushaf(
               key: _mushafKey,
               layout: _layout!,
@@ -450,6 +455,7 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
               onVerseTap: _openVerse,
               highlight: sura != null && ayah > 0 ? VerseRef(sura, ayah) : null,
               isBookmarked: bookmarks.isBookmarked,
+              verseTint: (verse) => tints[verse],
               onTapPage: () => _setFocused(!_focused),
             );
           },
@@ -486,6 +492,7 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
                 bookmarkedVerses: context.read<BookmarksCubit>().versesIn(
                   suraNumber,
                 ),
+                tintedVerses: context.watch<VerseNotesCubit>().tintsIn(suraNumber),
                 initialAyah: _initialAyah,
               ),
             );

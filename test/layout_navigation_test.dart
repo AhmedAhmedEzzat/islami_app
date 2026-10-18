@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakina/core/services/shared_prefs_helper.dart';
 import 'package:sakina/core/state/bookmarks_cubit.dart';
+import 'package:sakina/core/state/verse_notes_cubit.dart';
 import 'package:sakina/core/state/quran_player_cubit.dart';
 import 'package:sakina/core/state/radio_cubit.dart';
 import 'package:sakina/core/state/settings_cubit.dart';
@@ -40,6 +41,7 @@ Widget _app() {
       BlocProvider<SettingsCubit>(create: (_) => SettingsCubit()..load()),
       BlocProvider<RadioCubit>(create: (_) => RadioCubit()),
       BlocProvider<BookmarksCubit>(create: (_) => BookmarksCubit()),
+      BlocProvider<VerseNotesCubit>(create: (_) => VerseNotesCubit()),
       BlocProvider<QuranPlayerCubit>(
         create: (ctx) => QuranPlayerCubit(radio: ctx.read<RadioCubit>()),
       ),

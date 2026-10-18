@@ -14,6 +14,7 @@ import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/l10n_ext.dart';
 import '../../../../models/sura_data_model.dart';
 import 'verse_image_share.dart';
+import 'verse_note_section.dart';
 
 /// Everything you can do with one verse: read its translation and tafsir,
 /// play from it, bookmark, copy or share it.
@@ -189,6 +190,8 @@ class _VerseSheetState extends State<VerseSheet> {
             citation: _citation,
           ),
         ),
+        const SizedBox(height: AppSpacing.xl),
+        VerseNoteSection(verse: _ref, title: _SectionTitle(l10n.myNotesSection)),
         const SizedBox(height: AppSpacing.xl),
         _SectionTitle(l10n.translationTitle, subtitle: l10n.translationSource),
         FutureBuilder<List<String>>(

@@ -7,6 +7,7 @@ import '../../../core/services/quran_meta.dart';
 import '../../../core/services/reading_stats.dart';
 import '../../../core/services/recent_suras.dart';
 import '../../../core/state/bookmarks_cubit.dart';
+import '../../../core/state/verse_notes_cubit.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/l10n_ext.dart';
@@ -222,8 +223,62 @@ class _JuzTab extends StatelessWidget {
   }
 }
 
-class _BookmarksTab extends StatelessWidget {
+/// Bookmarks, and the verses the reader has highlighted or written about.
+class _BookmarksTab extends StatefulWidget {
   const _BookmarksTab({required this.onOpen});
+
+  final _Open onOpen;
+
+  @override
+  State<_BookmarksTab> createState() => _BookmarksTabState();
+}
+
+class _BookmarksTabState extends State<_BookmarksTab> {
+  bool _notes = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.sm),
+          child: SizedBox(
+            width: double.infinity,
+            child: SegmentedButton<bool>(
+              segments: [
+                ButtonSegment(value: false, icon: const Icon(Icons.bookmark_border), label: Text(l10n.savedBookmarks)),
+                ButtonSegment(value: true, icon: const Icon(Icons.edit_note), label: Text(l10n.savedNotes)),
+              ],
+              selected: {_notes},
+              showSelectedIcon: false,
+              onSelectionChanged: (s) => setState(() => _notes = s.first),
+            ),
+          ),
+        ),
+        Expanded(child: _notes ? _NotesList(onOpen: widget.onOpen) : _BookmarksList(onOpen: widget.onOpen)),
+      ],
+    );
+  }
+}
+
+/// A row that can be swiped away to delete.
+Widget _dismissible(BuildContext context, {required Key key, required VoidCallback onDelete, required Widget child}) =>
+    Dismissible(
+      key: key,
+      direction: DismissDirection.endToStart,
+      background: Container(
+        color: context.colors.errorContainer,
+        alignment: AlignmentDirectional.centerEnd,
+        padding: const EdgeInsetsDirectional.only(end: AppSpacing.xl),
+        child: Icon(Icons.delete_outline, color: context.colors.onErrorContainer),
+      ),
+      onDismissed: (_) => onDelete(),
+      child: child,
+    );
+
+class _BookmarksList extends StatelessWidget {
+  const _BookmarksList({required this.onOpen});
 
   final _Open onOpen;
 
@@ -243,16 +298,10 @@ class _BookmarksTab extends StatelessWidget {
           separatorBuilder: (_, _) => const Divider(indent: 72),
           itemBuilder: (context, i) {
             final b = bookmarks[i];
-            return Dismissible(
+            return _dismissible(
+              context,
               key: ValueKey(b.verse.key),
-              direction: DismissDirection.endToStart,
-              background: Container(
-                color: context.colors.errorContainer,
-                alignment: AlignmentDirectional.centerEnd,
-                padding: const EdgeInsetsDirectional.only(end: AppSpacing.xl),
-                child: Icon(Icons.delete_outline, color: context.colors.onErrorContainer),
-              ),
-              onDismissed: (_) => context.read<BookmarksCubit>().toggle(b.verse),
+              onDelete: () => context.read<BookmarksCubit>().toggle(b.verse),
               child: ListTile(
                 leading: Icon(Icons.bookmark, color: context.colors.primary),
                 title: Text(
@@ -262,6 +311,54 @@ class _BookmarksTab extends StatelessWidget {
                   MaterialLocalizations.of(context).formatMediumDate(b.savedAt),
                 ),
                 onTap: () => onOpen(suraByNumber(b.verse.sura), ayah: b.verse.ayah),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _NotesList extends StatelessWidget {
+  const _NotesList({required this.onOpen});
+
+  final _Open onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<VerseNotesCubit, List<VerseNote>>(
+      builder: (context, notes) {
+        if (notes.isEmpty) {
+          return AppStateMessage(
+            icon: Icons.edit_note,
+            message: context.l10n.noNotes,
+          );
+        }
+        final scheme = context.colors;
+        return ListView.separated(
+          padding: const EdgeInsets.only(bottom: AppSpacing.xl),
+          itemCount: notes.length,
+          separatorBuilder: (_, _) => const Divider(indent: 72),
+          itemBuilder: (context, i) {
+            final n = notes[i];
+            return _dismissible(
+              context,
+              key: ValueKey('note-${n.verse.key}'),
+              onDelete: () => context.read<VerseNotesCubit>().remove(n.verse),
+              child: ListTile(
+                leading: CircleAvatar(
+                  radius: 14,
+                  backgroundColor: n.color?.color ?? scheme.secondaryContainer,
+                  child: n.text.isEmpty ? null : Icon(Icons.notes, size: 16, color: n.color == null ? scheme.onSecondaryContainer : Colors.black87),
+                ),
+                title: Text(context.l10n.verseRef(suraName(context, n.verse.sura), n.verse.ayah)),
+                subtitle: Text(
+                  n.text.isEmpty ? context.l10n.highlighted : n.text,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                onTap: () => onOpen(suraByNumber(n.verse.sura), ayah: n.verse.ayah),
               ),
             );
           },
