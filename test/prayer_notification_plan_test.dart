@@ -48,8 +48,17 @@ void main() {
   });
 
   test('mid-afternoon drops the prayers already gone today', () {
-    // Fajr and Dhuhr have passed; Asr, Maghrib and Isha remain today.
-    expect(planAt(DateTime(2026, 6, 15, 15)).length, 5 * days - 2);
+    // Fajr and Dhuhr have passed; Asr, Maghrib and Isha remain today. The
+    // moment is taken from the computed times so it holds in any timezone.
+    final times = PrayerTimesService.computeFor(
+      coordinates: cairo,
+      date: DateTime(2026, 6, 15),
+      config: const PrayerConfig(),
+    );
+    final dhuhr = times.entry(PrayerName.dhuhr).time;
+    final asr = times.entry(PrayerName.asr).time;
+    final between = dhuhr.add(asr.difference(dhuhr) ~/ 2);
+    expect(planAt(between).length, 5 * days - 2);
   });
 
   test('everything is in chronological order', () {
