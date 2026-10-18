@@ -30,3 +30,13 @@ jobs:
 
       - name: Test
         run: flutter test
+
+      # Prayer times and alerts are worked out in the phone's own timezone;
+      # these are the ones that have caught day and clock-change bugs.
+      - name: Test prayer times in other timezones
+        run: |
+          for tz in Pacific/Fiji Pacific/Apia America/New_York Europe/Berlin; do
+            echo "::group::$tz"
+            TZ=$tz flutter test test/prayer_times_service_test.dart test/prayer_notification_plan_test.dart test/fasting_notification_plan_test.dart test/prayer_widget_test.dart
+            echo "::endgroup::"
+          done

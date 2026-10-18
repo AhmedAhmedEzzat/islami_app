@@ -5,13 +5,16 @@ import 'package:sakina/core/services/prayer_notification_service.dart';
 import 'package:sakina/core/services/prayer_times_service.dart';
 
 void main() {
-  final cairo = Coordinates(30.0444, 31.2357);
+  // Cairo's latitude, at the longitude whose sun matches the test machine's
+  // clock, so each day's prayers fall on that local calendar day in any
+  // timezone, as they do on a phone set to where its owner is.
+  final place = Coordinates(30.0444, _localLongitude());
   const eveKinds = {AlertKind.mondayThursday, AlertKind.whiteDays, AlertKind.arafah, AlertKind.ashura};
 
   /// Only the fasting alerts, from just after midnight of Hijri [year]/[month]/[day].
   List<ScheduledAlert> fastingFrom(int year, int month, int day, Set<FastingAlert> fasting) {
     final start = IslamicCalendar.toGregorian(year, month, day).add(const Duration(minutes: 1));
-    return PrayerNotificationService.plan(coordinates: cairo, now: start, prayers: const {}, fasting: fasting)
+    return PrayerNotificationService.plan(coordinates: place, now: start, prayers: const {}, fasting: fasting)
         .where((a) => eveKinds.contains(a.kind) || a.kind == AlertKind.suhoor || a.kind == AlertKind.iftar)
         .toList();
   }
@@ -64,7 +67,7 @@ void main() {
     expect(suhoor.length, PrayerNotificationService.daysAhead);
     expect(iftar.length, PrayerNotificationService.daysAhead);
     final day = DateTime(suhoor.first.time.year, suhoor.first.time.month, suhoor.first.time.day);
-    final times = PrayerTimesService.computeFor(coordinates: cairo, date: day);
+    final times = PrayerTimesService.computeFor(coordinates: place, date: day);
     expect(times.entry(PrayerName.fajr).time.difference(suhoor.first.time), const Duration(minutes: 40));
     expect(iftar.first.time, times.entry(PrayerName.maghrib).time);
     // Ramadan is fasted anyway: no Monday, Thursday or White Days reminder in it.
@@ -83,7 +86,7 @@ void main() {
   test('ids stay unique with every alert on', () {
     final start = IslamicCalendar.toGregorian(1448, 9, 20);
     final ids = PrayerNotificationService.plan(
-      coordinates: cairo,
+      coordinates: place,
       now: start,
       reminderMinutes: 10,
       fridayKahf: true,
@@ -91,4 +94,10 @@ void main() {
     ).map((a) => a.id).toList();
     expect(ids.toSet().length, ids.length);
   });
+}
+
+/// The longitude where local clock time is roughly solar time.
+double _localLongitude() {
+  final longitude = DateTime(2026, 6, 15).timeZoneOffset.inMinutes / 4;
+  return longitude > 180 ? longitude - 360 : longitude;
 }

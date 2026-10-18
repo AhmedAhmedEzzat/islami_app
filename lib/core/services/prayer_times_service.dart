@@ -219,7 +219,7 @@ abstract class PrayerTimesService {
     bool usedFallbackLocation = false,
   }) {
     final params = config.toParameters();
-    final prayers = _entries(PrayerTimes(coordinates, DateComponents.from(date), params));
+    final prayers = entriesOn(coordinates, date, params);
 
     PrayerEntry? next;
     for (final prayer in prayers) {
@@ -230,14 +230,7 @@ abstract class PrayerTimesService {
     }
 
     // Past Isha, the next prayer is tomorrow's Fajr.
-    if (next == null) {
-      final tomorrow = PrayerTimes(
-        coordinates,
-        DateComponents.from(DateTime(date.year, date.month, date.day + 1)),
-        params,
-      );
-      next = PrayerEntry(PrayerName.fajr, tomorrow.fajr);
-    }
+    next ??= entriesOn(coordinates, DateTime(date.year, date.month, date.day + 1), params).first;
 
     return PrayerTimesResult(
       prayers: prayers,
@@ -260,25 +253,66 @@ abstract class PrayerTimesService {
       for (var d = 1; d <= days; d++)
         (
           DateTime(month.year, month.month, d),
-          _entries(
-            PrayerTimes(
-              coordinates,
-              DateComponents(month.year, month.month, d),
-              params,
-            ),
-          ),
+          entriesOn(coordinates, DateTime(month.year, month.month, d), params),
         ),
     ];
   }
 
-  static List<PrayerEntry> _entries(PrayerTimes t) => [
-    PrayerEntry(PrayerName.fajr, t.fajr),
-    PrayerEntry(PrayerName.sunrise, t.sunrise),
-    PrayerEntry(PrayerName.dhuhr, t.dhuhr),
-    PrayerEntry(PrayerName.asr, t.asr),
-    PrayerEntry(PrayerName.maghrib, t.maghrib),
-    PrayerEntry(PrayerName.isha, t.isha),
-  ];
+  /// The six times of the local calendar day [date], Fajr first.
+  ///
+  /// The adhan library takes a date as a UTC day. Where the clock runs a day
+  /// ahead of the sun (Samoa and Tonga at UTC+13, Kiribati at +14) that
+  /// gave the next day's times, Dhuhr around noon tomorrow, so then the
+  /// date asked for is moved back a day (or on, the other way round).
+  /// Anything short of a whole day out is left as is: a phone whose clock is
+  /// half a day from its location has no right answer, only a steady one.
+  @visibleForTesting
+  static List<PrayerEntry> entriesOn(Coordinates coordinates, DateTime date, CalculationParameters params) {
+    final entries = _solarDay(coordinates, date, params);
+    final drift = entries[2].time.difference(DateTime(date.year, date.month, date.day, 12));
+    final shift = drift > const Duration(hours: 18)
+        ? -1
+        : drift < const Duration(hours: -18)
+        ? 1
+        : 0;
+    if (shift == 0) return entries;
+    return _solarDay(coordinates, DateTime(date.year, date.month, date.day + shift), params);
+  }
+
+  /// The library's times for [date].
+  ///
+  /// It works in UTC hours of the day and goes wrong where solar noon comes
+  /// within minutes of midnight UTC, within about four degrees of the 180th
+  /// meridian (Fiji, Tonga, Tuvalu): it put whole days 24 hours late,
+  /// skipping a date, and on some days gave Fajr and Isha as midnight. Past
+  /// 170 degrees the times are worked out at 170, where noon is safely 40
+  /// minutes or more from midnight UTC, and moved by the four minutes a
+  /// degree the sun takes to get from one to the other. The sun moves too
+  /// little in that time to change any prayer by more than seconds.
+  static List<PrayerEntry> _solarDay(Coordinates coordinates, DateTime date, CalculationParameters params) {
+    const edge = 170.0;
+    final longitude = coordinates.longitude;
+    final beyond = longitude > edge
+        ? longitude - edge
+        : longitude < -edge
+        ? longitude + edge
+        : 0.0;
+    final t = PrayerTimes(
+      beyond == 0 ? coordinates : Coordinates(coordinates.latitude, longitude - beyond),
+      DateComponents.from(date),
+      params,
+    );
+    // Further east, the sun gets there sooner.
+    final back = Duration(seconds: -(beyond * 240).round());
+    return [
+      PrayerEntry(PrayerName.fajr, t.fajr.add(back)),
+      PrayerEntry(PrayerName.sunrise, t.sunrise.add(back)),
+      PrayerEntry(PrayerName.dhuhr, t.dhuhr.add(back)),
+      PrayerEntry(PrayerName.asr, t.asr.add(back)),
+      PrayerEntry(PrayerName.maghrib, t.maghrib.add(back)),
+      PrayerEntry(PrayerName.isha, t.isha.add(back)),
+    ];
+  }
 
   /// Qibla bearing from [c], degrees clockwise from true north.
   static double qiblaBearing(Coordinates c) => Qibla(c).direction;
