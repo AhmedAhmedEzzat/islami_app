@@ -22,6 +22,7 @@ class MadaniMushaf extends StatefulWidget {
     this.onVerseTap,
     this.highlight,
     this.isBookmarked,
+    this.onTapPage,
   });
 
   final MushafLayout layout;
@@ -34,6 +35,9 @@ class MadaniMushaf extends StatefulWidget {
   /// The verse being recited. Highlighted, and followed onto its page.
   final VerseRef? highlight;
   final bool Function(VerseRef verse)? isBookmarked;
+
+  /// A tap on the page outside any word, e.g. to hide the app's bars.
+  final VoidCallback? onTapPage;
 
   @override
   State<MadaniMushaf> createState() => MadaniMushafState();
@@ -114,7 +118,7 @@ class MadaniMushafState extends State<MadaniMushaf> {
         onPageChanged: (i) => widget.onPageChanged?.call(i + 1),
         itemBuilder: (context, i) {
           final text = _textFor(i + 1);
-          return MushafSheet(
+          final sheet = MushafSheet(
             layout: widget.layout,
             page: i + 1,
             words: text,
@@ -122,6 +126,7 @@ class MadaniMushafState extends State<MadaniMushaf> {
             isBookmarked: widget.isBookmarked,
             onVerseTap: widget.onVerseTap,
           );
+          return GestureDetector(onTap: widget.onTapPage, child: sheet);
         },
       ),
     );

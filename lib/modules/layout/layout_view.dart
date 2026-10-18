@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../core/theme/app_tokens.dart';
 import '../../core/constants/constants.dart';
 import '../../core/state/now_playing.dart';
 import '../../core/state/quran_player_cubit.dart';
@@ -142,7 +143,11 @@ class _LayoutViewState extends State<LayoutView> {
   void _openSura(SuraDataModel sura, {int? ayah, int? page}) {
     _selectTab(AppTab.quran);
     // Already looking at it — pushing again would stack a duplicate.
-    if (ayah == null && page == null && _observers[AppTab.quran].showsSura(sura.suraID)) return;
+    if (ayah == null &&
+        page == null &&
+        _observers[AppTab.quran].showsSura(sura.suraID)) {
+      return;
+    }
     RecentSuras.remember(sura);
     _withNavigator(AppTab.quran, (navigator) {
       navigator
@@ -223,42 +228,50 @@ class _LayoutViewState extends State<LayoutView> {
                   const SizedBox.shrink(),
             ],
           ),
-          bottomNavigationBar: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildNowPlaying(),
-              NavigationBar(
-                selectedIndex: _selectedIndex,
-                onDestinationSelected: _onDestinationSelected,
-                destinations: [
-                  NavigationDestination(
-                    icon: const Icon(Icons.home_outlined),
-                    selectedIcon: const Icon(Icons.home),
-                    label: context.l10n.tabHome,
-                  ),
-                  NavigationDestination(
-                    icon: const Icon(Icons.menu_book_outlined),
-                    selectedIcon: const Icon(Icons.menu_book),
-                    label: context.l10n.tabQuran,
-                  ),
-                  NavigationDestination(
-                    icon: const Icon(Icons.access_time_outlined),
-                    selectedIcon: const Icon(Icons.access_time_filled),
-                    label: context.l10n.tabPrayer,
-                  ),
-                  NavigationDestination(
-                    icon: const Icon(Icons.radio_button_checked_outlined),
-                    selectedIcon: const Icon(Icons.radio_button_checked),
-                    label: context.l10n.tabAzkar,
-                  ),
-                  NavigationDestination(
-                    icon: const Icon(Icons.apps_outlined),
-                    selectedIcon: const Icon(Icons.apps),
-                    label: context.l10n.tabMore,
-                  ),
-                ],
-              ),
-            ],
+          bottomNavigationBar: ValueListenableBuilder<bool>(
+            valueListenable: FocusMode.on,
+            builder: (context, focused, bar) => AnimatedSize(
+              duration: AppDurations.normal,
+              curve: Curves.easeInOut,
+              child: focused ? const SizedBox(width: double.infinity) : bar,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildNowPlaying(),
+                NavigationBar(
+                  selectedIndex: _selectedIndex,
+                  onDestinationSelected: _onDestinationSelected,
+                  destinations: [
+                    NavigationDestination(
+                      icon: const Icon(Icons.home_outlined),
+                      selectedIcon: const Icon(Icons.home),
+                      label: context.l10n.tabHome,
+                    ),
+                    NavigationDestination(
+                      icon: const Icon(Icons.menu_book_outlined),
+                      selectedIcon: const Icon(Icons.menu_book),
+                      label: context.l10n.tabQuran,
+                    ),
+                    NavigationDestination(
+                      icon: const Icon(Icons.access_time_outlined),
+                      selectedIcon: const Icon(Icons.access_time_filled),
+                      label: context.l10n.tabPrayer,
+                    ),
+                    NavigationDestination(
+                      icon: const Icon(Icons.radio_button_checked_outlined),
+                      selectedIcon: const Icon(Icons.radio_button_checked),
+                      label: context.l10n.tabAzkar,
+                    ),
+                    NavigationDestination(
+                      icon: const Icon(Icons.apps_outlined),
+                      selectedIcon: const Icon(Icons.apps),
+                      label: context.l10n.tabMore,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

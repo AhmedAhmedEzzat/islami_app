@@ -33,3 +33,9 @@ class LayoutScope extends InheritedWidget {
   @override
   bool updateShouldNotify(LayoutScope old) => false;
 }
+
+/// Distraction-free reading: while on, the layout hides the bottom tabs and
+/// the now-playing bar. The mushaf turns it on and off with a tap.
+abstract final class FocusMode {
+  static final ValueNotifier<bool> on = ValueNotifier(false);
+}

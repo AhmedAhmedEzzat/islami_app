@@ -30,6 +30,7 @@ abstract final class PrefsKeys {
   static const String adhkarReminders = 'settings.adhkarReminders';
   static const String lastMushafPage = 'quran.lastMushafPage';
   static const String khatma = 'quran.khatma';
+  static const String focusHintShown = 'quran.focusHintShown';
   static const String hadethFavourites = 'hadeth.favourites';
   static const String zakatInputs = 'zakat.inputs';
 

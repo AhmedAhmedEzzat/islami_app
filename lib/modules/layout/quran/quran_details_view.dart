@@ -20,6 +20,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_background.dart';
 import '../../../models/quran_open_request.dart';
 import '../../../models/sura_data_model.dart';
+import '../layout_scope.dart';
 import 'widgets/madani_mushaf.dart';
 import 'widgets/verse_sheet.dart';
 import 'widgets/quran_player_bar.dart';
@@ -55,6 +56,38 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
   /// The mushaf page on screen, 1-based.
   int _page = 1;
 
+  /// Reading with every bar hidden, page alone on screen like the print.
+  bool _focused = false;
+
+  void _setFocused(bool on) {
+    setState(() => _focused = on);
+    FocusMode.on.value = on;
+    SystemChrome.setEnabledSystemUIMode(
+      on ? SystemUiMode.immersiveSticky : SystemUiMode.edgeToEdge,
+    );
+  }
+
+  @override
+  void dispose() {
+    if (_focused) {
+      FocusMode.on.value = false;
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    }
+    super.dispose();
+  }
+
+  /// Tells the reader once that a tap on the page hides the bars.
+  void _maybeShowFocusHint() {
+    if (LocalStorageServices.getBool(PrefsKeys.focusHintShown) ?? false) return;
+    LocalStorageServices.setBool(PrefsKeys.focusHintShown, true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.focusHint)));
+    });
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -89,8 +122,10 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
       setState(() {
         _verses = verses;
         _layout = layout;
-        final ayah = (_initialAyah ?? MushafPage.savedPosition(suraId) + 1).clamp(1, verses.length);
-        _page = _initialPage ?? layout.pageOf(VerseRef(int.parse(suraId), ayah));
+        final ayah = (_initialAyah ?? MushafPage.savedPosition(suraId) + 1)
+            .clamp(1, verses.length);
+        _page =
+            _initialPage ?? layout.pageOf(VerseRef(int.parse(suraId), ayah));
         // The flowing view has no pages; it opens at the page's first verse.
         if (_initialPage != null && _initialAyah == null) {
           final first = layout.firstWord(_page);
@@ -99,7 +134,10 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
         _isLoading = false;
       });
       // The opening page is read as much as any page turned to.
-      if (context.read<SettingsCubit>().state.mushafView) Khatma.notePage(_page);
+      if (context.read<SettingsCubit>().state.mushafView) {
+        Khatma.notePage(_page);
+        _maybeShowFocusHint();
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -123,7 +161,11 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
     LocalStorageServices.setInt(PrefsKeys.lastMushafPage, page);
     if (Khatma.notePage(page)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${context.l10n.khatmaComplete}. ${context.l10n.khatmaCompleteBody}')),
+        SnackBar(
+          content: Text(
+            '${context.l10n.khatmaComplete}. ${context.l10n.khatmaCompleteBody}',
+          ),
+        ),
       );
     }
     // Each sura on the page remembers its first verse here, for "continue
@@ -133,7 +175,10 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
     for (final line in layout.page(page)) {
       final first = line.first;
       if (first == null || !seen.add(first.sura)) continue;
-      LocalStorageServices.setInt(PrefsKeys.suraPosition('${first.sura}'), first.ayah - 1);
+      LocalStorageServices.setInt(
+        PrefsKeys.suraPosition('${first.sura}'),
+        first.ayah - 1,
+      );
     }
 
     if (shown != current) {
@@ -154,7 +199,12 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
   Future<void> _openVerse(VerseRef verse) async {
     final verses = await QuranService.loadSura('${verse.sura}');
     if (!mounted || verse.ayah > verses.length) return;
-    VerseSheet.show(context, sura: _model(verse.sura), ayah: verse.ayah, text: verses[verse.ayah - 1]);
+    VerseSheet.show(
+      context,
+      sura: _model(verse.sura),
+      ayah: verse.ayah,
+      text: verses[verse.ayah - 1],
+    );
   }
 
   void _openFlowingVerse(int index) {
@@ -169,11 +219,19 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
     if (layout == null || sura == null) return;
     if (mushaf) {
       // Open the mushaf where the flowing text was left.
-      final ayah = (MushafPage.savedPosition(sura.suraID) + 1).clamp(1, _verses.length);
+      final ayah = (MushafPage.savedPosition(sura.suraID) + 1).clamp(
+        1,
+        _verses.length,
+      );
       _page = layout.pageOf(VerseRef(int.parse(sura.suraID), ayah));
     } else {
       // And the flowing text at the top of the page that was showing.
-      final first = layout.page(_page).firstWhere((l) => l.sura == int.parse(sura.suraID) && l.first != null).first!;
+      final first = layout
+          .page(_page)
+          .firstWhere(
+            (l) => l.sura == int.parse(sura.suraID) && l.first != null,
+          )
+          .first!;
       _initialAyah = first.ayah;
     }
     context.read<SettingsCubit>().setMushafView(mushaf);
@@ -213,57 +271,86 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
   @override
   Widget build(BuildContext context) {
     final sura = _sura;
-    final mushaf = context.select<SettingsCubit, bool>((c) => c.state.mushafView);
+    final mushaf = context.select<SettingsCubit, bool>(
+      (c) => c.state.mushafView,
+    );
     final ready = sura != null && !_isLoading && _error == null;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: sura == null
-            ? Text(context.l10n.quranTitle)
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(context.isArabic ? sura.suraNameAR : sura.suraNameEN),
+    final focused = _focused && mushaf && ready;
+
+    return PopScope(
+      // Back leaves focus mode before it leaves the page.
+      canPop: !focused,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && focused) _setFocused(false);
+      },
+      child: Scaffold(
+        appBar: focused
+            ? null
+            : AppBar(
+                title: sura == null
+                    ? Text(context.l10n.quranTitle)
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            context.isArabic
+                                ? sura.suraNameAR
+                                : sura.suraNameEN,
+                          ),
+                          if (ready && mushaf)
+                            Text(
+                              context.l10n.mushafPageTitle(_page),
+                              style: context.texts.labelMedium?.copyWith(
+                                color: context.colors.onSurfaceVariant,
+                              ),
+                            ),
+                        ],
+                      ),
+                actions: [
                   if (ready && mushaf)
-                    Text(
-                      context.l10n.mushafPageTitle(_page),
-                      style: context.texts.labelMedium?.copyWith(color: context.colors.onSurfaceVariant),
+                    IconButton(
+                      tooltip: context.l10n.goToPage,
+                      icon: const Icon(Icons.find_in_page_outlined),
+                      onPressed: _askForPage,
+                    ),
+                  if (ready)
+                    IconButton(
+                      tooltip: mushaf
+                          ? context.l10n.flowingViewTooltip
+                          : context.l10n.mushafViewTooltip,
+                      icon: Icon(
+                        mushaf
+                            ? Icons.text_fields
+                            : Icons.auto_stories_outlined,
+                      ),
+                      onPressed: () => _switchView(!mushaf),
+                    ),
+                  if (ready)
+                    IconButton(
+                      tooltip: context.l10n.shareSura,
+                      icon: const Icon(Icons.share_outlined),
+                      onPressed: () => SharePlus.instance.share(
+                        ShareParams(
+                          text:
+                              '${sura.suraNameAR} (${sura.suraNameEN})\n\n'
+                              '${_verses.join('\n')}',
+                        ),
+                      ),
                     ),
                 ],
               ),
-        actions: [
-          if (ready && mushaf)
-            IconButton(
-              tooltip: context.l10n.goToPage,
-              icon: const Icon(Icons.find_in_page_outlined),
-              onPressed: _askForPage,
+        body: Column(
+          children: [
+            Expanded(
+              child: focused
+                  ? SafeArea(bottom: false, child: _buildBody(mushaf))
+                  : _buildBody(mushaf),
             ),
-          if (ready)
-            IconButton(
-              tooltip: mushaf ? context.l10n.flowingViewTooltip : context.l10n.mushafViewTooltip,
-              icon: Icon(mushaf ? Icons.text_fields : Icons.auto_stories_outlined),
-              onPressed: () => _switchView(!mushaf),
-            ),
-          if (ready)
-            IconButton(
-              tooltip: context.l10n.shareSura,
-              icon: const Icon(Icons.share_outlined),
-              onPressed: () => SharePlus.instance.share(
-                ShareParams(
-                  text:
-                      '${sura.suraNameAR} (${sura.suraNameEN})\n\n'
-                      '${_verses.join('\n')}',
-                ),
-              ),
-            ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Expanded(child: _buildBody(mushaf)),
-          if (sura != null && _error == null)
-            QuranPlayerBar(sura: sura),
-        ],
+            if (sura != null && _error == null && !focused)
+              QuranPlayerBar(sura: sura),
+          ],
+        ),
       ),
     );
   }
@@ -322,6 +409,7 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
               onVerseTap: _openVerse,
               highlight: sura != null && ayah > 0 ? VerseRef(sura, ayah) : null,
               isBookmarked: bookmarks.isBookmarked,
+              onTapPage: () => _setFocused(!_focused),
             );
           },
         );
@@ -341,7 +429,9 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
           // whole page several times a second.
           buildWhen: (a, b) => a.suraId != b.suraId || a.ayah != b.ayah,
           builder: (context, player) {
-            final playingAyah = player.isLoaded(sura.suraID) ? player.ayah : null;
+            final playingAyah = player.isLoaded(sura.suraID)
+                ? player.ayah
+                : null;
             return BlocBuilder<BookmarksCubit, List<Bookmark>>(
               builder: (context, _) => MushafPage(
                 key: ValueKey(sura.suraID),
@@ -349,8 +439,12 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
                 verses: _verses,
                 fontScale: settings.quranFontScale,
                 onVerseTap: _openFlowingVerse,
-                highlightVerse: (playingAyah ?? 0) > 0 ? playingAyah! - 1 : null,
-                bookmarkedVerses: context.read<BookmarksCubit>().versesIn(suraNumber),
+                highlightVerse: (playingAyah ?? 0) > 0
+                    ? playingAyah! - 1
+                    : null,
+                bookmarkedVerses: context.read<BookmarksCubit>().versesIn(
+                  suraNumber,
+                ),
                 initialAyah: _initialAyah,
               ),
             );

@@ -709,5 +709,6 @@
   "adhanHelpBattery": "Exclude Sakina from battery saving. Samsung: Battery > Background usage limits > Never sleeping apps. Xiaomi: allow Autostart and set Battery saver to No restrictions.",
   "adhanHelpVolume": "Check the notification volume, and that Do Not Disturb is off.",
   "adhanHelpGrant": "Check permissions",
-  "ok": "OK"
+  "ok": "OK",
+  "focusHint": "Tip: tap the page to read full screen"
 }
