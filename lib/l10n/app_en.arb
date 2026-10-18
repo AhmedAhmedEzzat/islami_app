@@ -844,5 +844,18 @@
         "type": "int"
       }
     }
-  }
+  },
+  "sunnahRemindersHeader": "Sunnah reminders",
+  "jumuahSetting": "Friday (Jumu'ah)",
+  "jumuahSubtitle": "An hour before the Friday prayer",
+  "jumuahTitle": "Jumu'ah today",
+  "jumuahBody": "Ghusl, go early to the mosque, and send blessings on the Prophet ﷺ",
+  "duhaSetting": "Duha prayer",
+  "duhaSubtitle": "Halfway between sunrise and Dhuhr",
+  "duhaTitle": "Duha prayer",
+  "duhaBody": "Time for Duha, the prayer of those who turn back to Allah",
+  "qiyamSetting": "Night prayer (Qiyam)",
+  "qiyamSubtitle": "When the last third of the night begins",
+  "qiyamTitle": "The last third of the night",
+  "qiyamBody": "Our Lord descends and says: who is calling upon Me, that I may answer him?"
 }

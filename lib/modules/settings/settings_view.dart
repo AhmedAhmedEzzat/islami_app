@@ -359,6 +359,25 @@ class SettingsView extends StatelessWidget {
                     ? cubit.setKhatmaReminders
                     : null,
               ),
+              Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 0),
+                child: Text(
+                  context.l10n.sunnahRemindersHeader,
+                  style: context.texts.labelLarge?.copyWith(color: context.colors.onSurfaceVariant),
+                ),
+              ),
+              for (final (alert, icon, title, subtitle) in [
+                (SunnahAlert.jumuah, Icons.mosque_outlined, context.l10n.jumuahSetting, context.l10n.jumuahSubtitle),
+                (SunnahAlert.duha, Icons.wb_sunny_outlined, context.l10n.duhaSetting, context.l10n.duhaSubtitle),
+                (SunnahAlert.qiyam, Icons.nightlight_outlined, context.l10n.qiyamSetting, context.l10n.qiyamSubtitle),
+              ])
+                SwitchListTile(
+                  value: state.sunnahAlerts.contains(alert),
+                  title: Text(title),
+                  subtitle: Text(subtitle),
+                  secondary: Icon(icon),
+                  onChanged: state.prayerNotifications ? (_) => cubit.toggleSunnahAlert(alert) : null,
+                ),
               SwitchListTile(
                 value: state.fridayKahf,
                 title: Text(context.l10n.fridayKahfSetting),

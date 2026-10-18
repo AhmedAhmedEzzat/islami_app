@@ -424,5 +424,18 @@
   "tasbehRemove": "حذف «{zikr}»؟",
   "tasbehTarget": "العدد في كل دورة",
   "tasbehTargetValue": "{n}",
-  "tasbehToday": "اليوم: {n}"
+  "tasbehToday": "اليوم: {n}",
+  "sunnahRemindersHeader": "تذكير بالسنن",
+  "jumuahSetting": "يوم الجمعة",
+  "jumuahSubtitle": "قبل صلاة الجمعة بساعة",
+  "jumuahTitle": "اليوم الجمعة",
+  "jumuahBody": "اغتسل وبكّر إلى المسجد وأكثر من الصلاة على النبي ﷺ",
+  "duhaSetting": "صلاة الضحى",
+  "duhaSubtitle": "في منتصف ما بين الشروق والظهر",
+  "duhaTitle": "صلاة الضحى",
+  "duhaBody": "حان وقت الضحى، صلاة الأوّابين",
+  "qiyamSetting": "قيام الليل",
+  "qiyamSubtitle": "عند بداية الثلث الأخير من الليل",
+  "qiyamTitle": "الثلث الأخير من الليل",
+  "qiyamBody": "ينزل ربنا فيقول: من يدعوني فأستجيب له؟"
 }

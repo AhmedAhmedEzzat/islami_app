@@ -126,7 +126,8 @@ class SakinaApp extends StatelessWidget {
             a.prayerSound != b.prayerSound ||
             a.adhkarReminders != b.adhkarReminders ||
             a.khatmaReminders != b.khatmaReminders ||
-            a.muezzinId != b.muezzinId,
+            a.muezzinId != b.muezzinId ||
+            !setEquals(a.sunnahAlerts, b.sunnahAlerts),
         listener: (_, state) => _reschedule(state),
         child: BlocBuilder<SettingsCubit, SettingsState>(
           builder: (context, state) {

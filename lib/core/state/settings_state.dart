@@ -29,6 +29,7 @@ class SettingsState {
     this.khatmaReminders = true,
     this.muezzinId = 'default',
     this.continuousRecitation = true,
+    this.sunnahAlerts = defaultSunnahAlerts,
   });
 
   final ThemeMode themeMode;
@@ -89,6 +90,13 @@ class SettingsState {
   /// Recitation carries on into the next sura when one ends.
   final bool continuousRecitation;
 
+  /// Which sunnah reminders are on. They post only while [prayerNotifications] is.
+  final Set<SunnahAlert> sunnahAlerts;
+
+  /// Friday is on from the start; the daily ones, one of them at night, are
+  /// for the user to choose.
+  static const Set<SunnahAlert> defaultSunnahAlerts = {SunnahAlert.jumuah};
+
   static const Set<FastingAlert> defaultFastingAlerts = {
     FastingAlert.mondayThursday,
     FastingAlert.whiteDays,
@@ -137,6 +145,7 @@ class SettingsState {
     bool? khatmaReminders,
     String? muezzinId,
     bool? continuousRecitation,
+    Set<SunnahAlert>? sunnahAlerts,
     // Distinguishes "leave unchanged" from "back to the system language".
     bool clearLocale = false,
   }) {
@@ -161,6 +170,7 @@ class SettingsState {
       khatmaReminders: khatmaReminders ?? this.khatmaReminders,
       muezzinId: muezzinId ?? this.muezzinId,
       continuousRecitation: continuousRecitation ?? this.continuousRecitation,
+      sunnahAlerts: sunnahAlerts ?? this.sunnahAlerts,
     );
   }
 
@@ -186,11 +196,12 @@ class SettingsState {
         other.adhkarReminders == adhkarReminders &&
         other.khatmaReminders == khatmaReminders &&
         other.muezzinId == muezzinId &&
-        other.continuousRecitation == continuousRecitation;
+        other.continuousRecitation == continuousRecitation &&
+        setEquals(other.sunnahAlerts, sunnahAlerts);
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     themeMode,
     quranFontScale,
     reciterId,
@@ -211,5 +222,6 @@ class SettingsState {
     khatmaReminders,
     muezzinId,
     continuousRecitation,
-  );
+    Object.hashAllUnordered(sunnahAlerts),
+  ]);
 }
