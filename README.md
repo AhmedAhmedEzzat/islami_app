@@ -84,9 +84,10 @@ Both came from Wikimedia Commons by way of the
 bundles the same files with the same credits. Neither has a separate Fajr
 version, so Fajr plays the same recording until one is added.
 
-More can be added. Each muezzin in Settings > Muezzin is a pair of files (`.ogg`
-or `.mp3`, never both for one name): one for Dhuhr, Asr, Maghrib and Isha, and
-one for Fajr (the adhan with *as-salatu khayrun min an-nawm*):
+Settings > Muezzin offers only these two, so every choice plays what its name
+says. More can be added. Each muezzin is a pair of files (`.ogg` or `.mp3`,
+never both for one name): one for Dhuhr, Asr, Maghrib and Isha, and one for
+Fajr (the adhan with *as-salatu khayrun min an-nawm*):
 
 | Muezzin | Four prayers | Fajr |
 | --- | --- | --- |
@@ -97,10 +98,13 @@ one for Fajr (the adhan with *as-salatu khayrun min an-nawm*):
 | Al-Aqsa | `adhan_aqsa.mp3` | `adhan_aqsa_fajr.mp3` |
 | Egypt | `adhan_egypt.mp3` | `adhan_egypt_fajr.mp3` |
 
-Add only the ones you want. Names
-must be lowercase letters, digits and underscores (Android resource rules).
-A missing file falls back in order: the muezzin's own adhan (for Fajr), then
-the default adhan, then the usual notification sound, so no alert is lost.
+Makkah, Madinah, Al-Aqsa and Egypt are defined in `Muezzins.unbundled`
+(`lib/core/constants/muezzins.dart`) but hidden until their recording ships:
+after adding the file, move the entry into `Muezzins.all`, and a test checks
+the file is there. Names must be lowercase letters, digits and underscores
+(Android resource rules). A missing Fajr file falls back to the muezzin's own
+adhan, then the default adhan, then the usual notification sound, so no alert
+is lost.
 Use recordings you have the right to distribute.
 
 Android fixes a channel's sound the first time it posts, so after **replacing**

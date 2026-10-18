@@ -159,7 +159,7 @@ void main() {
     });
 
     test('a muezzin falls back to their own adhan, then the default, then the plain sound', () {
-      final makkah = Muezzins.byId('makkah');
+      final makkah = Muezzins.unbundled.firstWhere((m) => m.id == 'makkah');
       expect(PrayerNotificationService.channelsFor(AlertKind.prayer, PrayerName.fajr, PrayerSound.adhan, makkah), [
         'prayer_adhan_makkah_fajr',
         'prayer_adhan_makkah',
@@ -174,10 +174,11 @@ void main() {
       ]);
     });
 
-    test('the bundled recordings are where the muezzins expect them', () {
-      for (final id in ['default', 'short']) {
-        final m = Muezzins.byId(id);
-        expect(File('android/app/src/main/res/raw/${m.sound}.ogg').existsSync(), isTrue, reason: m.sound);
+    test('every muezzin Settings offers has its recording bundled', () {
+      // A choice with no file would quietly play the default adhan.
+      for (final m in Muezzins.all) {
+        final bundled = ['ogg', 'mp3'].any((ext) => File('android/app/src/main/res/raw/${m.sound}.$ext').existsSync());
+        expect(bundled, isTrue, reason: m.sound);
         expect(File('android/app/src/main/res/raw/keep.xml').readAsStringSync(), contains('@raw/${m.sound},'));
       }
     });
@@ -190,6 +191,8 @@ void main() {
         ['prayer_adhan_fajr', 'prayer_adhan', PrayerNotificationService.standardChannel],
       );
       expect(Muezzins.byId('nobody'), Muezzins.standard);
+      // Saved by an earlier version that listed it before its file shipped.
+      expect(Muezzins.byId('makkah'), Muezzins.standard);
     });
 
     test('reminders and other alerts never play the adhan', () {

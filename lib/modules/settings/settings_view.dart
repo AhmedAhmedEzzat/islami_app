@@ -295,7 +295,7 @@ class SettingsView extends StatelessWidget {
                       context,
                       context.l10n.muezzinSetting,
                       {for (final m in Muezzins.all) m.id: _muezzinName(context, m)},
-                      state.muezzinId,
+                      Muezzins.byId(state.muezzinId).id,
                     );
                     if (picked != null) cubit.setMuezzin(picked);
                   },

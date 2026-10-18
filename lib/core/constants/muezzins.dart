@@ -1,10 +1,9 @@
 /// An adhan recording the prayer notification can play.
 ///
 /// Each muezzin is two raw resources in android/app/src/main/res/raw: [sound]
-/// for four prayers and [fajrSound] for Fajr (see README). Only the default
-/// and the short adhan ship with the app, both public domain; a missing file
-/// falls back to the next one in line, so choosing a muezzin never loses an
-/// alert.
+/// for four prayers and [fajrSound] for Fajr (see README). A missing Fajr
+/// file falls back to the muezzin's own adhan and then the default, so a
+/// muezzin never loses an alert.
 class Muezzin {
   const Muezzin({required this.id, required this.nameEn, required this.nameAr, required this.sound});
 
@@ -31,9 +30,18 @@ abstract final class Muezzins {
     sound: 'adhan',
   );
 
+  /// The muezzins Settings offers: only those whose recording ships with the
+  /// app, so picking one always plays what its name says.
   static const List<Muezzin> all = [
     standard,
     Muezzin(id: 'short', nameEn: 'Short adhan', nameAr: 'أذان قصير', sound: 'adhan_short'),
+  ];
+
+  /// Muezzins with no recording bundled yet. Once both files are in res/raw
+  /// (see README), move the entry into [all]. A user who chose one of them in
+  /// an earlier version now gets the default adhan, which is what they were
+  /// already hearing.
+  static const List<Muezzin> unbundled = [
     Muezzin(id: 'makkah', nameEn: 'Makkah', nameAr: 'أذان مكة', sound: 'adhan_makkah'),
     Muezzin(id: 'madinah', nameEn: 'Madinah', nameAr: 'أذان المدينة', sound: 'adhan_madinah'),
     Muezzin(id: 'aqsa', nameEn: 'Al-Aqsa', nameAr: 'أذان الأقصى', sound: 'adhan_aqsa'),
