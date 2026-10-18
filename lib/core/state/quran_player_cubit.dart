@@ -43,7 +43,10 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
         if (isClosed || index == null || index >= _ayahAt.length) return;
         // Repeating the sura wraps from the last verse to the first, so the
         // sura never "completes"; that wrap is where it ended.
-        final wrapped = index == 0 && _lastIndex == _ayahAt.length - 1 && _ayahAt.length > 1;
+        final wrapped = index == 0 &&
+            _lastIndex == _ayahAt.length - 1 &&
+            _ayahAt.length > 1 &&
+            _player.loopMode == LoopMode.all;
         _lastIndex = index;
         if (wrapped && SleepTimer.takeEndOfSura()) unawaited(_player.pause());
         emit(state.copyWith(ayah: _ayahAt[index], position: Duration.zero));
@@ -69,6 +72,10 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
   String _reciterId = Reciters.all.first.id;
   bool _advancing = false;
 
+  /// Bumped by every start, pause and stop, so a load still in flight can
+  /// tell it was overtaken and must not start playing.
+  int _generation = 0;
+
   /// Whether to go straight on into the next sura. Set from `main()` to read
   /// the user's setting.
   bool Function() continuous = () => true;
@@ -88,6 +95,7 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
         fromAyah: 1,
         totalAyahs: int.parse(next.suraVersesNumber),
         reciterId: _reciterId,
+        quiet: true,
       );
     } finally {
       _advancing = false;
@@ -112,9 +120,11 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
     required int fromAyah,
     required int totalAyahs,
     required String reciterId,
+    bool quiet = false,
   }) async {
     final sura = int.tryParse(suraId);
     if (sura == null || totalAyahs <= 0) return;
+    final generation = ++_generation;
 
     emit(state.copyWith(clearError: true));
     await _radio.stop();
@@ -140,13 +150,15 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
         for (final a in _ayahAt) _sourceFor(reciter, a == 0 ? 1 : sura, a == 0 ? 1 : a),
       ], preload: true);
       await _applyRepeat(state.repeat);
-      if (isClosed) return;
+      // Paused (the sleep timer) or stopped (the radio) while loading.
+      if (isClosed || generation != _generation) return;
       unawaited(_player.play());
     } catch (e) {
       debugPrint('Recitation failed for sura $suraId: $e');
-      if (isClosed) return;
-      // The text must stay readable even when audio fails.
-      emit(state.copyWith(clearSura: true, errorKey: 'recitation_unavailable'));
+      if (isClosed || generation != _generation) return;
+      // The text must stay readable even when audio fails. Moving on to a
+      // sura that is not downloaded, offline, just stops: no error for that.
+      emit(state.copyWith(clearSura: true, errorKey: quiet ? null : 'recitation_unavailable'));
     }
   }
 
@@ -208,10 +220,17 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
   });
 
   /// Pauses, for the sleep timer.
-  Future<void> pause() => _player.pause();
+  Future<void> pause() {
+    _generation++;
+    return _player.pause();
+  }
 
   /// Stops recitation entirely. Called when the radio takes over.
   Future<void> stop() async {
+    _generation++;
+    // "End of sura" belonged to this recitation; it must not linger and stop
+    // a later one.
+    SleepTimer.takeEndOfSura();
     await _player.stop();
     _ayahAt = const [];
     if (isClosed) return;

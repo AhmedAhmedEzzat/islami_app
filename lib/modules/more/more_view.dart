@@ -143,7 +143,9 @@ class MoreView extends StatelessWidget {
                     title: Text(l10n.offlineRecitations),
                     onTap: () => push(const DownloadsView()),
                   ),
-                if (!kIsWeb)
+                // The store page needs an App Store id on iOS, which the app
+                // does not have yet; Google Play needs none.
+                if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android)
                   ListTile(
                     leading: const Icon(Icons.star_outline_rounded),
                     title: Text(l10n.rateApp),

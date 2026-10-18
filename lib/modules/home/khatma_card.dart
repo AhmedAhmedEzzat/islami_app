@@ -135,14 +135,14 @@ class _Progress extends StatelessWidget {
                   l10n.khatmaDayOf(plan.dayIndex(now) + 1, plan.days),
                   style: context.texts.labelMedium?.copyWith(color: scheme.onSurfaceVariant),
                 ),
-                PopupMenuButton<void>(
+                // onSelected runs after the menu closes; an item's onTap would
+                // open the sheet only for the closing menu to dismiss it.
+                PopupMenuButton<bool>(
                   tooltip: l10n.moreOptions,
+                  onSelected: (change) => change ? KhatmaCard.showStartSheet(context) : Khatma.stop(),
                   itemBuilder: (_) => [
-                    PopupMenuItem(
-                      onTap: () => KhatmaCard.showStartSheet(context),
-                      child: Text(l10n.khatmaChangePlan),
-                    ),
-                    PopupMenuItem(onTap: Khatma.stop, child: Text(l10n.khatmaEnd)),
+                    PopupMenuItem(value: true, child: Text(l10n.khatmaChangePlan)),
+                    PopupMenuItem(value: false, child: Text(l10n.khatmaEnd)),
                   ],
                 ),
               ],

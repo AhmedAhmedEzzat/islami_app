@@ -124,7 +124,11 @@ class _TrackerViewState extends State<TrackerView> {
             ),
           ),
           const SizedBox(height: AppSpacing.xl),
-          _QadaSection(onChanged: () => setState(() {})),
+          _QadaSection(
+            onChanged: () {
+              if (mounted) setState(() {});
+            },
+          ),
         ],
       ),
     );

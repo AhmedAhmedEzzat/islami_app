@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -138,7 +140,7 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
       });
       // The opening page is read as much as any page turned to.
       if (context.read<SettingsCubit>().state.mushafView) {
-        Khatma.notePage(_page);
+        _noteKhatma(_page, null);
         _maybeShowFocusHint();
       }
     } catch (e) {
@@ -151,6 +153,21 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
   }
 
   static SuraDataModel _model(int sura) => Constants.suraDataLists[sura - 1];
+
+  /// Counts [page] (and [facing]) towards the khatma. True when that
+  /// completes it. Finishing today's portion is a good moment to ask for a
+  /// rating.
+  bool _noteKhatma(int page, int? facing) {
+    final leftBefore =
+        Khatma.notifier.value?.pagesLeftToday(DateTime.now()) ?? 0;
+    final completed =
+        Khatma.notePage(page) || (facing != null && Khatma.notePage(facing));
+    if (leftBefore > 0 &&
+        Khatma.notifier.value?.pagesLeftToday(DateTime.now()) == 0) {
+      unawaited(ReviewPrompt.noteGoodMoment());
+    }
+    return completed;
+  }
 
   /// The page last read, if [sura] is on it and no verse was asked for. More
   /// exact than the saved verse, which may have begun on the page before.
@@ -171,13 +188,7 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
     final shown = suras.contains(current) ? current : suras.first;
 
     LocalStorageServices.setInt(PrefsKeys.lastMushafPage, page);
-    final leftBefore = Khatma.notifier.value?.pagesLeftToday(DateTime.now()) ?? 0;
-    final completed = Khatma.notePage(page) || (facing != null && Khatma.notePage(facing));
-    // Finishing today's portion is a good moment to ask for a rating.
-    if (leftBefore > 0 && Khatma.notifier.value?.pagesLeftToday(DateTime.now()) == 0) {
-      ReviewPrompt.noteGoodMoment();
-    }
-    if (completed) {
+    if (_noteKhatma(page, facing)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -296,81 +307,106 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
 
     final focused = _focused && mushaf && ready;
 
-    return PopScope(
-      // Back leaves focus mode before it leaves the page.
-      canPop: !focused,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop && focused) _setFocused(false);
-      },
-      child: Scaffold(
-        appBar: focused
-            ? null
-            : AppBar(
-                title: sura == null
-                    ? Text(context.l10n.quranTitle)
-                    : Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            context.isArabic
-                                ? sura.suraNameAR
-                                : sura.suraNameEN,
-                          ),
-                          if (ready && mushaf)
+    return BlocListener<QuranPlayerCubit, QuranPlayerState>(
+      // Recitation that plays on into the next sura takes the screen with it,
+      // so the player bar, the title and the flowing text follow.
+      listenWhen: (a, b) =>
+          b.suraId != null && a.suraId != b.suraId && a.suraId == _sura?.suraID,
+      listener: (context, player) => _followRecitation(player.suraId!),
+      child: PopScope(
+        // Back leaves focus mode before it leaves the page.
+        canPop: !focused,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop && focused) _setFocused(false);
+        },
+        child: Scaffold(
+          appBar: focused
+              ? null
+              : AppBar(
+                  title: sura == null
+                      ? Text(context.l10n.quranTitle)
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                             Text(
-                              context.l10n.mushafPageTitle(_page),
-                              style: context.texts.labelMedium?.copyWith(
-                                color: context.colors.onSurfaceVariant,
-                              ),
+                              context.isArabic
+                                  ? sura.suraNameAR
+                                  : sura.suraNameEN,
                             ),
-                        ],
+                            if (ready && mushaf)
+                              Text(
+                                context.l10n.mushafPageTitle(_page),
+                                style: context.texts.labelMedium?.copyWith(
+                                  color: context.colors.onSurfaceVariant,
+                                ),
+                              ),
+                          ],
+                        ),
+                  actions: [
+                    if (ready && mushaf)
+                      IconButton(
+                        tooltip: context.l10n.goToPage,
+                        icon: const Icon(Icons.find_in_page_outlined),
+                        onPressed: _askForPage,
                       ),
-                actions: [
-                  if (ready && mushaf)
-                    IconButton(
-                      tooltip: context.l10n.goToPage,
-                      icon: const Icon(Icons.find_in_page_outlined),
-                      onPressed: _askForPage,
-                    ),
-                  if (ready)
-                    IconButton(
-                      tooltip: mushaf
-                          ? context.l10n.flowingViewTooltip
-                          : context.l10n.mushafViewTooltip,
-                      icon: Icon(
-                        mushaf
-                            ? Icons.text_fields
-                            : Icons.auto_stories_outlined,
+                    if (ready)
+                      IconButton(
+                        tooltip: mushaf
+                            ? context.l10n.flowingViewTooltip
+                            : context.l10n.mushafViewTooltip,
+                        icon: Icon(
+                          mushaf
+                              ? Icons.text_fields
+                              : Icons.auto_stories_outlined,
+                        ),
+                        onPressed: () => _switchView(!mushaf),
                       ),
-                      onPressed: () => _switchView(!mushaf),
-                    ),
-                  if (ready)
-                    IconButton(
-                      tooltip: context.l10n.shareSura,
-                      icon: const Icon(Icons.share_outlined),
-                      onPressed: () => SharePlus.instance.share(
-                        ShareParams(
-                          text:
-                              '${sura.suraNameAR} (${sura.suraNameEN})\n\n'
-                              '${_verses.join('\n')}',
+                    if (ready)
+                      IconButton(
+                        tooltip: context.l10n.shareSura,
+                        icon: const Icon(Icons.share_outlined),
+                        onPressed: () => SharePlus.instance.share(
+                          ShareParams(
+                            text:
+                                '${sura.suraNameAR} (${sura.suraNameEN})\n\n'
+                                '${_verses.join('\n')}',
+                          ),
                         ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
+          body: Column(
+            children: [
+              Expanded(
+                child: focused
+                    ? SafeArea(bottom: false, child: _buildBody(mushaf))
+                    : _buildBody(mushaf),
               ),
-        body: Column(
-          children: [
-            Expanded(
-              child: focused
-                  ? SafeArea(bottom: false, child: _buildBody(mushaf))
-                  : _buildBody(mushaf),
-            ),
-            if (sura != null && _error == null && !focused)
-              QuranPlayerBar(sura: sura),
-          ],
+              if (sura != null && _error == null && !focused)
+                QuranPlayerBar(sura: sura),
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  Future<void> _followRecitation(String suraId) async {
+    final number = int.tryParse(suraId);
+    if (number == null ||
+        number < 1 ||
+        number > Constants.suraDataLists.length) {
+      return;
+    }
+    final verses = await QuranService.loadSura(suraId);
+    if (!mounted) return;
+    final model = _model(number);
+    setState(() {
+      _sura = model;
+      _verses = verses;
+      _initialAyah = 1;
+    });
+    RecentSuras.remember(model);
   }
 
   Widget _buildBody(bool mushaf) {

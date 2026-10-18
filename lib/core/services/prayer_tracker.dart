@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import '../constants/prefs_keys.dart';
 import 'prayer_times_service.dart';
 import 'review_prompt.dart';
@@ -39,8 +41,15 @@ abstract final class PrayerTracker {
     if (bit < 0) return; // Sunrise is not a prayer to log.
     final mask = maskFor(day) ^ (1 << bit);
     await LocalStorageServices.setInt(PrefsKeys.prayerLog(_day(day)), mask);
-    // A full day of prayers is a good moment to ask for a rating.
-    if (mask == _all) await ReviewPrompt.noteGoodMoment();
+    // Completing today is a good moment to ask for a rating, counted once a
+    // day however often a prayer is unticked and ticked again.
+    final key = PrefsKeys.prayerLog(_day(day));
+    if (mask == _all &&
+        _day(day) == _day(DateTime.now()) &&
+        LocalStorageServices.getString(PrefsKeys.reviewTrackerDay) != key) {
+      await LocalStorageServices.setString(PrefsKeys.reviewTrackerDay, key);
+      unawaited(ReviewPrompt.noteGoodMoment());
+    }
   }
 
   /// Consecutive days with all five prayers, counting back from [today].

@@ -35,6 +35,7 @@ abstract final class PrefsKeys {
   static const String reviewLastAsked = 'review.lastAsked';
   static const String reviewMoments = 'review.moments';
   static const String reviewAsks = 'review.asks';
+  static const String reviewTrackerDay = 'review.trackerDay';
   static const String lastMushafPage = 'quran.lastMushafPage';
   static const String khatma = 'quran.khatma';
   static const String focusHintShown = 'quran.focusHintShown';

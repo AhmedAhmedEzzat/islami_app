@@ -147,6 +147,8 @@ class QuranPlayerBar extends StatelessWidget {
   }
 }
 
+enum _MenuAction { sleep, continuous, download }
+
 /// Sleep timer, continuous play and this sura's download, which do not need
 /// a button each on the bar.
 class _MoreMenu extends StatelessWidget {
@@ -165,8 +167,31 @@ class _MoreMenu extends StatelessWidget {
         final downloaded = RecitationDownloads.isDownloaded(reciter.id, sura);
         final job = RecitationDownloads.jobFor(reciter.id, sura);
         final busy = job != null && job.status != DownloadStatus.failed;
-        return PopupMenuButton<void>(
+        // Actions run from onSelected, after the menu has closed: an item's
+        // onTap runs before the menu pops itself, which would close a sheet
+        // opened from it straight away.
+        return PopupMenuButton<_MenuAction>(
           tooltip: l10n.moreOptions,
+          onSelected: (action) {
+            switch (action) {
+              case _MenuAction.sleep:
+                // A repeated verse never reaches the end of the sura.
+                showSleepTimerSheet(
+                  context,
+                  offerEndOfSura: context.read<QuranPlayerCubit>().state.repeat != RecitationRepeat.verse,
+                );
+              case _MenuAction.continuous:
+                settings.setContinuousRecitation(!settings.state.continuousRecitation);
+              case _MenuAction.download:
+                if (downloaded) {
+                  RecitationDownloads.delete(reciter, sura);
+                } else if (busy) {
+                  RecitationDownloads.cancel(reciter.id);
+                } else {
+                  RecitationDownloads.download(reciter, sura);
+                }
+            }
+          },
           // A ring on the menu button while this sura downloads.
           icon: busy
               ? SizedBox.square(
@@ -176,25 +201,17 @@ class _MoreMenu extends StatelessWidget {
               : const Icon(Icons.more_vert),
           itemBuilder: (context) => [
             PopupMenuItem(
-              onTap: () => showSleepTimerSheet(context, offerEndOfSura: true),
+              value: _MenuAction.sleep,
               child: ListTile(leading: const Icon(Icons.bedtime_outlined), title: Text(l10n.sleepTimer)),
             ),
             CheckedPopupMenuItem(
+              value: _MenuAction.continuous,
               checked: settings.state.continuousRecitation,
-              onTap: () => settings.setContinuousRecitation(!settings.state.continuousRecitation),
               child: Text(l10n.continuousRecitation),
             ),
             if (RecitationDownloads.supported)
               PopupMenuItem(
-                onTap: () {
-                  if (downloaded) {
-                    RecitationDownloads.delete(reciter, sura);
-                  } else if (busy) {
-                    RecitationDownloads.cancel(reciter.id);
-                  } else {
-                    RecitationDownloads.download(reciter, sura);
-                  }
-                },
+                value: _MenuAction.download,
                 child: ListTile(
                   leading: Icon(downloaded
                       ? Icons.delete_outline
