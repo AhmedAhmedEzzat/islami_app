@@ -129,6 +129,7 @@ abstract final class PrayerNotificationService {
     }
 
     await _plugin.initialize(
+      onDidReceiveNotificationResponse: _onTap,
       settings: const InitializationSettings(
         // White mark on transparent: status-bar icons are drawn as a mask.
         android: AndroidInitializationSettings('@drawable/ic_launcher_monochrome'),
@@ -140,6 +141,23 @@ abstract final class PrayerNotificationService {
       ),
     );
     _initialised = true;
+
+    // Opened by tapping one of ours: the layout takes it from here.
+    final launch = await _plugin.getNotificationAppLaunchDetails();
+    if (launch != null && launch.didNotificationLaunchApp) {
+      final response = launch.notificationResponse;
+      if (response != null) _onTap(response);
+    }
+  }
+
+  /// The kind of notification the user tapped, until the layout opens the
+  /// screen that goes with it and clears it.
+  static final ValueNotifier<AlertKind?> tapped = ValueNotifier(null);
+
+  static void _onTap(NotificationResponse response) {
+    // The Stop button only silences the adhan.
+    if (response.actionId != null) return;
+    tapped.value = AlertKind.values.where((k) => k.name == response.payload).firstOrNull;
   }
 
   static AndroidFlutterLocalNotificationsPlugin? get _android =>
@@ -424,6 +442,7 @@ abstract final class PrayerNotificationService {
             : AndroidScheduleMode.inexactAllowWhileIdle,
         title: title,
         body: body,
+        payload: alert.kind.name,
       );
 
       final channel = channelFor(alert.kind, alert.prayer, sound);
@@ -457,6 +476,7 @@ abstract final class PrayerNotificationService {
       title: l10n.prayerNotificationTitle(name),
       body: l10n.testAdhanBody,
       notificationDetails: details[channel],
+      payload: AlertKind.prayer.name,
     );
     final channel = channelFor(AlertKind.prayer, PrayerName.dhuhr, sound);
     try {

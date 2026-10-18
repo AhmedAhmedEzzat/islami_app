@@ -15,7 +15,10 @@ import '../../core/services/recent_suras.dart';
 import '../../models/sura_data_model.dart';
 import '../home/home_view.dart';
 import '../more/more_view.dart';
+import '../../core/services/prayer_notification_service.dart';
+import '../../models/zikr_model.dart';
 import 'azkar/azkar_tab_view.dart';
+import 'azkar/azkar_view.dart';
 import 'layout_scope.dart';
 import 'quran/quran_details_view.dart';
 import 'quran/quran_view.dart';
@@ -74,10 +77,40 @@ class _LayoutViewState extends State<LayoutView> {
     for (final observer in _observers) {
       observer.addListener(_onRouteChanged);
     }
+    PrayerNotificationService.tapped.addListener(_onNotificationTap);
+    // A tap that launched the app arrived before this screen existed.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _onNotificationTap());
+  }
+
+  /// Opens the screen that goes with a tapped notification.
+  void _onNotificationTap() {
+    final kind = PrayerNotificationService.tapped.value;
+    if (kind == null || !mounted) return;
+    PrayerNotificationService.tapped.value = null;
+    switch (kind) {
+      case AlertKind.morningAdhkar || AlertKind.eveningAdhkar:
+        _selectTab(AppTab.azkar);
+        _withNavigator(AppTab.azkar, (navigator) {
+          navigator
+            ..popUntil((route) => route.isFirst)
+            ..push(
+              MaterialPageRoute<void>(
+                builder: (_) => const AzkarView(chapterId: FeaturedAzkar.morningEvening),
+              ),
+            );
+        });
+      case AlertKind.kahf:
+        _openSura(Constants.suraDataLists[17]);
+      case AlertKind.prayer || AlertKind.reminder:
+        _selectTab(AppTab.prayer);
+      default:
+        _selectTab(AppTab.home);
+    }
   }
 
   @override
   void dispose() {
+    PrayerNotificationService.tapped.removeListener(_onNotificationTap);
     for (final observer in _observers) {
       observer
         ..removeListener(_onRouteChanged)
