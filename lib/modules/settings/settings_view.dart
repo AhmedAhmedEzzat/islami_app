@@ -11,6 +11,7 @@ import '../../core/constants/muezzins.dart';
 import '../../core/services/prayer_notification_service.dart';
 import '../more/listen_view.dart';
 import 'prayer_notifications_prompt.dart';
+import 'tafsir_download_tile.dart';
 import '../../core/state/settings_cubit.dart';
 import '../../core/state/settings_state.dart';
 import '../../core/theme/app_colors.dart';
@@ -108,6 +109,7 @@ class SettingsView extends StatelessWidget {
                   if (picked != null) cubit.setMushafPaper(picked);
                 },
               ),
+              const TafsirDownloadTile(),
 
               _SectionHeader(context.l10n.recitationSection),
               ListTile(
