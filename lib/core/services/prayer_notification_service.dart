@@ -214,7 +214,8 @@ abstract final class PrayerNotificationService {
   ///   fasting   4000 + day * 10 + slot (0 the evening before, 1 suhoor, 2 iftar)
   ///   adhkar    5000 + day * 10 + slot (0 morning, 1 evening)
   ///   khatma    6000 + day
-  ///   sunnah    7000 + day * 10 + slot (0 duha, 1 qiyam, 2 jumuah)
+  ///   sunnah    7000 + day * 10 + slot (0 duha, 1 qiyam, 2 jumuah,
+  ///             3 the qiyam of the night already under way, on day 0)
   static const int _reminderBase = 2000;
   static const int _kahfBase = 3000;
   static const int _fastingBase = 4000;
@@ -259,7 +260,7 @@ abstract final class PrayerNotificationService {
         await _plugin.cancel(id: _adhkarBase + day * 10 + slot);
       }
       await _plugin.cancel(id: _khatmaBase + day);
-      for (var slot = 0; slot < 3; slot++) {
+      for (var slot = 0; slot < 4; slot++) {
         await _plugin.cancel(id: _sunnahBase + day * 10 + slot);
       }
     }
@@ -291,7 +292,9 @@ abstract final class PrayerNotificationService {
     final today = DateTime(now.year, now.month, now.day);
 
     for (var day = 0; day < daysAhead; day++) {
-      final date = today.add(Duration(days: day));
+      // By calendar date, not 24-hour steps, which a 23- or 25-hour day (a
+      // clock change) would turn into a repeated or skipped date.
+      final date = DateTime(today.year, today.month, today.day + day);
       final times = PrayerTimesService.computeFor(
         coordinates: coordinates,
         date: date,
@@ -353,6 +356,16 @@ abstract final class PrayerNotificationService {
       }
       if (sunnah.contains(SunnahAlert.qiyam)) {
         addSunnah(1, AlertKind.qiyam, lastThirdOfNight(times.entry(PrayerName.maghrib).time, coordinates, config));
+        // After midnight, tonight's last third belongs to the night that began
+        // at yesterday's Maghrib; rebuilding the schedule then must keep it.
+        if (day == 0) {
+          final yesterday = PrayerTimesService.computeFor(
+            coordinates: coordinates,
+            date: DateTime(today.year, today.month, today.day - 1),
+            config: config,
+          );
+          addSunnah(3, AlertKind.qiyam, lastThirdOfNight(yesterday.entry(PrayerName.maghrib).time, coordinates, config));
+        }
       }
       if (sunnah.contains(SunnahAlert.jumuah) && date.weekday == DateTime.friday) {
         addSunnah(2, AlertKind.jumuah, times.entry(PrayerName.dhuhr).time.subtract(jumuahBeforeDhuhr));
@@ -385,7 +398,7 @@ abstract final class PrayerNotificationService {
   /// When the last third of the night after [maghrib] begins: the night runs
   /// from Maghrib to the next Fajr.
   static DateTime lastThirdOfNight(DateTime maghrib, Coordinates coordinates, PrayerConfig config) {
-    final next = DateTime(maghrib.year, maghrib.month, maghrib.day).add(const Duration(days: 1));
+    final next = DateTime(maghrib.year, maghrib.month, maghrib.day + 1);
     final fajr = PrayerTimesService.computeFor(coordinates: coordinates, date: next, config: config)
         .entry(PrayerName.fajr)
         .time;
@@ -435,7 +448,7 @@ abstract final class PrayerNotificationService {
   /// Ramadan, which is fasted anyway.
   static AlertKind? _fastTomorrow(DateTime eve, Set<FastingAlert> fasting, int hijriOffset) {
     if (fasting.isEmpty) return null;
-    final tomorrow = eve.add(const Duration(days: 1));
+    final tomorrow = DateTime(eve.year, eve.month, eve.day + 1);
     final h = IslamicCalendar.of(tomorrow, offset: hijriOffset);
     final forbidden = (h.hMonth == 10 && h.hDay == 1) || (h.hMonth == 12 && h.hDay >= 10 && h.hDay <= 13);
     if (forbidden || h.hMonth == 9) return null;

@@ -15,6 +15,10 @@ abstract final class ReadingStats {
 
   static DateTime _day(DateTime d) => DateTime(d.year, d.month, d.day);
 
+  /// [days] calendar days before [d]. Not a 24-hour step, which a clock
+  /// change would turn into the wrong date.
+  static DateTime _back(DateTime d, int days) => DateTime(d.year, d.month, d.day - days);
+
   static String _key(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
@@ -29,7 +33,7 @@ abstract final class ReadingStats {
   static int pagesThisWeek(DateTime today) {
     var n = 0;
     for (var i = 0; i < 7; i++) {
-      n += pagesOn(today.subtract(Duration(days: i)));
+      n += pagesOn(_back(today, i));
     }
     return n;
   }
@@ -38,11 +42,11 @@ abstract final class ReadingStats {
   /// counts once read in, so an unread today does not break yesterday's run.
   static int streak(DateTime today) {
     var day = _day(today);
-    if (pagesOn(day) == 0) day = day.subtract(const Duration(days: 1));
+    if (pagesOn(day) == 0) day = _back(day, 1);
     var n = 0;
     while (n < keepDays && pagesOn(day) > 0) {
       n++;
-      day = day.subtract(const Duration(days: 1));
+      day = _back(day, 1);
     }
     return n;
   }
@@ -56,7 +60,7 @@ abstract final class ReadingStats {
 
     // Remember which days have entries, and drop the ones past keepDays.
     final days = {...?LocalStorageServices.getStringList(PrefsKeys.readingDays), _key(day)};
-    final cutoff = _key(day.subtract(const Duration(days: keepDays)));
+    final cutoff = _key(_back(day, keepDays));
     final old = days.where((k) => k.compareTo(cutoff) < 0).toList();
     if (old.isNotEmpty) {
       await LocalStorageServices.remove([for (final k in old) PrefsKeys.readingDay(k)]);

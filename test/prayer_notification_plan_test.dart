@@ -161,7 +161,7 @@ void main() {
     // thirds of the way through.
     final maghrib = day0.entry(PrayerName.maghrib).time;
     final nextFajr = day1.entry(PrayerName.fajr).time;
-    final qiyam = ofKind(plan, AlertKind.qiyam).first.time;
+    final qiyam = ofKind(plan, AlertKind.qiyam).firstWhere((a) => a.time.isAfter(maghrib)).time;
     final expected = nextFajr.subtract(nextFajr.difference(maghrib) ~/ 3);
     expect(qiyam.difference(expected).inSeconds.abs(), lessThan(60));
     expect(qiyam.difference(maghrib).inMinutes, closeTo(nextFajr.difference(maghrib).inMinutes * 2 / 3, 1));
@@ -176,6 +176,47 @@ void main() {
     final ids = plan.map((a) => a.id).toList();
     expect(ids.toSet().length, ids.length);
     expect(ofKind(planAt(monday), AlertKind.qiyam), isEmpty);
+  });
+
+  test("a schedule rebuilt during the night keeps that night's Qiyam", () {
+    // Rebuilt a minute before the last third begins: after midnight that is
+    // the night of yesterday's Maghrib, which day 0 alone would miss.
+    final maghrib = PrayerTimesService.computeFor(coordinates: cairo, date: DateTime(2026, 6, 15), config: const PrayerConfig())
+        .entry(PrayerName.maghrib)
+        .time;
+    final lastThird = PrayerNotificationService.lastThirdOfNight(maghrib, cairo, const PrayerConfig());
+    final now = lastThird.subtract(const Duration(minutes: 1));
+    final plan = PrayerNotificationService.plan(coordinates: cairo, now: now, sunnah: {SunnahAlert.qiyam});
+    expect(ofKind(plan, AlertKind.qiyam).where((a) => a.time.difference(lastThird).inSeconds.abs() < 60), hasLength(1));
+    final ids = plan.map((a) => a.id).toList();
+    expect(ids.toSet().length, ids.length);
+  });
+
+  test('every calendar day is planned once, across a clock change', () {
+    // Egypt and Europe put their clocks back in late October; run this file
+    // with TZ=Africa/Cairo or TZ=Europe/Berlin to exercise it.
+    final plan = PrayerNotificationService.plan(
+      coordinates: cairo,
+      now: DateTime(2026, 10, 20),
+      sunnah: SunnahAlert.values.toSet(),
+    );
+    final fajrDays = [
+      for (final a in ofKind(plan, AlertKind.prayer).where((a) => a.prayer == PrayerName.fajr))
+        DateTime(a.time.year, a.time.month, a.time.day),
+    ];
+    expect(fajrDays.toSet().length, days);
+
+    DateTime maghribOn(DateTime d) =>
+        PrayerTimesService.computeFor(coordinates: cairo, date: d, config: const PrayerConfig())
+            .entry(PrayerName.maghrib)
+            .time;
+    for (final q in ofKind(plan, AlertKind.qiyam)) {
+      // Each falls within the night after some Maghrib, never mid-morning.
+      final day = DateTime(q.time.year, q.time.month, q.time.day);
+      final inNight = [maghribOn(day), maghribOn(DateTime(day.year, day.month, day.day - 1))]
+          .any((m) => q.time.isAfter(m) && q.time.difference(m) < const Duration(hours: 14));
+      expect(inNight, isTrue, reason: '${q.time}');
+    }
   });
 
   test('no adhkar reminders unless asked for', () {

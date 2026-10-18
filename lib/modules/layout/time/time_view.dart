@@ -85,7 +85,7 @@ class _TimeViewState extends State<TimeView> {
   bool get _isToday => DateUtils.isSameDay(_day, _now);
 
   void _shiftDay(int days) =>
-      setState(() => _day = _day.add(Duration(days: days)));
+      setState(() => _day = DateTime(_day.year, _day.month, _day.day + days));
 
   @override
   Widget build(BuildContext context) {

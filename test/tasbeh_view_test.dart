@@ -153,4 +153,29 @@ void main() {
     expect(_count(tester), '33');
     expect(_rounds(tester), 'No rounds yet');
   });
+
+  testWidgets('undo does not reach into a round once another dhikr is picked', (tester) async {
+    await tester.pumpWidget(_wrap());
+    await _tapCounter(tester, times: 33);
+    await tester.tap(find.widgetWithText(ChoiceChip, 'اللَّهُ أَكْبَر'));
+    await tester.pump();
+    final undo = tester.widget<TextButton>(find.byKey(TasbehView.undoKey));
+    expect(undo.onPressed, isNull);
+  });
+
+  testWidgets('lowering the target below the count completes the round', (tester) async {
+    await tester.pumpWidget(_wrap());
+    await tester.tap(find.widgetWithText(TextButton, 'Target: 33'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ListTile, '99'));
+    await tester.pumpAndSettle();
+    await _tapCounter(tester, times: 50);
+
+    await tester.tap(find.widgetWithText(TextButton, 'Target: 99'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ListTile, '33'));
+    await tester.pumpAndSettle();
+    expect(_count(tester), '0');
+    expect(_rounds(tester), '1 round completed');
+  });
 }

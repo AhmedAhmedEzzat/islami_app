@@ -263,6 +263,7 @@ class _MoreMenu extends StatelessWidget {
     );
     if (picked == null || picked == settings.state.verseRepeat) return;
     await settings.setVerseRepeat(picked);
-    if (player.state.isPlaying) await player.restartFromCurrentVerse();
+    // Applies at once whether playing or paused.
+    if (player.state.suraId != null) await player.restartFromCurrentVerse();
   }
 }

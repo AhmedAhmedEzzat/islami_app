@@ -92,7 +92,7 @@ class _CalendarViewState extends State<CalendarView> {
                     Text('$monthName $year', style: context.texts.titleLarge),
                     Text(
                       '${DateFormat.yMMM(locale).format(first)} – '
-                      '${DateFormat.yMMM(locale).format(first.add(Duration(days: days - 1)))}',
+                      '${DateFormat.yMMM(locale).format(DateTime(first.year, first.month, first.day + days - 1))}',
                       style: context.texts.bodySmall?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),
@@ -132,7 +132,7 @@ class _CalendarViewState extends State<CalendarView> {
               for (var d = 1; d <= days; d++)
                 Builder(
                   builder: (context) {
-                    final g = first.add(Duration(days: d - 1));
+                    final g = DateTime(first.year, first.month, first.day + d - 1);
                     final isToday = g == today;
                     final events = IslamicCalendar.eventsOn(month, d);
                     final white = IslamicCalendar.isWhiteDay(d);

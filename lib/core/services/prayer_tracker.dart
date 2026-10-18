@@ -57,11 +57,12 @@ abstract final class PrayerTracker {
   /// a streak that ran up to yesterday.
   static int streak(DateTime today) {
     var day = _day(today);
-    if (maskFor(day) != _all) day = day.subtract(const Duration(days: 1));
+    // Calendar days back, not 24-hour steps, which skip a date at a clock change.
+    if (maskFor(day) != _all) day = DateTime(day.year, day.month, day.day - 1);
     var n = 0;
     while (maskFor(day) == _all) {
       n++;
-      day = day.subtract(const Duration(days: 1));
+      day = DateTime(day.year, day.month, day.day - 1);
     }
     return n;
   }

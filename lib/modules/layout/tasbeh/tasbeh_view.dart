@@ -53,6 +53,19 @@ class _TasbehViewState extends State<TasbehView> {
   int today = 0;
   String _day = _todayKey();
 
+  /// The dhikr of the round just completed, so undo can step back into it.
+  /// Cleared once the selection or target changes, when that round is no
+  /// longer what "back" means.
+  int? _lastRound;
+
+  /// Starts a new day's total if midnight has passed. True if it did.
+  bool _rollDay() {
+    if (_todayKey() == _day) return false;
+    _day = _todayKey();
+    today = 0;
+    return true;
+  }
+
   List<String> get azkar => [...classic, ...custom];
 
   static String _todayKey() {
@@ -85,15 +98,13 @@ class _TasbehViewState extends State<TasbehView> {
   void _increment() {
     setState(() {
       // A new day starts a new total, even with the screen left open.
-      if (_todayKey() != _day) {
-        _day = _todayKey();
-        today = 0;
-      }
+      _rollDay();
       counter++;
       today++;
       if (counter >= target) {
         counter = 0;
         rounds++;
+        _lastRound = index;
         // The classic three follow one another; the user's own stay put.
         if (index < classic.length) index = (index + 1) % classic.length;
         HapticFeedback.mediumImpact();
@@ -106,14 +117,16 @@ class _TasbehViewState extends State<TasbehView> {
 
   /// Steps back one count, rolling back across a completed round if needed.
   void _undo() {
-    if (counter == 0 && rounds == 0) return;
+    if (counter == 0 && _lastRound == null) return;
     setState(() {
-      if (today > 0) today--;
+      // Yesterday's taps are not taken off today's total.
+      if (!_rollDay() && today > 0) today--;
       if (counter > 0) {
         counter--;
       } else {
         rounds--;
-        if (index < classic.length) index = (index - 1 + classic.length) % classic.length;
+        index = _lastRound!;
+        _lastRound = null;
         counter = target - 1;
       }
     });
@@ -138,7 +151,13 @@ class _TasbehViewState extends State<TasbehView> {
     if (picked == null || picked == target) return;
     setState(() {
       target = picked;
-      counter = counter.clamp(0, target - 1);
+      _lastRound = null;
+      // Already at the new, lower target: that round is complete.
+      if (counter >= target) {
+        counter = 0;
+        rounds++;
+        if (index < classic.length) index = (index + 1) % classic.length;
+      }
     });
     LocalStorageServices.setInt(PrefsKeys.tasbehTarget, target);
     _persist();
@@ -155,6 +174,7 @@ class _TasbehViewState extends State<TasbehView> {
     );
     if (text == null || text.isEmpty || azkar.contains(text)) return;
     setState(() {
+      _lastRound = null;
       custom = [...custom, text];
       index = azkar.length - 1;
       counter = 0;
@@ -176,6 +196,7 @@ class _TasbehViewState extends State<TasbehView> {
     );
     if (ok != true || !mounted) return;
     setState(() {
+      _lastRound = null;
       custom = [...custom]..removeAt(i - classic.length);
       if (index == i) {
         index = 0;
@@ -213,12 +234,14 @@ class _TasbehViewState extends State<TasbehView> {
       counter = 0;
       index = 0;
       rounds = 0;
+      _lastRound = null;
     });
     _persist();
   }
 
   void _selectZikr(int value) {
     setState(() {
+      _lastRound = null;
       index = value;
       counter = 0;
     });
@@ -278,7 +301,7 @@ class _TasbehViewState extends State<TasbehView> {
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            context.l10n.tasbehToday(today),
+            context.l10n.tasbehToday(_todayKey() == _day ? today : 0),
             style: context.texts.labelMedium?.copyWith(color: scheme.primary),
           ),
           const SizedBox(height: AppSpacing.md),
@@ -287,7 +310,7 @@ class _TasbehViewState extends State<TasbehView> {
             children: [
               TextButton.icon(
                 key: TasbehView.undoKey,
-                onPressed: (counter == 0 && rounds == 0) ? null : _undo,
+                onPressed: (counter == 0 && _lastRound == null) ? null : _undo,
                 icon: const Icon(Icons.undo),
                 label: Text(context.l10n.undo),
               ),

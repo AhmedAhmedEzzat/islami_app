@@ -42,7 +42,7 @@ abstract final class PrayerWidget {
         for (var d = 0; d < days; d++)
           for (final e in PrayerTimesService.computeFor(
             coordinates: location.coordinates,
-            date: today.add(Duration(days: d)),
+            date: DateTime(today.year, today.month, today.day + d),
             config: config,
           ).prayers)
             if (e.prayer != PrayerName.sunrise)

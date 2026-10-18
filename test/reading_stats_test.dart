@@ -43,4 +43,14 @@ void main() {
     expect(ReadingStats.pagesOn(ago(ReadingStats.keepDays + 5)), 0);
     expect(ReadingStats.pagesOn(today), 1);
   });
+
+  test('the streak steps by calendar day across a clock change', () async {
+    // Europe puts its clocks forward on 29 March 2026; run with
+    // TZ=Europe/Berlin to exercise it.
+    final day = DateTime(2026, 3, 31, 20);
+    for (final d in [27, 28, 29, 30, 31]) {
+      await ReadingStats.notePage(1, at: DateTime(2026, 3, d, 20));
+    }
+    expect(ReadingStats.streak(day), 5);
+  });
 }
