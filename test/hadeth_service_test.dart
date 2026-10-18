@@ -31,7 +31,7 @@ void main() {
       'numbers 1..50: 42 of An-Nawawi with English, then 8 of Ibn Rajab',
       () {
         expect(
-          all.map((h) => h.number),
+          all.take(HadethService.hadethCount).map((h) => h.number),
           List.generate(HadethService.hadethCount, (i) => i + 1),
         );
         final nawawi = all
@@ -46,11 +46,26 @@ void main() {
           );
         }
         expect(
-          all.skip(42).every((h) => h.collection == HadethCollection.ibnRajab),
+          all.skip(42).take(8).every((h) => h.collection == HadethCollection.ibnRajab),
           isTrue,
         );
       },
     );
+
+    test('then the forty Qudsi, numbered 101..140, each with English', () {
+      final qudsi = all.where((h) => h.collection == HadethCollection.qudsi).toList();
+      expect(
+        qudsi.map((h) => h.number),
+        List.generate(HadethService.qudsiCount, (i) => HadethService.qudsiFirst + i),
+      );
+      for (final h in qudsi) {
+        expect(h.title, startsWith('الحديث القدسي '));
+        expect(h.english, isNotEmpty, reason: 'qudsi ${h.number}');
+      }
+      expect(ArabicText.normalizeForSearch(qudsi.first.content.join(' ')), contains('ان رحمتي تغلب غضبي'));
+      // Favourites are kept by number, so numbers must be unique.
+      expect(all.map((h) => h.number).toSet().length, all.length);
+    });
 
     test('every hadeth has a title and text, with no markup left in it', () {
       for (final h in all) {

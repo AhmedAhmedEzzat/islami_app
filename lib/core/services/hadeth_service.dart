@@ -4,10 +4,14 @@ import 'package:flutter/services.dart';
 import 'package:sakina/core/utils/arabic_text.dart';
 import 'package:sakina/models/hadeth_data_model.dart';
 
-/// Loads the bundled ahadeth: An-Nawawi's Forty (1..42) and Ibn Rajab's
-/// additions (43..50), generated into one file by tool/build_content_assets.py.
+/// Loads the bundled ahadeth: An-Nawawi's Forty (1..42), Ibn Rajab's
+/// additions (43..50) and the Forty Hadith Qudsi (101..140), generated into
+/// one file by tool/build_content_assets.py.
 abstract class HadethService {
+  /// An-Nawawi's and Ibn Rajab's, numbered 1..50.
   static const int hadethCount = 50;
+  static const int qudsiFirst = 101;
+  static const int qudsiCount = 40;
   static const String asset = 'assets/hadeth/hadeth.json';
 
   static List<HadethDataModel> _cache = [];

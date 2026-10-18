@@ -13,6 +13,7 @@ import '../../../core/utils/l10n_ext.dart';
 import '../../../core/widgets/app_background.dart';
 import '../../../models/quran_open_request.dart';
 import '../../../models/sura_data_model.dart';
+import '../../more/listen_view.dart';
 import '../../settings/settings_view.dart';
 import 'quran_details_view.dart';
 import 'quran_search_view.dart';
@@ -63,6 +64,14 @@ class _QuranViewState extends State<QuranView> {
             MaterialPageRoute<void>(
               builder: (_) => QuranSearchView(onOpen: _open),
             ),
+          ),
+        ),
+        IconButton(
+          tooltip: l10n.listenTitle,
+          icon: const Icon(Icons.headphones_outlined),
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute<void>(builder: (_) => const ListenView()),
           ),
         ),
         IconButton(

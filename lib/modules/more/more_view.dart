@@ -5,7 +5,6 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../core/constants/assets.dart';
 import '../../core/services/prayer_times_service.dart';
-import '../../core/services/recitation_downloads.dart';
 import '../../core/services/review_prompt.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
@@ -17,7 +16,7 @@ import '../layout/time/qibla_view.dart';
 import '../layout/time/tracker_view.dart';
 import '../settings/settings_view.dart';
 import 'calendar_view.dart';
-import 'downloads_view.dart';
+import 'listen_view.dart';
 import 'duas_view.dart';
 import 'names_view.dart';
 import 'zakat_view.dart';
@@ -137,12 +136,11 @@ class MoreView extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (RecitationDownloads.supported)
-                  ListTile(
-                    leading: const Icon(Icons.download_for_offline_outlined),
-                    title: Text(l10n.offlineRecitations),
-                    onTap: () => push(const DownloadsView()),
-                  ),
+                ListTile(
+                  leading: const Icon(Icons.headphones_outlined),
+                  title: Text(l10n.listenTitle),
+                  onTap: () => push(const ListenView()),
+                ),
                 // The store page needs an App Store id on iOS, which the app
                 // does not have yet; Google Play needs none.
                 if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android)

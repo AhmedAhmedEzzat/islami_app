@@ -7,11 +7,11 @@ import '../../core/constants/reciters.dart';
 import '../../core/services/prayer_config.dart';
 import '../../core/services/prayer_times_service.dart';
 import '../../core/utils/prayer_labels.dart';
-import '../../core/services/recitation_downloads.dart';
 import '../../core/constants/muezzins.dart';
 import '../../core/services/prayer_notification_service.dart';
-import '../more/downloads_view.dart';
+import '../more/listen_view.dart';
 import 'prayer_notifications_prompt.dart';
+import 'tafsir_download_tile.dart';
 import '../../core/state/settings_cubit.dart';
 import '../../core/state/settings_state.dart';
 import '../../core/theme/app_colors.dart';
@@ -109,6 +109,7 @@ class SettingsView extends StatelessWidget {
                   if (picked != null) cubit.setMushafPaper(picked);
                 },
               ),
+              const TafsirDownloadTile(),
 
               _SectionHeader(context.l10n.recitationSection),
               ListTile(
@@ -128,17 +129,16 @@ class SettingsView extends StatelessWidget {
                   if (picked != null) cubit.setReciter(picked);
                 },
               ),
-              if (RecitationDownloads.supported)
-                ListTile(
-                  leading: const Icon(Icons.download_for_offline_outlined),
-                  title: Text(context.l10n.offlineRecitations),
-                  subtitle: Text(context.l10n.offlineRecitationsSubtitle),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute<void>(builder: (_) => const DownloadsView()),
-                  ),
+              ListTile(
+                leading: const Icon(Icons.headphones_outlined),
+                title: Text(context.l10n.listenTitle),
+                subtitle: Text(context.l10n.offlineRecitationsSubtitle),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute<void>(builder: (_) => const ListenView()),
                 ),
+              ),
 
               _SectionHeader(context.l10n.prayerTimesSection),
               ListTile(

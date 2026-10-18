@@ -52,7 +52,7 @@
       }
     }
   },
-  "hadethTitle": "An-Nawawi's Forty",
+  "hadethTitle": "Hadith",
   "hadethLoadError": "Could not load the ahadeth.",
   "noHadeth": "No ahadeth are bundled with the app.",
   "tapToRead": "Tap to read",
@@ -227,7 +227,7 @@
   "tafsirTitle": "Tafsir",
   "tafsirMuyassar": "Al-Muyassar",
   "tafsirJalalayn": "Al-Jalalayn",
-  "tafsirUnavailable": "Tafsir needs an internet connection the first time it is opened.",
+  "tafsirUnavailable": "Tafsir needs an internet connection the first time it is opened. To read it offline, save it all from Settings › Offline tafsir.",
   "playFromHere": "Play from this verse",
   "addBookmark": "Bookmark",
   "removeBookmark": "Remove bookmark",
@@ -711,8 +711,16 @@
   "adhanHelpGrant": "Check permissions",
   "ok": "OK",
   "focusHint": "Tip: tap the page to read full screen",
+  "listenTitle": "Listen and download",
+  "offlineTafsir": "Offline tafsir",
+  "offlineTafsirSaved": "Al-Muyassar and Al-Jalalayn: {saved} of {total} suras saved",
+  "offlineTafsirAll": "Both tafsirs saved, readable without internet",
+  "offlineTafsirDone": "Tafsir saved for reading offline",
+  "offlineTafsirFailed": "Download stopped. Check the connection and try again.",
+  "deleteTafsirConfirm": "Delete the saved tafsir? Each sura downloads again when you open it.",
+  "@offlineTafsirSaved": {"placeholders": {"saved": {"type": "int"}, "total": {"type": "int"}}},
   "offlineRecitations": "Offline recitations",
-  "offlineRecitationsSubtitle": "Download reciters to listen without internet",
+  "offlineRecitationsSubtitle": "Play any sura with any reciter, or save it for offline listening",
   "surasDownloaded": "{n} suras downloaded",
   "@surasDownloaded": {
     "placeholders": {
@@ -763,7 +771,7 @@
     }
   },
   "keepAppOpenWhileDownloading": "Keep the app open while downloading. Finished suras stay saved if you leave.",
-  "ayahsCount": "{n} verses",
+  "ayahsCount": "{n, plural, =1{1 verse} other{{n} verses}}",
   "@ayahsCount": {
     "placeholders": {
       "n": {
@@ -874,5 +882,7 @@
   "paperAuto": "Automatic (cream by day, dark at night)",
   "paperWhite": "White",
   "paperSepia": "Sepia (easy on the eyes)",
-  "paperNight": "Night"
+  "paperNight": "Night",
+  "qudsiSection": "Forty Hadith Qudsi",
+  "hadethSourceQudsi": "Source: Forty Hadith Qudsi, fawazahmed0/hadith-api"
 }

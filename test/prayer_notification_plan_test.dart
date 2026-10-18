@@ -8,7 +8,10 @@ import 'package:sakina/core/services/prayer_notification_service.dart';
 import 'package:sakina/core/services/prayer_times_service.dart';
 
 void main() {
-  final cairo = Coordinates(30.0444, 31.2357);
+  // Cairo's latitude, at the longitude whose sun matches the test machine's
+  // clock, so each day's prayers fall on that local calendar day in any
+  // timezone, as they do on a phone set to where its owner is.
+  final place = Coordinates(30.0444, _localLongitude());
   const days = PrayerNotificationService.daysAhead;
 
   List<ScheduledAlert> planAt(
@@ -18,7 +21,7 @@ void main() {
     int reminder = 0,
     bool kahf = false,
   }) => PrayerNotificationService.plan(
-    coordinates: cairo,
+    coordinates: place,
     now: now,
     config: config,
     prayers: prayers ?? PrayerNotificationService.notifiedPrayers.toSet(),
@@ -51,7 +54,7 @@ void main() {
     // Fajr and Dhuhr have passed; Asr, Maghrib and Isha remain today. The
     // moment is taken from the computed times so it holds in any timezone.
     final times = PrayerTimesService.computeFor(
-      coordinates: cairo,
+      coordinates: place,
       date: DateTime(2026, 6, 15),
       config: const PrayerConfig(),
     );
@@ -113,7 +116,7 @@ void main() {
 
   test('adhkar reminders come half an hour after Fajr and Asr, with unique ids', () {
     final plan = PrayerNotificationService.plan(
-      coordinates: cairo,
+      coordinates: place,
       now: monday,
       reminderMinutes: 10,
       fridayKahf: true,
@@ -130,7 +133,7 @@ void main() {
   });
 
   test('the khatma reminder comes daily, half an hour after Isha', () {
-    final plan = PrayerNotificationService.plan(coordinates: cairo, now: monday, khatma: true, adhkar: true);
+    final plan = PrayerNotificationService.plan(coordinates: place, now: monday, khatma: true, adhkar: true);
     final khatma = ofKind(plan, AlertKind.khatma).toList();
     expect(khatma, hasLength(days));
     final isha = ofKind(plan, AlertKind.prayer).firstWhere((a) => a.prayer == PrayerName.isha);
@@ -142,7 +145,7 @@ void main() {
 
   test('sunnah reminders: Duha mid-morning, Qiyam in the last third, Jumu\'ah on Fridays', () {
     final plan = PrayerNotificationService.plan(
-      coordinates: cairo,
+      coordinates: place,
       now: monday,
       sunnah: SunnahAlert.values.toSet(),
       reminderMinutes: 10,
@@ -150,8 +153,8 @@ void main() {
       khatma: true,
       fridayKahf: true,
     );
-    final day0 = PrayerTimesService.computeFor(coordinates: cairo, date: DateTime(2026, 6, 15), config: const PrayerConfig());
-    final day1 = PrayerTimesService.computeFor(coordinates: cairo, date: DateTime(2026, 6, 16), config: const PrayerConfig());
+    final day0 = PrayerTimesService.computeFor(coordinates: place, date: DateTime(2026, 6, 15), config: const PrayerConfig());
+    final day1 = PrayerTimesService.computeFor(coordinates: place, date: DateTime(2026, 6, 16), config: const PrayerConfig());
 
     final duha = ofKind(plan, AlertKind.duha).first.time;
     expect(duha.isAfter(day0.entry(PrayerName.sunrise).time), isTrue);
@@ -181,12 +184,12 @@ void main() {
   test("a schedule rebuilt during the night keeps that night's Qiyam", () {
     // Rebuilt a minute before the last third begins: after midnight that is
     // the night of yesterday's Maghrib, which day 0 alone would miss.
-    final maghrib = PrayerTimesService.computeFor(coordinates: cairo, date: DateTime(2026, 6, 15), config: const PrayerConfig())
+    final maghrib = PrayerTimesService.computeFor(coordinates: place, date: DateTime(2026, 6, 15), config: const PrayerConfig())
         .entry(PrayerName.maghrib)
         .time;
-    final lastThird = PrayerNotificationService.lastThirdOfNight(maghrib, cairo, const PrayerConfig());
+    final lastThird = PrayerNotificationService.lastThirdOfNight(maghrib, place, const PrayerConfig());
     final now = lastThird.subtract(const Duration(minutes: 1));
-    final plan = PrayerNotificationService.plan(coordinates: cairo, now: now, sunnah: {SunnahAlert.qiyam});
+    final plan = PrayerNotificationService.plan(coordinates: place, now: now, sunnah: {SunnahAlert.qiyam});
     expect(ofKind(plan, AlertKind.qiyam).where((a) => a.time.difference(lastThird).inSeconds.abs() < 60), hasLength(1));
     final ids = plan.map((a) => a.id).toList();
     expect(ids.toSet().length, ids.length);
@@ -196,7 +199,7 @@ void main() {
     // Egypt and Europe put their clocks back in late October; run this file
     // with TZ=Africa/Cairo or TZ=Europe/Berlin to exercise it.
     final plan = PrayerNotificationService.plan(
-      coordinates: cairo,
+      coordinates: place,
       now: DateTime(2026, 10, 20),
       sunnah: SunnahAlert.values.toSet(),
     );
@@ -207,7 +210,7 @@ void main() {
     expect(fajrDays.toSet().length, days);
 
     DateTime maghribOn(DateTime d) =>
-        PrayerTimesService.computeFor(coordinates: cairo, date: d, config: const PrayerConfig())
+        PrayerTimesService.computeFor(coordinates: place, date: d, config: const PrayerConfig())
             .entry(PrayerName.maghrib)
             .time;
     for (final q in ofKind(plan, AlertKind.qiyam)) {
@@ -293,4 +296,10 @@ void main() {
       }
     });
   });
+}
+
+/// The longitude where local clock time is roughly solar time.
+double _localLongitude() {
+  final longitude = DateTime(2026, 6, 15).timeZoneOffset.inMinutes / 4;
+  return longitude > 180 ? longitude - 360 : longitude;
 }

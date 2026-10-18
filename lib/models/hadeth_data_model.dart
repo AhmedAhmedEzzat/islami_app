@@ -1,5 +1,5 @@
 /// Which book a bundled hadeth belongs to.
-enum HadethCollection { nawawi, ibnRajab }
+enum HadethCollection { nawawi, ibnRajab, qudsi }
 
 class HadethDataModel {
   HadethDataModel({
@@ -17,9 +17,11 @@ class HadethDataModel {
         title: json['title'] as String,
         content: [for (final p in json['ar'] as List) p as String],
         english: json['en'] as String?,
-        collection: json['c'] == 'ibn_rajab'
-            ? HadethCollection.ibnRajab
-            : HadethCollection.nawawi,
+        collection: switch (json['c']) {
+          'ibn_rajab' => HadethCollection.ibnRajab,
+          'qudsi' => HadethCollection.qudsi,
+          _ => HadethCollection.nawawi,
+        },
       );
 
   final String title;

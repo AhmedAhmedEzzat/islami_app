@@ -70,6 +70,9 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
   List<int> _ayahAt = const [];
   int? _lastIndex;
   String _reciterId = Reciters.all.first.id;
+
+  /// The reciter of what is loaded, or was last.
+  String get reciterId => _reciterId;
   bool _advancing = false;
 
   /// Bumped by every start, pause and stop, so a load still in flight can
