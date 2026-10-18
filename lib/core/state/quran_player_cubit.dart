@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:just_audio/just_audio.dart';
 
 import '../constants/reciters.dart';
+import '../services/recitation_downloads.dart';
 import 'quran_player_state.dart';
 import 'radio_cubit.dart';
 
@@ -94,11 +95,9 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
     );
 
     try {
+      await RecitationDownloads.ready();
       await _player.setAudioSources([
-        for (final a in _ayahAt)
-          AudioSource.uri(
-            Uri.parse(a == 0 ? reciter.basmalaUrl : reciter.urlForVerse(sura, a)),
-          ),
+        for (final a in _ayahAt) _sourceFor(reciter, a == 0 ? 1 : sura, a == 0 ? 1 : a),
       ], preload: true);
       await _applyRepeat(state.repeat);
       if (isClosed) return;
@@ -109,6 +108,15 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
       // The text must stay readable even when audio fails.
       emit(state.copyWith(clearSura: true, errorKey: 'recitation_unavailable'));
     }
+  }
+
+  /// The verse's saved file when it has been downloaded, so it plays without
+  /// a connection; otherwise its stream.
+  static AudioSource _sourceFor(Reciter reciter, int sura, int ayah) {
+    final local = RecitationDownloads.localPath(reciter, sura, ayah);
+    return local != null
+        ? AudioSource.file(local)
+        : AudioSource.uri(Uri.parse(reciter.urlForVerse(sura, ayah)));
   }
 
   /// Play/pause if [suraId] is loaded, otherwise start it from verse 1.

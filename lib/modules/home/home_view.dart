@@ -7,11 +7,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 
 import '../../core/constants/assets.dart';
+import '../../core/constants/constants.dart';
 import '../../core/constants/daily_verses.dart';
 import '../../core/constants/quran_duas.dart';
 import '../../core/services/hadeth_service.dart';
 import '../../core/services/islamic_calendar.dart';
-import '../../core/services/prayer_notification_service.dart';
+import '../../core/services/mushaf_layout.dart';
+import '../../core/services/notification_refresh.dart';
 import '../../core/services/prayer_times_service.dart';
 import '../../core/services/quran_service.dart';
 import '../../core/services/recent_suras.dart';
@@ -39,6 +41,7 @@ import '../more/calendar_view.dart';
 import '../more/duas_view.dart';
 import '../more/names_view.dart';
 import '../settings/settings_view.dart';
+import 'khatma_card.dart';
 
 /// The first tab: today at a glance and one tap to everything daily.
 class HomeView extends StatefulWidget {
@@ -87,27 +90,17 @@ class _HomeViewState extends State<HomeView> {
     final fresh = await PrayerTimesService.refreshLocation();
     if (!mounted) return;
     setState(() => _location = fresh);
-    if (!_same(before, fresh.coordinates)) _rescheduleIfOn();
+    if (!_same(before, fresh.coordinates)) _reschedule();
   }
 
   static bool _same(Coordinates a, Coordinates b) =>
       (a.latitude - b.latitude).abs() < 1e-4 &&
       (a.longitude - b.longitude).abs() < 1e-4;
 
-  /// The prayer alerts were planned for the old position.
-  void _rescheduleIfOn() {
+  /// The prayer alerts and the widget's times were for the old position.
+  void _reschedule() {
     final s = context.read<SettingsCubit>().state;
-    if (!s.prayerNotifications) return;
-    PrayerNotificationService.reschedule(
-      enabled: true,
-      locale: Localizations.localeOf(context),
-      config: s.prayerConfig,
-      prayers: s.notifiedPrayers,
-      reminderMinutes: s.reminderMinutes,
-      fridayKahf: s.fridayKahf,
-      fasting: s.fastingAlerts,
-      hijriOffset: s.hijriOffset,
-    );
+    NotificationRefresh.reschedule(s, Localizations.localeOf(context));
   }
 
   static Future<HadethDataModel?> _hadethOfTheDay() async {
@@ -124,13 +117,21 @@ class _HomeViewState extends State<HomeView> {
     ),
   );
 
-  void _openSura(SuraDataModel sura, {int? ayah}) {
+  void _openSura(SuraDataModel sura, {int? ayah, int? page}) {
     final scope = LayoutScope.maybeOf(context);
     if (scope != null) {
-      scope.openSura(sura, ayah: ayah);
+      scope.openSura(sura, ayah: ayah, page: page);
     } else {
-      openSura(context, sura, ayah: ayah);
+      openSura(context, sura, ayah: ayah, page: page);
     }
+  }
+
+  /// Opens the mushaf at a 1-based [page].
+  Future<void> _openPage(int page) async {
+    final layout = await MushafLayout.load();
+    if (!mounted) return;
+    final p = page.clamp(1, MushafLayout.pageCount);
+    _openSura(Constants.suraDataLists[layout.firstWord(p).sura - 1], page: p);
   }
 
   @override
@@ -161,13 +162,12 @@ class _HomeViewState extends State<HomeView> {
           final offset = settings.hijriOffset;
           final ramadanDay = IslamicCalendar.ramadanDay(_now, offset: offset);
 
+          // On a tablet the cards keep a readable width instead of
+          // stretching edge to edge.
+          final side = ((MediaQuery.sizeOf(context).width - 720) / 2)
+              .clamp(AppSpacing.lg, double.infinity);
           return ListView(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              0,
-              AppSpacing.lg,
-              AppSpacing.xl,
-            ),
+            padding: EdgeInsets.fromLTRB(side, 0, side, AppSpacing.xl),
             children: [
               _DateHeader(now: _now, hijriOffset: offset),
               const SizedBox(height: AppSpacing.md),
@@ -210,6 +210,8 @@ class _HomeViewState extends State<HomeView> {
                   );
                 },
               ),
+              const SizedBox(height: AppSpacing.sm),
+              KhatmaCard(now: _now, onOpenPage: _openPage),
               const SizedBox(height: AppSpacing.lg),
               _SectionTitle(l10n.quickAccess),
               _QuickGrid(

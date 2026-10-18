@@ -7,7 +7,7 @@ import 'package:intl/intl.dart' hide TextDirection;
 
 import '../../../core/constants/assets.dart';
 import '../../../core/services/islamic_calendar.dart';
-import '../../../core/services/prayer_notification_service.dart';
+import '../../../core/services/notification_refresh.dart';
 import '../../../core/services/prayer_times_service.dart';
 import '../../../core/state/settings_cubit.dart';
 import '../../../core/state/settings_state.dart';
@@ -65,23 +65,13 @@ class _TimeViewState extends State<TimeView> {
       _location = fresh;
       _locating = false;
     });
-    _rescheduleIfOn();
+    _reschedule();
   }
 
   /// A different location moves every prayer, so the schedule is rebuilt.
-  void _rescheduleIfOn() {
+  void _reschedule() {
     final s = context.read<SettingsCubit>().state;
-    if (!s.prayerNotifications) return;
-    PrayerNotificationService.reschedule(
-      enabled: true,
-      locale: Localizations.localeOf(context),
-      config: s.prayerConfig,
-      prayers: s.notifiedPrayers,
-      reminderMinutes: s.reminderMinutes,
-      fridayKahf: s.fridayKahf,
-      fasting: s.fastingAlerts,
-      hijriOffset: s.hijriOffset,
-    );
+    NotificationRefresh.reschedule(s, Localizations.localeOf(context));
   }
 
   Future<void> _changeLocation() async {
@@ -89,7 +79,7 @@ class _TimeViewState extends State<TimeView> {
     if (changed != true || !mounted) return;
     setState(() => _location = PrayerTimesService.currentLocation());
     if (!_location.isManual) await _refreshLocation();
-    _rescheduleIfOn();
+    _reschedule();
   }
 
   bool get _isToday => DateUtils.isSameDay(_day, _now);

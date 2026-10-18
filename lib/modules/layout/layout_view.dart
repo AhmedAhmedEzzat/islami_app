@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../core/theme/app_tokens.dart';
 import '../../core/constants/constants.dart';
 import '../../core/state/now_playing.dart';
 import '../../core/state/quran_player_cubit.dart';
@@ -14,7 +15,10 @@ import '../../core/services/recent_suras.dart';
 import '../../models/sura_data_model.dart';
 import '../home/home_view.dart';
 import '../more/more_view.dart';
+import '../../core/services/prayer_notification_service.dart';
+import '../../models/zikr_model.dart';
 import 'azkar/azkar_tab_view.dart';
+import 'azkar/azkar_view.dart';
 import 'layout_scope.dart';
 import 'quran/quran_details_view.dart';
 import 'quran/quran_view.dart';
@@ -73,10 +77,43 @@ class _LayoutViewState extends State<LayoutView> {
     for (final observer in _observers) {
       observer.addListener(_onRouteChanged);
     }
+    PrayerNotificationService.tapped.addListener(_onNotificationTap);
+    // A tap that launched the app arrived before this screen existed.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _onNotificationTap());
+  }
+
+  /// Opens the screen that goes with a tapped notification.
+  void _onNotificationTap() {
+    final kind = PrayerNotificationService.tapped.value;
+    if (kind == null || !mounted) return;
+    PrayerNotificationService.tapped.value = null;
+    switch (kind) {
+      case AlertKind.morningAdhkar || AlertKind.eveningAdhkar:
+        _selectTab(AppTab.azkar);
+        _withNavigator(AppTab.azkar, (navigator) {
+          navigator
+            ..popUntil((route) => route.isFirst)
+            ..push(
+              MaterialPageRoute<void>(
+                builder: (_) => const AzkarView(chapterId: FeaturedAzkar.morningEvening),
+              ),
+            );
+        });
+      case AlertKind.kahf:
+        _openSura(Constants.suraDataLists[17]);
+      case AlertKind.prayer || AlertKind.reminder:
+        _selectTab(AppTab.prayer);
+      case AlertKind.khatma:
+        // Home holds the khatma card, with today's pages and a Read button.
+        _selectTab(AppTab.home);
+      default:
+        _selectTab(AppTab.home);
+    }
   }
 
   @override
   void dispose() {
+    PrayerNotificationService.tapped.removeListener(_onNotificationTap);
     for (final observer in _observers) {
       observer
         ..removeListener(_onRouteChanged)
@@ -139,17 +176,21 @@ class _LayoutViewState extends State<LayoutView> {
   }
 
   /// Opens [sura] in the Quran tab, from wherever the request came from.
-  void _openSura(SuraDataModel sura, {int? ayah}) {
+  void _openSura(SuraDataModel sura, {int? ayah, int? page}) {
     _selectTab(AppTab.quran);
     // Already looking at it — pushing again would stack a duplicate.
-    if (ayah == null && _observers[AppTab.quran].showsSura(sura.suraID)) return;
+    if (ayah == null &&
+        page == null &&
+        _observers[AppTab.quran].showsSura(sura.suraID)) {
+      return;
+    }
     RecentSuras.remember(sura);
     _withNavigator(AppTab.quran, (navigator) {
       navigator
         ..popUntil((route) => route.isFirst)
         ..pushNamed(
           QuranDetailsView.routeName,
-          arguments: QuranOpenRequest(sura, ayah: ayah),
+          arguments: QuranOpenRequest(sura, ayah: ayah, page: page),
         );
     });
   }
@@ -223,42 +264,50 @@ class _LayoutViewState extends State<LayoutView> {
                   const SizedBox.shrink(),
             ],
           ),
-          bottomNavigationBar: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildNowPlaying(),
-              NavigationBar(
-                selectedIndex: _selectedIndex,
-                onDestinationSelected: _onDestinationSelected,
-                destinations: [
-                  NavigationDestination(
-                    icon: const Icon(Icons.home_outlined),
-                    selectedIcon: const Icon(Icons.home),
-                    label: context.l10n.tabHome,
-                  ),
-                  NavigationDestination(
-                    icon: const Icon(Icons.menu_book_outlined),
-                    selectedIcon: const Icon(Icons.menu_book),
-                    label: context.l10n.tabQuran,
-                  ),
-                  NavigationDestination(
-                    icon: const Icon(Icons.access_time_outlined),
-                    selectedIcon: const Icon(Icons.access_time_filled),
-                    label: context.l10n.tabPrayer,
-                  ),
-                  NavigationDestination(
-                    icon: const Icon(Icons.radio_button_checked_outlined),
-                    selectedIcon: const Icon(Icons.radio_button_checked),
-                    label: context.l10n.tabAzkar,
-                  ),
-                  NavigationDestination(
-                    icon: const Icon(Icons.apps_outlined),
-                    selectedIcon: const Icon(Icons.apps),
-                    label: context.l10n.tabMore,
-                  ),
-                ],
-              ),
-            ],
+          bottomNavigationBar: ValueListenableBuilder<bool>(
+            valueListenable: FocusMode.on,
+            builder: (context, focused, bar) => AnimatedSize(
+              duration: AppDurations.normal,
+              curve: Curves.easeInOut,
+              child: focused ? const SizedBox(width: double.infinity) : bar,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildNowPlaying(),
+                NavigationBar(
+                  selectedIndex: _selectedIndex,
+                  onDestinationSelected: _onDestinationSelected,
+                  destinations: [
+                    NavigationDestination(
+                      icon: const Icon(Icons.home_outlined),
+                      selectedIcon: const Icon(Icons.home),
+                      label: context.l10n.tabHome,
+                    ),
+                    NavigationDestination(
+                      icon: const Icon(Icons.menu_book_outlined),
+                      selectedIcon: const Icon(Icons.menu_book),
+                      label: context.l10n.tabQuran,
+                    ),
+                    NavigationDestination(
+                      icon: const Icon(Icons.access_time_outlined),
+                      selectedIcon: const Icon(Icons.access_time_filled),
+                      label: context.l10n.tabPrayer,
+                    ),
+                    NavigationDestination(
+                      icon: const Icon(Icons.radio_button_checked_outlined),
+                      selectedIcon: const Icon(Icons.radio_button_checked),
+                      label: context.l10n.tabAzkar,
+                    ),
+                    NavigationDestination(
+                      icon: const Icon(Icons.apps_outlined),
+                      selectedIcon: const Icon(Icons.apps),
+                      label: context.l10n.tabMore,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

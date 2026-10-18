@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The adhan recordings are looked up by name at runtime, so a release
+     build's resource shrinker sees nothing using them and would drop them. -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@raw/adhan,@raw/adhan_fajr,@raw/adhan_makkah,@raw/adhan_makkah_fajr,@raw/adhan_madinah,@raw/adhan_madinah_fajr,@raw/adhan_aqsa,@raw/adhan_aqsa_fajr,@raw/adhan_egypt,@raw/adhan_egypt_fajr" />

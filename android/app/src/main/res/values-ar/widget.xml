@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_label">الصلاة القادمة</string>
+    <string name="widget_description">الصلاة القادمة مع العد التنازلي، ومواقيت صلوات اليوم</string>
+    <string name="widget_open_app">افتح سكينة لتحميل مواقيت الصلاة</string>
+</resources>

@@ -11,6 +11,9 @@ so it can be regenerated and audited rather than trusted:
   Verse metadata  juz / page / hizb quarter / sajda, from the same response
   Azkar           Hisn al-Muslim, from the official hisnmuslim.com API
   99 Names        api.aladhan.com
+  Mushaf layout   The 604-page, 15-line Madinah mushaf: which words sit on
+                  which line. Line data (MIT) from the quran-qcf4 npm package;
+                  only the layout is used, never its fonts or its text.
   Ahadeth         An-Nawawi's Forty (42), Arabic and English, from the
                   fawazahmed0/hadith-api editions (text from sunnah.com).
                   Ibn Rajab's 8 additions come from the original project's
@@ -24,6 +27,7 @@ import os
 import re
 import subprocess
 import sys
+import unicodedata
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CACHE = os.path.join(ROOT, '.content_cache')
@@ -121,6 +125,151 @@ def build_quran():
         ensure_ascii=False, separators=(',', ':')))
     print(f'quran: 114 suras, {total} verses, {stripped} basmala prefixes removed, '
           f'{sum(len(v["sajda"]) for v in verse_meta.values())} sajda verses')
+
+
+def mushaf_words(verse):
+    """Splits a verse into the words a mushaf line breaks between.
+
+    Tanzil writes pause marks (ۖ ۚ ۛ), the hizb mark ۞ and the sajda mark ۩ as
+    tokens of their own; each joins the word it belongs to, the one before it
+    or, at the start of a verse, the one after. MushafWords.split in the app
+    does the same, and a test holds the two together.
+    """
+    out = []
+    for tok in verse.split():
+        is_word = any(unicodedata.category(c) == 'Lo' for c in tok)
+        if out and (not is_word or not any(unicodedata.category(c) == 'Lo' for c in out[-1])):
+            out[-1] += ' ' + tok
+        else:
+            out.append(tok)
+    return out
+
+
+def _letters(s):
+    """A word's base letters, so the two spellings of one word compare equal."""
+    s = unicodedata.normalize('NFKD', s)
+    s = ''.join(c for c in s if unicodedata.category(c) == 'Lo')
+    for a, b in (('ٱأإآ', 'ا'), ('ى', 'ي'), ('ؤ', 'و'), ('ئ', 'ي')):
+        s = re.sub(f'[{a}]', b, s)
+    return s.replace('ا', '')
+
+
+def build_mushaf_layout():
+    """Writes quran/mushaf.json: for each page, its lines, each one of
+      [0, sura, ayah, word, sura, ayah, word]  text, first and last word (inclusive,
+                                                word 1-based as in mushaf_words)
+      [1, sura]                                 the sura's title frame
+      [2, sura]                                 the basmala
+    and the words the mushaf splits in two, as [sura, ayah, word, character].
+    """
+    import tarfile
+    os.makedirs(CACHE, exist_ok=True)
+    tgz = os.path.join(CACHE, 'quran-qcf4-1.1.0.tgz')
+    if not os.path.exists(tgz):
+        subprocess.run(['curl', '-sSfL', '--retry', '3', '--max-time', '600', '-o', tgz,
+                        'https://registry.npmjs.org/quran-qcf4/-/quran-qcf4-1.1.0.tgz'], check=True)
+    pages = []
+    with tarfile.open(tgz) as tar:
+        for n in range(1, 605):
+            pages.append(json.load(tar.extractfile(f'package/pages/{n:03d}.json')))
+
+    text = {}
+    for n in range(1, 115):
+        with open(os.path.join(ASSETS, f'quran/ar/{n}.txt'), encoding='utf-8') as f:
+            for a, line in enumerate((l for l in f.read().split('\n') if l.strip()), 1):
+                text[(n, a)] = mushaf_words(line)
+
+    # The layout's words of each verse, minus its sajda glyph, which the text
+    # carries as a mark on the last word.
+    layout_words = {}
+    for p in pages:
+        for line in p['lines']:
+            for w in line['words']:
+                if w['type'] == 'word' and not w['text'].startswith('#'):
+                    s, a = map(int, w['verse_key'].split(':'))
+                    layout_words.setdefault((s, a), []).append(w['text'])
+
+    # The two agree everywhere except بَعْدَمَا: one word in the text, two
+    # (بَعْدَ مَا) in the mushaf, which can even break a line between them. The
+    # text's word is split where the mushaf splits it, and the split is
+    # recorded so the app splits it the same way.
+    splits = []
+    for key, words in text.items():
+        lw = layout_words[key]
+        if len(lw) == len(words):
+            continue
+        assert len(lw) == len(words) + 1, (key, len(words), len(lw))
+        i = next(i for i in range(len(words))
+                 if _letters(words[i]) == _letters(lw[i] + lw[i + 1]))
+        word = words[i]
+        cut = next(k for k in range(1, len(word)) if _letters(word[:k]) == _letters(lw[i])
+                   and unicodedata.category(word[k]) != 'Mn')
+        words[i:i + 1] = [word[:cut], word[cut:]]
+        splits.append([*key, i + 1, cut])
+    assert len(splits) == 3, splits
+
+    def ref(w):
+        s, a = map(int, w['verse_key'].split(':'))
+        return [s, a, w['position']]
+
+    out, expected = [], (1, 1, 1)
+    order = sorted(text)
+    def following(s, a, w):
+        if w < len(text[(s, a)]):
+            return (s, a, w + 1)
+        i = order.index((s, a))
+        return (*order[i + 1], 1) if i + 1 < len(order) else None
+
+    for n, p in enumerate(pages, 1):
+        assert p['page'] == n
+        lines = []
+        for line in p['lines']:
+            kinds = {w['type'] for w in line['words']}
+            if 'surah_header' in kinds:
+                lines.append([1, line['words'][0]['sura']])
+            elif 'bismillah' in kinds:
+                lines.append([2, line['words'][0]['sura']])
+            else:
+                words = [w for w in line['words'] if w['type'] == 'word' and not w['text'].startswith('#')]
+                first, last = ref(words[0]), ref(words[-1])
+                # Every word of the Quran, once, in order, with no gaps.
+                assert tuple(first) == expected, (n, first, expected)
+                lines.append([0, *first, *last])
+                expected = following(*last)
+        assert len(lines) == (8 if n <= 2 else 15), (n, len(lines))
+        out.append(lines)
+    assert expected is None
+
+    # The verse pages from build_quran follow an older printing, which breaks
+    # pages differently in a few dozen places; the layout's are the current
+    # printing's, so they replace them and every page number in the app agrees.
+    page_of = {}
+    for n, lines in enumerate(out, 1):
+        for l in lines:
+            if l[0] != 0:
+                continue
+            v = (l[1], l[2])
+            if l[3] == 1:
+                page_of.setdefault(v, n)
+            while v <= (l[4], l[5]):
+                page_of.setdefault(v, n)
+                v = (v[0], v[1] + 1) if (v[0], v[1] + 1) in text else (v[0] + 1, 1)
+    with open(os.path.join(ASSETS, 'quran/meta.json'), encoding='utf-8') as f:
+        meta = json.load(f)
+    moved = 0
+    for sura in meta['suras']:
+        n = sura['n']
+        pages_n = [page_of[(n, a)] for a in range(1, sura['ayahs'] + 1)]
+        moved += sum(x != y for x, y in zip(pages_n, meta['verses'][str(n)]['page']))
+        meta['verses'][str(n)]['page'] = pages_n
+        sura['page'] = pages_n[0]
+    write('quran/meta.json', json.dumps(meta, ensure_ascii=False, separators=(',', ':')))
+
+    write('quran/mushaf.json', json.dumps(
+        {'source': 'Madinah mushaf line layout, quran-qcf4 1.1.0 (MIT), re-keyed to the bundled text',
+         'splits': splits, 'pages': out}, separators=(',', ':')))
+    print(f'mushaf: {len(out)} pages, {sum(len(p) for p in out)} lines, {len(splits)} words split, '
+          f'{moved} verse pages corrected')
 
 
 def build_search_text():
@@ -269,6 +418,7 @@ def build_hadeth():
 if __name__ == '__main__':
     build_quran()
     build_search_text()
+    build_mushaf_layout()
     build_hisn()
     build_names()
     build_hadeth()

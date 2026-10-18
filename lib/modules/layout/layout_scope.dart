@@ -23,12 +23,19 @@ class LayoutScope extends InheritedWidget {
 
   final void Function(int tab) selectTab;
 
-  /// Switches to the Quran tab and opens [sura], optionally at [ayah].
-  final void Function(SuraDataModel sura, {int? ayah}) openSura;
+  /// Switches to the Quran tab and opens [sura], optionally at [ayah] or at
+  /// a mushaf [page].
+  final void Function(SuraDataModel sura, {int? ayah, int? page}) openSura;
 
   static LayoutScope? maybeOf(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<LayoutScope>();
 
   @override
   bool updateShouldNotify(LayoutScope old) => false;
+}
+
+/// Distraction-free reading: while on, the layout hides the bottom tabs and
+/// the now-playing bar. The mushaf turns it on and off with a tap.
+abstract final class FocusMode {
+  static final ValueNotifier<bool> on = ValueNotifier(false);
 }

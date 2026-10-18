@@ -12,6 +12,8 @@ import 'core/constants/prefs_keys.dart';
 import 'core/state/bookmarks_cubit.dart';
 import 'core/state/quran_player_cubit.dart';
 import 'core/state/radio_cubit.dart';
+import 'core/services/khatma.dart';
+import 'core/services/notification_refresh.dart';
 import 'core/services/prayer_notification_service.dart';
 import 'core/services/hadeth_favourites.dart';
 import 'core/services/quran_meta.dart';
@@ -49,6 +51,15 @@ Future<void> main() async {
   // Top up the rolling schedule on every launch. Not awaited: it must not hold
   // up the first frame.
   _reschedule(settings.state);
+  // And again every day in the background, for when the app is not opened.
+  NotificationRefresh.init();
+  // Starting, ending or finishing a khatma turns its reminder on or off.
+  var khatmaActive = Khatma.isActive;
+  Khatma.notifier.addListener(() {
+    if (Khatma.isActive == khatmaActive) return;
+    khatmaActive = Khatma.isActive;
+    _reschedule(settings.state);
+  });
   final isFirstTime = LocalStorageServices.getBool(PrefsKeys.firstTime) ?? true;
 
   runApp(SakinaApp(settings: settings, isFirstTime: isFirstTime));
@@ -59,16 +70,7 @@ Locale _effectiveLocale(SettingsState state) =>
     state.locale ?? WidgetsBinding.instance.platformDispatcher.locale;
 
 void _reschedule(SettingsState state) {
-  PrayerNotificationService.reschedule(
-    enabled: state.prayerNotifications,
-    locale: _effectiveLocale(state),
-    config: state.prayerConfig,
-    prayers: state.notifiedPrayers,
-    reminderMinutes: state.reminderMinutes,
-    fridayKahf: state.fridayKahf,
-    fasting: state.fastingAlerts,
-    hijriOffset: state.hijriOffset,
-  );
+  NotificationRefresh.reschedule(state, _effectiveLocale(state));
 }
 
 class SakinaApp extends StatelessWidget {
@@ -111,7 +113,11 @@ class SakinaApp extends StatelessWidget {
             a.reminderMinutes != b.reminderMinutes ||
             a.fridayKahf != b.fridayKahf ||
             a.hijriOffset != b.hijriOffset ||
-            !setEquals(a.fastingAlerts, b.fastingAlerts),
+            !setEquals(a.fastingAlerts, b.fastingAlerts) ||
+            a.prayerSound != b.prayerSound ||
+            a.adhkarReminders != b.adhkarReminders ||
+            a.khatmaReminders != b.khatmaReminders ||
+            a.muezzinId != b.muezzinId,
         listener: (_, state) => _reschedule(state),
         child: BlocBuilder<SettingsCubit, SettingsState>(
           builder: (context, state) {

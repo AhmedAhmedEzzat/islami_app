@@ -1,5 +1,6 @@
 import 'package:adhan/adhan.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sakina/core/constants/muezzins.dart';
 import 'package:sakina/core/services/prayer_config.dart';
 import 'package:sakina/core/services/prayer_notification_service.dart';
 import 'package:sakina/core/services/prayer_times_service.dart';
@@ -97,5 +98,98 @@ void main() {
     final hanafi = ofKind(planAt(monday, config: const PrayerConfig(madhab: 'hanafi')), AlertKind.prayer)
         .firstWhere((a) => a.prayer == PrayerName.asr);
     expect(hanafi.time.isAfter(standard.time), isTrue);
+  });
+
+  test('adhkar reminders come half an hour after Fajr and Asr, with unique ids', () {
+    final plan = PrayerNotificationService.plan(
+      coordinates: cairo,
+      now: monday,
+      reminderMinutes: 10,
+      fridayKahf: true,
+      adhkar: true,
+    );
+    final morning = ofKind(plan, AlertKind.morningAdhkar).toList();
+    final evening = ofKind(plan, AlertKind.eveningAdhkar).toList();
+    expect(morning, hasLength(days));
+    expect(evening, hasLength(days));
+    final fajr = ofKind(plan, AlertKind.prayer).firstWhere((a) => a.prayer == PrayerName.fajr);
+    expect(morning.first.time.difference(fajr.time), PrayerNotificationService.adhkarAfterPrayer);
+    final ids = plan.map((a) => a.id).toList();
+    expect(ids.toSet().length, ids.length);
+  });
+
+  test('the khatma reminder comes daily, half an hour after Isha', () {
+    final plan = PrayerNotificationService.plan(coordinates: cairo, now: monday, khatma: true, adhkar: true);
+    final khatma = ofKind(plan, AlertKind.khatma).toList();
+    expect(khatma, hasLength(days));
+    final isha = ofKind(plan, AlertKind.prayer).firstWhere((a) => a.prayer == PrayerName.isha);
+    expect(khatma.first.time.difference(isha.time), PrayerNotificationService.khatmaAfterIsha);
+    final ids = plan.map((a) => a.id).toList();
+    expect(ids.toSet().length, ids.length);
+    expect(ofKind(planAt(monday), AlertKind.khatma), isEmpty);
+  });
+
+  test('no adhkar reminders unless asked for', () {
+    final plan = planAt(monday);
+    expect(ofKind(plan, AlertKind.morningAdhkar), isEmpty);
+    expect(ofKind(plan, AlertKind.eveningAdhkar), isEmpty);
+  });
+
+  group('channelFor', () {
+    String channel(AlertKind kind, PrayerName? prayer, PrayerSound sound) =>
+        PrayerNotificationService.channelFor(kind, prayer, sound);
+
+    test('Fajr gets its own adhan, the other four share one', () {
+      expect(
+        channel(AlertKind.prayer, PrayerName.fajr, PrayerSound.adhan),
+        PrayerNotificationService.fajrAdhanChannel,
+      );
+      for (final p in [PrayerName.dhuhr, PrayerName.asr, PrayerName.maghrib, PrayerName.isha]) {
+        expect(channel(AlertKind.prayer, p, PrayerSound.adhan), PrayerNotificationService.adhanChannel);
+      }
+    });
+
+    test('the other sounds apply to every prayer, Fajr included', () {
+      for (final p in PrayerNotificationService.notifiedPrayers) {
+        expect(channel(AlertKind.prayer, p, PrayerSound.standard), PrayerNotificationService.standardChannel);
+        expect(channel(AlertKind.prayer, p, PrayerSound.silent), PrayerNotificationService.silentChannel);
+      }
+    });
+
+    test('a muezzin falls back to their own adhan, then the default, then the plain sound', () {
+      final makkah = Muezzins.byId('makkah');
+      expect(PrayerNotificationService.channelsFor(AlertKind.prayer, PrayerName.fajr, PrayerSound.adhan, makkah), [
+        'prayer_adhan_makkah_fajr',
+        'prayer_adhan_makkah',
+        PrayerNotificationService.fajrAdhanChannel,
+        PrayerNotificationService.adhanChannel,
+        PrayerNotificationService.standardChannel,
+      ]);
+      expect(PrayerNotificationService.channelsFor(AlertKind.prayer, PrayerName.isha, PrayerSound.adhan, makkah), [
+        'prayer_adhan_makkah',
+        PrayerNotificationService.adhanChannel,
+        PrayerNotificationService.standardChannel,
+      ]);
+    });
+
+    test('the default muezzin keeps the channels existing installs already have', () {
+      expect(PrayerNotificationService.adhanChannel, 'prayer_adhan');
+      expect(PrayerNotificationService.fajrAdhanChannel, 'prayer_adhan_fajr');
+      expect(
+        PrayerNotificationService.channelsFor(AlertKind.prayer, PrayerName.fajr, PrayerSound.adhan),
+        ['prayer_adhan_fajr', 'prayer_adhan', PrayerNotificationService.standardChannel],
+      );
+      expect(Muezzins.byId('nobody'), Muezzins.standard);
+    });
+
+    test('reminders and other alerts never play the adhan', () {
+      // A reminder ten minutes early that sounds like the adhan would be
+      // mistaken for the prayer itself.
+      for (final kind in AlertKind.values.where((k) => k != AlertKind.prayer)) {
+        for (final sound in PrayerSound.values) {
+          expect(channel(kind, PrayerName.fajr, sound), PrayerNotificationService.standardChannel);
+        }
+      }
+    });
   });
 }

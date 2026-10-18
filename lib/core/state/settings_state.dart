@@ -23,6 +23,11 @@ class SettingsState {
     this.fridayKahf = true,
     this.hijriOffset = 0,
     this.fastingAlerts = defaultFastingAlerts,
+    this.prayerSound = PrayerSound.adhan,
+    this.mushafView = true,
+    this.adhkarReminders = true,
+    this.khatmaReminders = true,
+    this.muezzinId = 'default',
   });
 
   final ThemeMode themeMode;
@@ -62,6 +67,23 @@ class SettingsState {
 
   /// Which fasting reminders are on. They post only while [prayerNotifications] is.
   final Set<FastingAlert> fastingAlerts;
+
+  /// What the prayer-time notification sounds like.
+  final PrayerSound prayerSound;
+
+  /// The Quran opens as the printed 604-page mushaf; false for flowing text
+  /// that can be enlarged.
+  final bool mushafView;
+
+  /// Morning and evening adhkar reminders. They post only while
+  /// [prayerNotifications] is on.
+  final bool adhkarReminders;
+
+  /// A daily reminder of the khatma portion, while a khatma is under way.
+  final bool khatmaReminders;
+
+  /// Whose adhan the prayer alert plays; see Muezzins.
+  final String muezzinId;
 
   static const Set<FastingAlert> defaultFastingAlerts = {
     FastingAlert.mondayThursday,
@@ -105,6 +127,11 @@ class SettingsState {
     bool? fridayKahf,
     int? hijriOffset,
     Set<FastingAlert>? fastingAlerts,
+    PrayerSound? prayerSound,
+    bool? mushafView,
+    bool? adhkarReminders,
+    bool? khatmaReminders,
+    String? muezzinId,
     // Distinguishes "leave unchanged" from "back to the system language".
     bool clearLocale = false,
   }) {
@@ -123,6 +150,11 @@ class SettingsState {
       fridayKahf: fridayKahf ?? this.fridayKahf,
       hijriOffset: hijriOffset ?? this.hijriOffset,
       fastingAlerts: fastingAlerts ?? this.fastingAlerts,
+      prayerSound: prayerSound ?? this.prayerSound,
+      mushafView: mushafView ?? this.mushafView,
+      adhkarReminders: adhkarReminders ?? this.adhkarReminders,
+      khatmaReminders: khatmaReminders ?? this.khatmaReminders,
+      muezzinId: muezzinId ?? this.muezzinId,
     );
   }
 
@@ -142,7 +174,12 @@ class SettingsState {
         setEquals(other.notifiedPrayers, notifiedPrayers) &&
         other.fridayKahf == fridayKahf &&
         other.hijriOffset == hijriOffset &&
-        setEquals(other.fastingAlerts, fastingAlerts);
+        setEquals(other.fastingAlerts, fastingAlerts) &&
+        other.prayerSound == prayerSound &&
+        other.mushafView == mushafView &&
+        other.adhkarReminders == adhkarReminders &&
+        other.khatmaReminders == khatmaReminders &&
+        other.muezzinId == muezzinId;
   }
 
   @override
@@ -161,5 +198,10 @@ class SettingsState {
     fridayKahf,
     hijriOffset,
     Object.hashAllUnordered(fastingAlerts),
+    prayerSound,
+    mushafView,
+    adhkarReminders,
+    khatmaReminders,
+    muezzinId,
   );
 }

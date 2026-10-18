@@ -25,6 +25,20 @@ abstract final class PrefsKeys {
   static const String fridayKahf = 'settings.fridayKahf';
   static const String hijriOffset = 'settings.hijriOffset';
   static const String fastingAlerts = 'settings.fastingAlerts';
+  static const String prayerSound = 'settings.prayerSound';
+  static const String mushafView = 'settings.mushafView';
+  static const String adhkarReminders = 'settings.adhkarReminders';
+  static const String khatmaReminders = 'settings.khatmaReminders';
+  static const String muezzin = 'settings.muezzin';
+  static const String lastMushafPage = 'quran.lastMushafPage';
+  static const String khatma = 'quran.khatma';
+  static const String focusHintShown = 'quran.focusHintShown';
+
+  /// Read natively by the home screen widget as "flutter.widget.prayers".
+  static const String widgetPrayers = 'widget.prayers';
+
+  /// The suras of a reciter saved for offline listening, as numbers.
+  static String recitationDownloads(String reciterId) => 'recitation.downloads.$reciterId';
   static const String hadethFavourites = 'hadeth.favourites';
   static const String zakatInputs = 'zakat.inputs';
 

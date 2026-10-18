@@ -50,6 +50,13 @@ class SettingsCubit extends Cubit<SettingsState> {
         fastingAlerts: _decodeFasting(
           LocalStorageServices.getString(PrefsKeys.fastingAlerts),
         ),
+        prayerSound: _decodePrayerSound(
+          LocalStorageServices.getString(PrefsKeys.prayerSound),
+        ),
+        mushafView: LocalStorageServices.getBool(PrefsKeys.mushafView) ?? true,
+        adhkarReminders: LocalStorageServices.getBool(PrefsKeys.adhkarReminders) ?? true,
+        khatmaReminders: LocalStorageServices.getBool(PrefsKeys.khatmaReminders) ?? true,
+        muezzinId: LocalStorageServices.getString(PrefsKeys.muezzin) ?? 'default',
       ),
     );
   }
@@ -144,6 +151,31 @@ class SettingsCubit extends Cubit<SettingsState> {
     );
   }
 
+  Future<void> setPrayerSound(PrayerSound sound) async {
+    emit(state.copyWith(prayerSound: sound));
+    await LocalStorageServices.setString(PrefsKeys.prayerSound, sound.name);
+  }
+
+  Future<void> setMushafView(bool on) async {
+    emit(state.copyWith(mushafView: on));
+    await LocalStorageServices.setBool(PrefsKeys.mushafView, on);
+  }
+
+  Future<void> setAdhkarReminders(bool on) async {
+    emit(state.copyWith(adhkarReminders: on));
+    await LocalStorageServices.setBool(PrefsKeys.adhkarReminders, on);
+  }
+
+  Future<void> setKhatmaReminders(bool on) async {
+    emit(state.copyWith(khatmaReminders: on));
+    await LocalStorageServices.setBool(PrefsKeys.khatmaReminders, on);
+  }
+
+  Future<void> setMuezzin(String id) async {
+    emit(state.copyWith(muezzinId: id));
+    await LocalStorageServices.setString(PrefsKeys.muezzin, id);
+  }
+
   Future<void> setHijriOffset(int days) async {
     final clamped = days.clamp(-2, 2);
     emit(state.copyWith(hijriOffset: clamped));
@@ -165,6 +197,13 @@ class SettingsCubit extends Cubit<SettingsState> {
       for (final name in stored.split(','))
         ...FastingAlert.values.where((a) => a.name == name),
     };
+  }
+
+  static PrayerSound _decodePrayerSound(String? stored) {
+    return PrayerSound.values.firstWhere(
+      (s) => s.name == stored,
+      orElse: () => PrayerSound.adhan,
+    );
   }
 
   static Locale? _decodeLocale(String? stored) {

@@ -11,6 +11,7 @@ import 'package:sakina/core/state/settings_cubit.dart';
 import 'package:sakina/core/theme/app_theme.dart';
 import 'package:sakina/l10n/gen/app_localizations.dart';
 import 'package:sakina/modules/home/home_view.dart';
+import 'package:sakina/modules/more/downloads_view.dart';
 import 'package:sakina/modules/more/more_view.dart';
 import 'package:sakina/modules/more/zakat_view.dart';
 import 'package:sakina/modules/settings/settings_view.dart';
@@ -68,6 +69,7 @@ void main() {
     'More': () => const MoreView(),
     'Zakat': () => const ZakatView(),
     'Settings': () => const SettingsView(),
+    'Downloads': () => const DownloadsView(),
   };
 
   for (final locale in const [Locale('en'), Locale('ar')]) {

@@ -11,18 +11,32 @@ The bottom bar is **Home · Quran · Prayer · Adhkar · More**.
 
 | Tab | What it does |
 | --- | --- |
-| **Home** | Greeting with today's Hijri and Gregorian dates, the next prayer with a live countdown, all five prayer times at a glance, a **Ramadan card** (Imsak, Iftar, countdown to Iftar) during Ramadan, reminders for the Monday/Thursday and White Days fasts, *continue reading*, a quick-access grid, a **verse of the day** and **hadith of the day**, and a countdown to the next Islamic occasion. |
-| **Quran** | All 114 suras plus Juz and hizb-quarter indexes, bookmarks, and **full-text search** in Arabic (diacritics-insensitive) and English. A sura opens as a **mushaf** turned page by page, right to left. Pages are filled like a printed copy, so a verse can run across a page break. Each page shows its juz and hizb. Your page is remembered. Tap a verse for **tafsir** (Al-Muyassar, Al-Jalalayn), the English translation, bookmarking, copying, or **sharing as an image**. Recitation by 12 reciters plays verse by verse, highlights the verse being recited, and can repeat a verse or the sura. Sajda verses are marked. |
+| **Home** | Greeting with today's Hijri and Gregorian dates, the next prayer with a live countdown, all five prayer times at a glance, a **Ramadan card** (Imsak, Iftar, countdown to Iftar) during Ramadan, a **khatma planner** (finish the Quran in 7 to 90 days, with today's pages and progress), reminders for the Monday/Thursday and White Days fasts, *continue reading*, a quick-access grid, a **verse of the day** and **hadith of the day**, and a countdown to the next Islamic occasion. |
+| **Quran** | All 114 suras plus Juz and hizb-quarter indexes, bookmarks, and **full-text search** in Arabic (diacritics-insensitive) and English. The Quran opens as the **printed Madinah mushaf**: all 604 pages, 15 lines each, every page starting and ending on the same word as the print, with the juz and sura at the head, framed sura titles, hizb-quarter marks in the margin and the page number at the foot. Pages turn right to left straight through from one sura to the next, and you can jump to any page. Tap the page to read **full screen**; on a tablet or in landscape it shows **two facing pages** like an open book. For larger text, switch to the **flowing view**, which reflows the sura at any size. Your place is remembered in both. Tap a verse for **tafsir** (Al-Muyassar, Al-Jalalayn), the English translation, bookmarking, copying, or **sharing as an image**. Recitation by 12 reciters plays verse by verse, highlights the verse being recited, and can repeat a verse or the sura. Any sura, or the whole Quran, can be **downloaded per reciter** for offline listening, from the player bar or **More > Offline recitations**; downloaded verses play from the phone, with the same highlighting and page-following. Sajda verses are marked. |
 | **Prayer** | Prayer times for your location or a city you pick: 12 calculation methods, Shafi'i/Hanafi Asr, high-latitude rules and per-prayer minute adjustments. Day-by-day browsing, a monthly timetable, a **Qibla compass**, a **prayer tracker** with a streak, and adhkar shortcuts. |
 | **Adhkar** | The full **Hisn al-Muslim** (132 chapters, 267 adhkar) with counters, plus the **tasbeh**: a progress ring to 33, three dhikr, rounds, undo, haptics and a confirmed reset. |
 | **More** | **An-Nawawi's Forty** in Arabic and English, with Ibn Rajab's 8 additions (search and favourites), Duas from the Quran (Rabbana and the prophets' supplications), the **99 Names of Allah**, **Quran radio** (10 live stations), the **Islamic calendar** with occasions and White Days, Qibla, prayer tracker, a **Zakat calculator**, Settings, About and Share. |
 
 **Notifications** (off by default): an adhan-time alert for each prayer you
 choose, an optional reminder N minutes before, and an optional Friday reminder
-to read Al-Kahf.
+to read Al-Kahf, and morning and evening **adhkar reminders** half an hour after
+Fajr and Asr, and a daily khatma reminder after Isha while a khatma is under way.
+Tapping a notification opens its screen. The prayer alert plays the **adhan** (a separate recording for
+Fajr), the phone's usual notification sound, or nothing, as chosen in
+Settings. Reminders and the other alerts always use the usual sound.
+The adhan notification has a **Stop** button. Settings has **Test the adhan**
+and an **Adhan not playing?** checklist, including the battery-saver settings
+that stop alarms on Samsung and Xiaomi phones.
+Alerts are scheduled two weeks ahead and topped up whenever the app opens and,
+on Android, by a background task every 12 hours, so they keep coming even if
+the app is not opened.
 Fasting reminders, each with its own switch: the evening before Monday and
 Thursday, before the White Days and before Arafah and Ashura, and suhoor and
 iftar during Ramadan. None is sent before Eid or the days of Tashreeq.
+
+**Home screen widget** (Android): the next prayer with a live countdown and the
+day's five prayer times. It keeps working without the app open: the app saves two
+weeks of times, and the widget moves on by itself at each prayer.
 
 **Settings**: language, theme (light, dark or follow the phone), Quran text size,
 reciter, calculation method, madhab, high-latitude rule, prayer adjustments,
@@ -48,13 +62,41 @@ iOS and desktop configuration is written but **has not been built or tested**,
 because the development machine has no Xcode.
 
 ```bash
-flutter test      # 172 tests
+flutter test      # 214 tests
 flutter analyze   # clean
 ```
 
 `test/new_screens_smoke_test.dart` lays out Home, More, Zakat and Settings at
 the target phone's size and 1.1 font scale, in both languages and both themes,
 so any overflow fails the test.
+
+## Adhan recordings
+
+The recordings are not in the repository. Put audio files in
+`android/app/src/main/res/raw/`. Each muezzin in Settings > Muezzin is a pair:
+one file for Dhuhr, Asr, Maghrib and Isha, and one for Fajr (the adhan with
+*as-salatu khayrun min an-nawm*):
+
+| Muezzin | Four prayers | Fajr |
+| --- | --- | --- |
+| Default | `adhan.mp3` | `adhan_fajr.mp3` |
+| Makkah | `adhan_makkah.mp3` | `adhan_makkah_fajr.mp3` |
+| Madinah | `adhan_madinah.mp3` | `adhan_madinah_fajr.mp3` |
+| Al-Aqsa | `adhan_aqsa.mp3` | `adhan_aqsa_fajr.mp3` |
+| Egypt | `adhan_egypt.mp3` | `adhan_egypt_fajr.mp3` |
+
+Add only the ones you want; at least the default pair is recommended. Names
+must be lowercase letters, digits and underscores (Android resource rules).
+A missing file falls back in order: the muezzin's own adhan (for Fajr), then
+the default adhan, then the usual notification sound, so no alert is lost.
+Use recordings you have the right to distribute.
+
+Android fixes a channel's sound the first time it posts, so after **replacing**
+a recording on a phone that already played the old one, uninstall the app (or
+clear its data) to hear the new one.
+
+On iOS a notification sound is capped at 30 seconds, so iOS keeps the system
+sound.
 
 ## Religious content
 
@@ -71,6 +113,7 @@ python3 tool/build_content_assets.py   # downloads into .content_cache/, writes 
 | Search text | Tanzil simple-clean, so `الرحمن` finds `ٱلرَّحْمَٰن` |
 | Translation | Saheeh International |
 | Juz, hizb, sajda | Tanzil metadata |
+| Mushaf pages and lines | The 1441 AH Madinah mushaf's 604-page, 15-line layout from the [quran-qcf4](https://www.npmjs.com/package/quran-qcf4) package (MIT). Only its line data is used, re-keyed to the Tanzil text; its fonts are not redistributable and are not bundled. |
 | Adhkar | Hisn al-Muslim (hisnmuslim.com) |
 | 99 Names | api.aladhan.com |
 | An-Nawawi's Forty | Arabic and English, fawazahmed0/hadith-api (text from sunnah.com); six source defects fixed by the script, each asserted |

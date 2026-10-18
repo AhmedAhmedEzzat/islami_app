@@ -601,5 +601,185 @@
   "fastMondayThursdaySubtitle": "The evening before",
   "fastWhiteDaysSetting": "White Days (13th-15th)",
   "fastRamadanSetting": "Ramadan: suhoor and iftar",
-  "fastArafahAshuraSetting": "Arafah and Ashura"
+  "fastArafahAshuraSetting": "Arafah and Ashura",
+  "prayerSoundSetting": "Prayer-time sound",
+  "prayerSoundAdhan": "Adhan",
+  "prayerSoundStandard": "Notification sound",
+  "prayerSoundSilent": "Silent",
+  "adhanChannelName": "Adhan",
+  "adhanChannelDescription": "The adhan when each prayer time begins",
+  "fajrAdhanChannelName": "Fajr adhan",
+  "silentChannelName": "Prayer times (silent)",
+  "stopAdhan": "Stop",
+  "mushafViewTooltip": "Mushaf pages",
+  "flowingViewTooltip": "Flowing text (resizable)",
+  "mushafPageTitle": "Page {page}",
+  "@mushafPageTitle": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "goToPage": "Go to page",
+  "goToPageHint": "1 to 604",
+  "go": "Go",
+  "khatmaTitle": "Khatma",
+  "khatmaStart": "Start a khatma",
+  "khatmaStartSubtitle": "Read the whole Quran with a daily portion",
+  "khatmaFinishIn": "Finish the Quran in",
+  "daysCount": "{n} days",
+  "@daysCount": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "khatmaPerDay": "About {n} pages a day",
+  "@khatmaPerDay": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "khatmaBegin": "Begin",
+  "khatmaDayOf": "Day {day} of {days}",
+  "@khatmaDayOf": {
+    "placeholders": {
+      "day": {
+        "type": "int"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "khatmaProgress": "Page {page} of {total} · {percent}%",
+  "@khatmaProgress": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "khatmaToday": "Today: pages {from}–{to} ({left} left)",
+  "@khatmaToday": {
+    "placeholders": {
+      "from": {
+        "type": "int"
+      },
+      "to": {
+        "type": "int"
+      },
+      "left": {
+        "type": "int"
+      }
+    }
+  },
+  "khatmaTodayDone": "Today's portion is done. Well done!",
+  "khatmaRead": "Read",
+  "khatmaReadAhead": "Read more",
+  "khatmaChangePlan": "Change plan",
+  "khatmaEnd": "End khatma",
+  "khatmaComplete": "You completed the Quran",
+  "khatmaCompleteBody": "May Allah accept it from you.",
+  "khatmaStartAgain": "Start another",
+  "khatmaDismiss": "Dismiss",
+  "moreOptions": "More options",
+  "morningAdhkarTitle": "Morning adhkar",
+  "morningAdhkarBody": "Start your day with the remembrance of Allah",
+  "eveningAdhkarTitle": "Evening adhkar",
+  "eveningAdhkarBody": "Time for the evening adhkar",
+  "adhkarRemindersSetting": "Morning and evening adhkar",
+  "adhkarRemindersSubtitle": "Half an hour after Fajr and Asr",
+  "testAdhan": "Test the adhan",
+  "testAdhanSubtitle": "Hear it now, as it will sound at prayer time",
+  "testAdhanBody": "This is a test. The adhan will sound like this at prayer time.",
+  "adhanHelpTitle": "Adhan not playing?",
+  "adhanHelpNotifications": "Allow notifications for Sakina, and keep the Adhan channel's sound on.",
+  "adhanHelpExact": "Allow \"Alarms & reminders\" so the adhan comes on the minute.",
+  "adhanHelpBattery": "Exclude Sakina from battery saving. Samsung: Battery > Background usage limits > Never sleeping apps. Xiaomi: allow Autostart and set Battery saver to No restrictions.",
+  "adhanHelpVolume": "Check the notification volume, and that Do Not Disturb is off.",
+  "adhanHelpGrant": "Check permissions",
+  "ok": "OK",
+  "focusHint": "Tip: tap the page to read full screen",
+  "offlineRecitations": "Offline recitations",
+  "offlineRecitationsSubtitle": "Download reciters to listen without internet",
+  "surasDownloaded": "{n} suras downloaded",
+  "@surasDownloaded": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "surasDownloadedOf": "{done} of {total} suras downloaded",
+  "@surasDownloadedOf": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "storageUsed": "Using {size} on this phone",
+  "@storageUsed": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadWholeQuran": "Download the whole Quran",
+  "downloadWholeQuranWarning": "This is a large download, often more than 1 GB. Use Wi-Fi, and keep the app open until it finishes. You can stop at any time and continue later.",
+  "download": "Download",
+  "stopDownloads": "Stop downloading",
+  "deleteAll": "Delete all",
+  "delete": "Delete",
+  "deleteAllDownloads": "Delete every downloaded recitation of {reciter}?",
+  "@deleteAllDownloads": {
+    "placeholders": {
+      "reciter": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteSuraDownload": "Delete the downloaded recitation of {sura}?",
+  "@deleteSuraDownload": {
+    "placeholders": {
+      "sura": {
+        "type": "String"
+      }
+    }
+  },
+  "keepAppOpenWhileDownloading": "Keep the app open while downloading. Finished suras stay saved if you leave.",
+  "ayahsCount": "{n} verses",
+  "@ayahsCount": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "downloadedTapToRemove": "Saved on this phone. Tap to remove",
+  "downloadFailedRetry": "Download failed. Tap to retry",
+  "downloadForOffline": "Download for offline listening",
+  "widgetNextPrayer": "Next prayer",
+  "widgetStale": "Open Sakina to refresh prayer times",
+  "khatmaReminderTitle": "Today's Quran portion",
+  "khatmaReminderBody": "Keep your khatma on track: read today's pages",
+  "khatmaReminderSetting": "Daily khatma reminder",
+  "khatmaReminderSubtitle": "Half an hour after Isha, while a khatma is under way",
+  "muezzinSetting": "Muezzin",
+  "muezzinDefault": "Default"
 }

@@ -7,7 +7,10 @@ import '../../core/constants/reciters.dart';
 import '../../core/services/prayer_config.dart';
 import '../../core/services/prayer_times_service.dart';
 import '../../core/utils/prayer_labels.dart';
+import '../../core/services/recitation_downloads.dart';
+import '../../core/constants/muezzins.dart';
 import '../../core/services/prayer_notification_service.dart';
+import '../more/downloads_view.dart';
 import '../../core/state/settings_cubit.dart';
 import '../../core/state/settings_state.dart';
 import '../../core/theme/app_colors.dart';
@@ -109,6 +112,17 @@ class SettingsView extends StatelessWidget {
                   if (picked != null) cubit.setReciter(picked);
                 },
               ),
+              if (RecitationDownloads.supported)
+                ListTile(
+                  leading: const Icon(Icons.download_for_offline_outlined),
+                  title: Text(context.l10n.offlineRecitations),
+                  subtitle: Text(context.l10n.offlineRecitationsSubtitle),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute<void>(builder: (_) => const DownloadsView()),
+                  ),
+                ),
 
               _SectionHeader(context.l10n.prayerTimesSection),
               ListTile(
@@ -254,6 +268,56 @@ class SettingsView extends StatelessWidget {
               ),
               ListTile(
                 enabled: state.prayerNotifications,
+                leading: const Icon(Icons.volume_up_outlined),
+                title: Text(context.l10n.prayerSoundSetting),
+                subtitle: Text(_prayerSoundLabel(context, state.prayerSound)),
+                onTap: () async {
+                  final picked = await _pick<PrayerSound>(
+                    context,
+                    context.l10n.prayerSoundSetting,
+                    {
+                      for (final s in PrayerSound.values)
+                        s: _prayerSoundLabel(context, s),
+                    },
+                    state.prayerSound,
+                  );
+                  if (picked != null) cubit.setPrayerSound(picked);
+                },
+              ),
+              if (state.prayerSound == PrayerSound.adhan)
+                ListTile(
+                  enabled: state.prayerNotifications,
+                  leading: const Icon(Icons.mosque_outlined),
+                  title: Text(context.l10n.muezzinSetting),
+                  subtitle: Text(_muezzinName(context, Muezzins.byId(state.muezzinId))),
+                  onTap: () async {
+                    final picked = await _pick<String>(
+                      context,
+                      context.l10n.muezzinSetting,
+                      {for (final m in Muezzins.all) m.id: _muezzinName(context, m)},
+                      state.muezzinId,
+                    );
+                    if (picked != null) cubit.setMuezzin(picked);
+                  },
+                ),
+              ListTile(
+                enabled: state.prayerNotifications,
+                leading: const Icon(Icons.play_circle_outline),
+                title: Text(context.l10n.testAdhan),
+                subtitle: Text(context.l10n.testAdhanSubtitle),
+                onTap: () => PrayerNotificationService.showTest(
+                  locale: Localizations.localeOf(context),
+                  sound: state.prayerSound,
+                  muezzin: Muezzins.byId(state.muezzinId),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.help_outline),
+                title: Text(context.l10n.adhanHelpTitle),
+                onTap: () => _showAdhanHelp(context),
+              ),
+              ListTile(
+                enabled: state.prayerNotifications,
                 leading: const Icon(Icons.alarm),
                 title: Text(context.l10n.reminderTitleSetting),
                 subtitle: Text(
@@ -275,6 +339,24 @@ class SettingsView extends StatelessWidget {
                   );
                   if (picked != null) cubit.setReminderMinutes(picked);
                 },
+              ),
+              SwitchListTile(
+                value: state.adhkarReminders,
+                title: Text(context.l10n.adhkarRemindersSetting),
+                subtitle: Text(context.l10n.adhkarRemindersSubtitle),
+                secondary: const Icon(Icons.wb_twilight),
+                onChanged: state.prayerNotifications
+                    ? cubit.setAdhkarReminders
+                    : null,
+              ),
+              SwitchListTile(
+                value: state.khatmaReminders,
+                title: Text(context.l10n.khatmaReminderSetting),
+                subtitle: Text(context.l10n.khatmaReminderSubtitle),
+                secondary: const Icon(Icons.flag_outlined),
+                onChanged: state.prayerNotifications
+                    ? cubit.setKhatmaReminders
+                    : null,
               ),
               SwitchListTile(
                 value: state.fridayKahf,
@@ -360,6 +442,61 @@ class SettingsView extends StatelessWidget {
         'twilight' => context.l10n.highLatTwilight,
         _ => context.l10n.highLatMiddle,
       };
+
+  static String _muezzinName(BuildContext context, Muezzin m) => m == Muezzins.standard
+      ? context.l10n.muezzinDefault
+      : (context.isArabic ? m.nameAr : m.nameEn);
+
+  static String _prayerSoundLabel(BuildContext context, PrayerSound sound) =>
+      switch (sound) {
+        PrayerSound.adhan => context.l10n.prayerSoundAdhan,
+        PrayerSound.standard => context.l10n.prayerSoundStandard,
+        PrayerSound.silent => context.l10n.prayerSoundSilent,
+      };
+
+  /// What to check when the adhan does not sound: on many Android phones a
+  /// battery saver stops alarms from apps it decides are idle.
+  static Future<void> _showAdhanHelp(BuildContext context) {
+    final l10n = context.l10n;
+    return showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: const Icon(Icons.notifications_paused_outlined),
+        title: Text(l10n.adhanHelpTitle),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final step in [
+                l10n.adhanHelpNotifications,
+                l10n.adhanHelpExact,
+                l10n.adhanHelpBattery,
+                l10n.adhanHelpVolume,
+              ])
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.check_circle_outline, size: 20),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(child: Text(step)),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => PrayerNotificationService.requestPermissions(),
+            child: Text(l10n.adhanHelpGrant),
+          ),
+          FilledButton(onPressed: () => Navigator.pop(context), child: Text(l10n.ok)),
+        ],
+      ),
+    );
+  }
 
   /// A single-choice dialog. Returns the picked value, or null if dismissed.
   static Future<T?> _pick<T>(
