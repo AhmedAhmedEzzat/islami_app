@@ -35,6 +35,12 @@ enum AlertKind {
 
   /// Iftar, at Maghrib, on each day of Ramadan.
   iftar,
+
+  /// Morning adhkar, [adhkarAfterPrayer] after Fajr.
+  morningAdhkar,
+
+  /// Evening adhkar, [adhkarAfterPrayer] after Asr.
+  eveningAdhkar,
 }
 
 /// The fasting reminders a user can turn on, each with its own switch.
@@ -175,9 +181,16 @@ abstract final class PrayerNotificationService {
   ///   reminders 2000 + day * 10 + prayer
   ///   Al-Kahf   3000 + day
   ///   fasting   4000 + day * 10 + slot (0 the evening before, 1 suhoor, 2 iftar)
+  ///   adhkar    5000 + day * 10 + slot (0 morning, 1 evening)
   static const int _reminderBase = 2000;
   static const int _kahfBase = 3000;
   static const int _fastingBase = 4000;
+  static const int _adhkarBase = 5000;
+
+  /// The adhkar reminders come this long after Fajr and Asr: the time for the
+  /// morning adhkar runs from Fajr to sunrise, the evening's from Asr to
+  /// Maghrib.
+  static const Duration adhkarAfterPrayer = Duration(minutes: 30);
 
   /// When the evening-before reminders arrive, after Isha in most places.
   static const int eveningHour = 21;
@@ -198,6 +211,9 @@ abstract final class PrayerNotificationService {
       await _plugin.cancel(id: _kahfBase + day);
       for (var slot = 0; slot < 3; slot++) {
         await _plugin.cancel(id: _fastingBase + day * 10 + slot);
+      }
+      for (var slot = 0; slot < 2; slot++) {
+        await _plugin.cancel(id: _adhkarBase + day * 10 + slot);
       }
     }
   }
@@ -220,6 +236,7 @@ abstract final class PrayerNotificationService {
     bool fridayKahf = false,
     Set<FastingAlert> fasting = const {},
     int hijriOffset = 0,
+    bool adhkar = false,
   }) {
     final result = <ScheduledAlert>[];
     final today = DateTime(now.year, now.month, now.day);
@@ -262,6 +279,18 @@ abstract final class PrayerNotificationService {
         final evening = DateTime(date.year, date.month, date.day, eveningHour);
         if (evening.isAfter(now)) {
           result.add(ScheduledAlert(_fastingBase + day * 10, eveKind, null, evening));
+        }
+      }
+
+      if (adhkar) {
+        for (final (slot, prayer, kind) in [
+          (0, PrayerName.fajr, AlertKind.morningAdhkar),
+          (1, PrayerName.asr, AlertKind.eveningAdhkar),
+        ]) {
+          final time = times.entry(prayer).time.add(adhkarAfterPrayer);
+          if (time.isAfter(now)) {
+            result.add(ScheduledAlert(_adhkarBase + day * 10 + slot, kind, null, time));
+          }
         }
       }
 
@@ -332,6 +361,7 @@ abstract final class PrayerNotificationService {
     Set<FastingAlert> fasting = const {},
     int hijriOffset = 0,
     PrayerSound sound = PrayerSound.adhan,
+    bool adhkar = false,
   }) async {
     if (kIsWeb) return;
     await init();
@@ -339,38 +369,10 @@ abstract final class PrayerNotificationService {
     if (!enabled) return;
 
     final coordinates = PrayerTimesService.currentLocation().coordinates;
-    final l10n = lookupAppLocalizations(
-      AppLocalizations.supportedLocales.any(
-            (l) => l.languageCode == locale.languageCode,
-          )
-          ? Locale(locale.languageCode)
-          : const Locale('en'),
-    );
+    final l10n = _l10n(locale);
 
     final exact = await _android?.canScheduleExactNotifications() ?? true;
-    final details = {
-      standardChannel: _details(standardChannel, l10n.prayerChannelName, l10n.prayerChannelDescription),
-      adhanChannel: _details(
-        adhanChannel,
-        l10n.adhanChannelName,
-        l10n.adhanChannelDescription,
-        sound: _adhanSound,
-        stopLabel: l10n.stopAdhan,
-      ),
-      fajrAdhanChannel: _details(
-        fajrAdhanChannel,
-        l10n.fajrAdhanChannelName,
-        l10n.adhanChannelDescription,
-        sound: _fajrAdhanSound,
-        stopLabel: l10n.stopAdhan,
-      ),
-      silentChannel: _details(
-        silentChannel,
-        l10n.silentChannelName,
-        l10n.prayerChannelDescription,
-        playSound: false,
-      ),
-    };
+    final details = _channels(l10n);
 
     final alerts = plan(
       coordinates: coordinates,
@@ -381,6 +383,7 @@ abstract final class PrayerNotificationService {
       fridayKahf: fridayKahf,
       fasting: fasting,
       hijriOffset: hijriOffset,
+      adhkar: adhkar,
     );
 
     final missingSounds = <String>{};
@@ -407,6 +410,8 @@ abstract final class PrayerNotificationService {
         AlertKind.ashura => (l10n.fastAshuraTitle, l10n.fastAshuraBody),
         AlertKind.suhoor => (l10n.suhoorTitle, l10n.suhoorBody),
         AlertKind.iftar => (l10n.iftarNotificationTitle, l10n.iftarNotificationBody),
+        AlertKind.morningAdhkar => (l10n.morningAdhkarTitle, l10n.morningAdhkarBody),
+        AlertKind.eveningAdhkar => (l10n.eveningAdhkarTitle, l10n.eveningAdhkarBody),
       };
       Future<void> schedule(String channel) => _plugin.zonedSchedule(
         id: alert.id,
@@ -438,6 +443,62 @@ abstract final class PrayerNotificationService {
       }
     }
   }
+
+  /// Posts the prayer alert now, as it will sound at the next prayer, so the
+  /// user can hear the adhan and check the phone lets it through.
+  static Future<void> showTest({required Locale locale, PrayerSound sound = PrayerSound.adhan}) async {
+    if (kIsWeb) return;
+    await init();
+    final l10n = _l10n(locale);
+    final details = _channels(l10n);
+    final name = _label(l10n, PrayerName.dhuhr);
+    Future<void> show(String channel) => _plugin.show(
+      id: _testId,
+      title: l10n.prayerNotificationTitle(name),
+      body: l10n.testAdhanBody,
+      notificationDetails: details[channel],
+    );
+    final channel = channelFor(AlertKind.prayer, PrayerName.dhuhr, sound);
+    try {
+      await show(channel);
+    } on PlatformException catch (e) {
+      if (e.code != 'invalid_sound') rethrow;
+      await show(standardChannel);
+    }
+  }
+
+  /// Outside every scheduled range, so a test never replaces a real alert.
+  static const int _testId = 999;
+
+  static AppLocalizations _l10n(Locale locale) => lookupAppLocalizations(
+    AppLocalizations.supportedLocales.any((l) => l.languageCode == locale.languageCode)
+        ? Locale(locale.languageCode)
+        : const Locale('en'),
+  );
+
+  static Map<String, NotificationDetails> _channels(AppLocalizations l10n) => {
+    standardChannel: _details(standardChannel, l10n.prayerChannelName, l10n.prayerChannelDescription),
+    adhanChannel: _details(
+      adhanChannel,
+      l10n.adhanChannelName,
+      l10n.adhanChannelDescription,
+      sound: _adhanSound,
+      stopLabel: l10n.stopAdhan,
+    ),
+    fajrAdhanChannel: _details(
+      fajrAdhanChannel,
+      l10n.fajrAdhanChannelName,
+      l10n.adhanChannelDescription,
+      sound: _fajrAdhanSound,
+      stopLabel: l10n.stopAdhan,
+    ),
+    silentChannel: _details(
+      silentChannel,
+      l10n.silentChannelName,
+      l10n.prayerChannelDescription,
+      playSound: false,
+    ),
+  };
 
   static NotificationDetails _details(
     String channel,

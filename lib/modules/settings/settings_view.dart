@@ -272,6 +272,21 @@ class SettingsView extends StatelessWidget {
               ),
               ListTile(
                 enabled: state.prayerNotifications,
+                leading: const Icon(Icons.play_circle_outline),
+                title: Text(context.l10n.testAdhan),
+                subtitle: Text(context.l10n.testAdhanSubtitle),
+                onTap: () => PrayerNotificationService.showTest(
+                  locale: Localizations.localeOf(context),
+                  sound: state.prayerSound,
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.help_outline),
+                title: Text(context.l10n.adhanHelpTitle),
+                onTap: () => _showAdhanHelp(context),
+              ),
+              ListTile(
+                enabled: state.prayerNotifications,
                 leading: const Icon(Icons.alarm),
                 title: Text(context.l10n.reminderTitleSetting),
                 subtitle: Text(
@@ -293,6 +308,15 @@ class SettingsView extends StatelessWidget {
                   );
                   if (picked != null) cubit.setReminderMinutes(picked);
                 },
+              ),
+              SwitchListTile(
+                value: state.adhkarReminders,
+                title: Text(context.l10n.adhkarRemindersSetting),
+                subtitle: Text(context.l10n.adhkarRemindersSubtitle),
+                secondary: const Icon(Icons.wb_twilight),
+                onChanged: state.prayerNotifications
+                    ? cubit.setAdhkarReminders
+                    : null,
               ),
               SwitchListTile(
                 value: state.fridayKahf,
@@ -385,6 +409,50 @@ class SettingsView extends StatelessWidget {
         PrayerSound.standard => context.l10n.prayerSoundStandard,
         PrayerSound.silent => context.l10n.prayerSoundSilent,
       };
+
+  /// What to check when the adhan does not sound: on many Android phones a
+  /// battery saver stops alarms from apps it decides are idle.
+  static Future<void> _showAdhanHelp(BuildContext context) {
+    final l10n = context.l10n;
+    return showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: const Icon(Icons.notifications_paused_outlined),
+        title: Text(l10n.adhanHelpTitle),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final step in [
+                l10n.adhanHelpNotifications,
+                l10n.adhanHelpExact,
+                l10n.adhanHelpBattery,
+                l10n.adhanHelpVolume,
+              ])
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.check_circle_outline, size: 20),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(child: Text(step)),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => PrayerNotificationService.requestPermissions(),
+            child: Text(l10n.adhanHelpGrant),
+          ),
+          FilledButton(onPressed: () => Navigator.pop(context), child: Text(l10n.ok)),
+        ],
+      ),
+    );
+  }
 
   /// A single-choice dialog. Returns the picked value, or null if dismissed.
   static Future<T?> _pick<T>(

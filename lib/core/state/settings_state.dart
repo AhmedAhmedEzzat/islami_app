@@ -25,6 +25,7 @@ class SettingsState {
     this.fastingAlerts = defaultFastingAlerts,
     this.prayerSound = PrayerSound.adhan,
     this.mushafView = true,
+    this.adhkarReminders = true,
   });
 
   final ThemeMode themeMode;
@@ -72,6 +73,10 @@ class SettingsState {
   /// that can be enlarged.
   final bool mushafView;
 
+  /// Morning and evening adhkar reminders. They post only while
+  /// [prayerNotifications] is on.
+  final bool adhkarReminders;
+
   static const Set<FastingAlert> defaultFastingAlerts = {
     FastingAlert.mondayThursday,
     FastingAlert.whiteDays,
@@ -116,6 +121,7 @@ class SettingsState {
     Set<FastingAlert>? fastingAlerts,
     PrayerSound? prayerSound,
     bool? mushafView,
+    bool? adhkarReminders,
     // Distinguishes "leave unchanged" from "back to the system language".
     bool clearLocale = false,
   }) {
@@ -136,6 +142,7 @@ class SettingsState {
       fastingAlerts: fastingAlerts ?? this.fastingAlerts,
       prayerSound: prayerSound ?? this.prayerSound,
       mushafView: mushafView ?? this.mushafView,
+      adhkarReminders: adhkarReminders ?? this.adhkarReminders,
     );
   }
 
@@ -157,7 +164,8 @@ class SettingsState {
         other.hijriOffset == hijriOffset &&
         setEquals(other.fastingAlerts, fastingAlerts) &&
         other.prayerSound == prayerSound &&
-        other.mushafView == mushafView;
+        other.mushafView == mushafView &&
+        other.adhkarReminders == adhkarReminders;
   }
 
   @override
@@ -178,5 +186,6 @@ class SettingsState {
     Object.hashAllUnordered(fastingAlerts),
     prayerSound,
     mushafView,
+    adhkarReminders,
   );
 }

@@ -99,6 +99,30 @@ void main() {
     expect(hanafi.time.isAfter(standard.time), isTrue);
   });
 
+  test('adhkar reminders come half an hour after Fajr and Asr, with unique ids', () {
+    final plan = PrayerNotificationService.plan(
+      coordinates: cairo,
+      now: monday,
+      reminderMinutes: 10,
+      fridayKahf: true,
+      adhkar: true,
+    );
+    final morning = ofKind(plan, AlertKind.morningAdhkar).toList();
+    final evening = ofKind(plan, AlertKind.eveningAdhkar).toList();
+    expect(morning, hasLength(days));
+    expect(evening, hasLength(days));
+    final fajr = ofKind(plan, AlertKind.prayer).firstWhere((a) => a.prayer == PrayerName.fajr);
+    expect(morning.first.time.difference(fajr.time), PrayerNotificationService.adhkarAfterPrayer);
+    final ids = plan.map((a) => a.id).toList();
+    expect(ids.toSet().length, ids.length);
+  });
+
+  test('no adhkar reminders unless asked for', () {
+    final plan = planAt(monday);
+    expect(ofKind(plan, AlertKind.morningAdhkar), isEmpty);
+    expect(ofKind(plan, AlertKind.eveningAdhkar), isEmpty);
+  });
+
   group('channelFor', () {
     String channel(AlertKind kind, PrayerName? prayer, PrayerSound sound) =>
         PrayerNotificationService.channelFor(kind, prayer, sound);

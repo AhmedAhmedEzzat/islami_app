@@ -346,5 +346,21 @@
   "khatmaCompleteBody": "تقبّل الله منك.",
   "khatmaStartAgain": "ابدأ ختمة جديدة",
   "khatmaDismiss": "إخفاء",
-  "moreOptions": "خيارات أخرى"
+  "moreOptions": "خيارات أخرى",
+  "morningAdhkarTitle": "أذكار الصباح",
+  "morningAdhkarBody": "ابدأ يومك بذكر الله",
+  "eveningAdhkarTitle": "أذكار المساء",
+  "eveningAdhkarBody": "حان وقت أذكار المساء",
+  "adhkarRemindersSetting": "أذكار الصباح والمساء",
+  "adhkarRemindersSubtitle": "بعد الفجر والعصر بنصف ساعة",
+  "testAdhan": "تجربة الأذان",
+  "testAdhanSubtitle": "اسمعه الآن كما سيُرفع عند الصلاة",
+  "testAdhanBody": "هذه تجربة، سيُرفع الأذان هكذا عند وقت الصلاة.",
+  "adhanHelpTitle": "الأذان لا يعمل؟",
+  "adhanHelpNotifications": "اسمح لسكينة بالإشعارات، وأبقِ صوت قناة الأذان مفعّلًا.",
+  "adhanHelpExact": "اسمح بـ«المنبّهات والتذكيرات» ليُرفع الأذان في وقته تمامًا.",
+  "adhanHelpBattery": "استثنِ سكينة من توفير البطارية. سامسونج: البطارية ← حدود الاستخدام في الخلفية ← التطبيقات التي لا تنام أبدًا. شاومي: فعّل التشغيل التلقائي واجعل موفّر البطارية «بلا قيود».",
+  "adhanHelpVolume": "تأكد من مستوى صوت الإشعارات وأن وضع «عدم الإزعاج» متوقف.",
+  "adhanHelpGrant": "التحقق من الأذونات",
+  "ok": "حسنًا"
 }

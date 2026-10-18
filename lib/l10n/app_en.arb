@@ -693,5 +693,21 @@
   "khatmaCompleteBody": "May Allah accept it from you.",
   "khatmaStartAgain": "Start another",
   "khatmaDismiss": "Dismiss",
-  "moreOptions": "More options"
+  "moreOptions": "More options",
+  "morningAdhkarTitle": "Morning adhkar",
+  "morningAdhkarBody": "Start your day with the remembrance of Allah",
+  "eveningAdhkarTitle": "Evening adhkar",
+  "eveningAdhkarBody": "Time for the evening adhkar",
+  "adhkarRemindersSetting": "Morning and evening adhkar",
+  "adhkarRemindersSubtitle": "Half an hour after Fajr and Asr",
+  "testAdhan": "Test the adhan",
+  "testAdhanSubtitle": "Hear it now, as it will sound at prayer time",
+  "testAdhanBody": "This is a test. The adhan will sound like this at prayer time.",
+  "adhanHelpTitle": "Adhan not playing?",
+  "adhanHelpNotifications": "Allow notifications for Sakina, and keep the Adhan channel's sound on.",
+  "adhanHelpExact": "Allow \"Alarms & reminders\" so the adhan comes on the minute.",
+  "adhanHelpBattery": "Exclude Sakina from battery saving. Samsung: Battery > Background usage limits > Never sleeping apps. Xiaomi: allow Autostart and set Battery saver to No restrictions.",
+  "adhanHelpVolume": "Check the notification volume, and that Do Not Disturb is off.",
+  "adhanHelpGrant": "Check permissions",
+  "ok": "OK"
 }

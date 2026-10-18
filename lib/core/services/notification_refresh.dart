@@ -32,6 +32,7 @@ abstract final class NotificationRefresh {
       fasting: state.fastingAlerts,
       hijriOffset: state.hijriOffset,
       sound: state.prayerSound,
+      adhkar: state.adhkarReminders,
     );
   }
 
