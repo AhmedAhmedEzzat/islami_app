@@ -11,6 +11,7 @@ import '../../core/services/recitation_downloads.dart';
 import '../../core/constants/muezzins.dart';
 import '../../core/services/prayer_notification_service.dart';
 import '../more/downloads_view.dart';
+import 'prayer_notifications_prompt.dart';
 import '../../core/state/settings_cubit.dart';
 import '../../core/state/settings_state.dart';
 import '../../core/theme/app_colors.dart';
@@ -533,28 +534,10 @@ class SettingsView extends StatelessWidget {
     BuildContext context,
     bool on,
   ) async {
-    final cubit = context.read<SettingsCubit>();
-    final messenger = ScaffoldMessenger.of(context);
-    final l10n = context.l10n;
-
-    if (!on) {
-      await cubit.setPrayerNotifications(false);
-      return;
-    }
-
-    final result = await PrayerNotificationService.requestPermissions();
-    switch (result) {
-      case NotificationPermission.denied:
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n.notificationsDenied)),
-        );
-      case NotificationPermission.grantedInexact:
-        await cubit.setPrayerNotifications(true);
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n.notificationsInexact)),
-        );
-      case NotificationPermission.granted:
-        await cubit.setPrayerNotifications(true);
+    if (on) {
+      await turnOnPrayerNotifications(context);
+    } else {
+      await context.read<SettingsCubit>().setPrayerNotifications(false);
     }
   }
 }

@@ -389,5 +389,17 @@
   "khatmaReminderSetting": "تذكير يومي بالختمة",
   "khatmaReminderSubtitle": "بعد العشاء بنصف ساعة، ما دامت لديك ختمة",
   "muezzinSetting": "المؤذن",
-  "muezzinDefault": "الافتراضي"
+  "muezzinDefault": "الافتراضي",
+  "setupTitle": "مواقيت الصلاة والأذان",
+  "setupBody": "خطوتان سريعتان لتكون المواقيت دقيقة لمكانك ويصلك الأذان.",
+  "setupLocationTitle": "موقعك",
+  "setupLocationBody": "لمواقيت دقيقة واتجاه القبلة",
+  "setupLocationAction": "السماح",
+  "setupLocationDone": "تم تحديد الموقع",
+  "setupLocationFailed": "تعذّر تحديد الموقع، يمكنك اختيار مدينتك من تبويب الصلاة.",
+  "setupAdhanTitle": "الأذان",
+  "setupAdhanBody": "الأذان عند كل صلاة حتى والتطبيق مغلق",
+  "setupAdhanAction": "تفعيل",
+  "setupAdhanDone": "الأذان مفعّل",
+  "setupLater": "يمكنك تغيير ذلك في أي وقت من الإعدادات."
 }
