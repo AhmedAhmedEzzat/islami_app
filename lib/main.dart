@@ -12,6 +12,7 @@ import 'core/constants/prefs_keys.dart';
 import 'core/state/bookmarks_cubit.dart';
 import 'core/state/quran_player_cubit.dart';
 import 'core/state/radio_cubit.dart';
+import 'core/services/notification_refresh.dart';
 import 'core/services/prayer_notification_service.dart';
 import 'core/services/hadeth_favourites.dart';
 import 'core/services/quran_meta.dart';
@@ -49,6 +50,8 @@ Future<void> main() async {
   // Top up the rolling schedule on every launch. Not awaited: it must not hold
   // up the first frame.
   _reschedule(settings.state);
+  // And again every day in the background, for when the app is not opened.
+  NotificationRefresh.init();
   final isFirstTime = LocalStorageServices.getBool(PrefsKeys.firstTime) ?? true;
 
   runApp(SakinaApp(settings: settings, isFirstTime: isFirstTime));
@@ -59,17 +62,7 @@ Locale _effectiveLocale(SettingsState state) =>
     state.locale ?? WidgetsBinding.instance.platformDispatcher.locale;
 
 void _reschedule(SettingsState state) {
-  PrayerNotificationService.reschedule(
-    enabled: state.prayerNotifications,
-    locale: _effectiveLocale(state),
-    config: state.prayerConfig,
-    prayers: state.notifiedPrayers,
-    reminderMinutes: state.reminderMinutes,
-    fridayKahf: state.fridayKahf,
-    fasting: state.fastingAlerts,
-    hijriOffset: state.hijriOffset,
-    sound: state.prayerSound,
-  );
+  NotificationRefresh.reschedule(state, _effectiveLocale(state));
 }
 
 class SakinaApp extends StatelessWidget {

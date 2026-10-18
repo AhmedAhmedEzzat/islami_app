@@ -11,7 +11,7 @@ import '../../core/constants/daily_verses.dart';
 import '../../core/constants/quran_duas.dart';
 import '../../core/services/hadeth_service.dart';
 import '../../core/services/islamic_calendar.dart';
-import '../../core/services/prayer_notification_service.dart';
+import '../../core/services/notification_refresh.dart';
 import '../../core/services/prayer_times_service.dart';
 import '../../core/services/quran_service.dart';
 import '../../core/services/recent_suras.dart';
@@ -98,17 +98,7 @@ class _HomeViewState extends State<HomeView> {
   void _rescheduleIfOn() {
     final s = context.read<SettingsCubit>().state;
     if (!s.prayerNotifications) return;
-    PrayerNotificationService.reschedule(
-      enabled: true,
-      locale: Localizations.localeOf(context),
-      config: s.prayerConfig,
-      prayers: s.notifiedPrayers,
-      reminderMinutes: s.reminderMinutes,
-      fridayKahf: s.fridayKahf,
-      fasting: s.fastingAlerts,
-      hijriOffset: s.hijriOffset,
-      sound: s.prayerSound,
-    );
+    NotificationRefresh.reschedule(s, Localizations.localeOf(context));
   }
 
   static Future<HadethDataModel?> _hadethOfTheDay() async {

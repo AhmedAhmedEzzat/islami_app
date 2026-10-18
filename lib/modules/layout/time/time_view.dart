@@ -7,7 +7,7 @@ import 'package:intl/intl.dart' hide TextDirection;
 
 import '../../../core/constants/assets.dart';
 import '../../../core/services/islamic_calendar.dart';
-import '../../../core/services/prayer_notification_service.dart';
+import '../../../core/services/notification_refresh.dart';
 import '../../../core/services/prayer_times_service.dart';
 import '../../../core/state/settings_cubit.dart';
 import '../../../core/state/settings_state.dart';
@@ -72,17 +72,7 @@ class _TimeViewState extends State<TimeView> {
   void _rescheduleIfOn() {
     final s = context.read<SettingsCubit>().state;
     if (!s.prayerNotifications) return;
-    PrayerNotificationService.reschedule(
-      enabled: true,
-      locale: Localizations.localeOf(context),
-      config: s.prayerConfig,
-      prayers: s.notifiedPrayers,
-      reminderMinutes: s.reminderMinutes,
-      fridayKahf: s.fridayKahf,
-      fasting: s.fastingAlerts,
-      hijriOffset: s.hijriOffset,
-      sound: s.prayerSound,
-    );
+    NotificationRefresh.reschedule(s, Localizations.localeOf(context));
   }
 
   Future<void> _changeLocation() async {

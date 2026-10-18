@@ -22,6 +22,9 @@ choose, an optional reminder N minutes before, and an optional Friday reminder
 to read Al-Kahf. The prayer alert plays the **adhan** (a separate recording for
 Fajr), the phone's usual notification sound, or nothing, as chosen in
 Settings. Reminders and the other alerts always use the usual sound.
+Alerts are scheduled two weeks ahead and topped up whenever the app opens and,
+on Android, by a background task every 12 hours, so they keep coming even if
+the app is not opened.
 Fasting reminders, each with its own switch: the evening before Monday and
 Thursday, before the White Days and before Arafah and Ashura, and suhoor and
 iftar during Ramadan. None is sent before Eid or the days of Tashreeq.
