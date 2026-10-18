@@ -781,5 +781,41 @@
   "khatmaReminderSetting": "Daily khatma reminder",
   "khatmaReminderSubtitle": "Half an hour after Isha, while a khatma is under way",
   "muezzinSetting": "Muezzin",
-  "muezzinDefault": "Default"
+  "muezzinDefault": "Default",
+  "setupTitle": "Prayer times and the adhan",
+  "setupBody": "Two quick steps so the times are right for where you are and the adhan reaches you.",
+  "setupLocationTitle": "Your location",
+  "setupLocationBody": "For accurate prayer times and the Qibla",
+  "setupLocationAction": "Allow",
+  "setupLocationDone": "Location set",
+  "setupLocationFailed": "Location unavailable. You can pick a city from the Prayer tab.",
+  "setupAdhanTitle": "The adhan",
+  "setupAdhanBody": "The adhan at each prayer time, even with the app closed",
+  "setupAdhanAction": "Turn on",
+  "setupAdhanDone": "The adhan is on",
+  "setupLater": "You can change these any time in Settings.",
+  "rateApp": "Rate Sakina",
+  "rateAppSubtitle": "A review helps others find the app",
+  "sleepTimer": "Sleep timer",
+  "sleepEndOfSura": "At the end of this sura",
+  "sleepEndOfSuraShort": "End of sura",
+  "sleepTimerOff": "Turn off the timer",
+  "continuousRecitation": "Continue to the next sura",
+  "removeDownload": "Remove download",
+  "qadaTitle": "Missed prayers (qada)",
+  "qadaNone": "Nothing to make up. Tap + to count a missed prayer.",
+  "qadaTotal": "{n} prayers left to make up. Tap − each time you make one up.",
+  "@qadaTotal": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "qadaAddDays": "Add missed days",
+  "qadaAddDaysHint": "Adds all five prayers for each day, for example the days you estimate you missed.",
+  "qadaDays": "Days",
+  "qadaAdd": "Add",
+  "qadaMadeUp": "Made one up",
+  "qadaMissed": "Add a missed prayer"
 }

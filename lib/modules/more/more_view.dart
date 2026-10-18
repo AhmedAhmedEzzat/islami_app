@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:share_plus/share_plus.dart';
@@ -5,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../core/constants/assets.dart';
 import '../../core/services/prayer_times_service.dart';
 import '../../core/services/recitation_downloads.dart';
+import '../../core/services/review_prompt.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../core/utils/l10n_ext.dart';
@@ -140,6 +142,15 @@ class MoreView extends StatelessWidget {
                     leading: const Icon(Icons.download_for_offline_outlined),
                     title: Text(l10n.offlineRecitations),
                     onTap: () => push(const DownloadsView()),
+                  ),
+                // The store page needs an App Store id on iOS, which the app
+                // does not have yet; Google Play needs none.
+                if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android)
+                  ListTile(
+                    leading: const Icon(Icons.star_outline_rounded),
+                    title: Text(l10n.rateApp),
+                    subtitle: Text(l10n.rateAppSubtitle),
+                    onTap: ReviewPrompt.openStore,
                   ),
                 ListTile(
                   leading: const Icon(Icons.share_outlined),

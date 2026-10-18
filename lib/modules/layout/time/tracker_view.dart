@@ -3,13 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 
 import '../../../core/services/prayer_tracker.dart';
+import '../../../core/services/qada.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/l10n_ext.dart';
 import '../../../core/utils/prayer_labels.dart';
 
 /// Log each of the five prayers as you pray it, with a streak and the week
-/// at a glance.
+/// at a glance, and count the missed prayers still to make up.
 class TrackerView extends StatefulWidget {
   const TrackerView({super.key});
 
@@ -122,8 +123,132 @@ class _TrackerViewState extends State<TrackerView> {
               ],
             ),
           ),
+          const SizedBox(height: AppSpacing.xl),
+          _QadaSection(
+            onChanged: () {
+              if (mounted) setState(() {});
+            },
+          ),
         ],
       ),
+    );
+  }
+}
+
+/// Missed prayers to make up: a count per prayer, made up one at a time.
+class _QadaSection extends StatelessWidget {
+  const _QadaSection({required this.onChanged});
+
+  final VoidCallback onChanged;
+
+  Future<void> _addDays(BuildContext context) async {
+    final controller = TextEditingController();
+    final days = await showDialog<int>(
+      context: context,
+      builder: (context) {
+        void submit() => Navigator.pop(context, int.tryParse(controller.text));
+        return AlertDialog(
+          title: Text(context.l10n.qadaAddDays),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(context.l10n.qadaAddDaysHint),
+              const SizedBox(height: AppSpacing.md),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(5)],
+                decoration: InputDecoration(labelText: context.l10n.qadaDays, border: const OutlineInputBorder()),
+                onSubmitted: (_) => submit(),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
+            ),
+            FilledButton(onPressed: submit, child: Text(context.l10n.qadaAdd)),
+          ],
+        );
+      },
+    );
+    controller.dispose();
+    if (days == null || days <= 0) return;
+    await Qada.addDays(days);
+    onChanged();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final scheme = context.colors;
+    final total = Qada.total;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(child: Text(l10n.qadaTitle, style: context.texts.titleMedium)),
+            TextButton.icon(
+              onPressed: () => _addDays(context),
+              icon: const Icon(Icons.add),
+              label: Text(l10n.qadaAddDays),
+            ),
+          ],
+        ),
+        Text(
+          total == 0 ? l10n.qadaNone : l10n.qadaTotal(total),
+          style: context.texts.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Card(
+          color: scheme.surfaceContainerLow,
+          child: Column(
+            children: [
+              for (final p in PrayerTracker.prayers)
+                ListTile(
+                  title: Text(prayerLabel(context, p)),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        tooltip: l10n.qadaMadeUp,
+                        onPressed: Qada.count(p) == 0
+                            ? null
+                            : () async {
+                                HapticFeedback.selectionClick();
+                                await Qada.add(p, -1);
+                                onChanged();
+                              },
+                        icon: const Icon(Icons.remove_circle_outline),
+                      ),
+                      SizedBox(
+                        width: 48,
+                        child: Text(
+                          '${Qada.count(p)}',
+                          textAlign: TextAlign.center,
+                          style: context.texts.titleMedium,
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: l10n.qadaMissed,
+                        onPressed: () async {
+                          HapticFeedback.selectionClick();
+                          await Qada.add(p, 1);
+                          onChanged();
+                        },
+                        icon: const Icon(Icons.add_circle_outline),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

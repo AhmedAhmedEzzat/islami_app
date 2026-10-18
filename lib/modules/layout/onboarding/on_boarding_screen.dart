@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/constants/prefs_keys.dart';
+import '../../../core/services/notification_refresh.dart';
+import '../../../core/services/prayer_times_service.dart';
 import '../../../core/services/shared_prefs_helper.dart';
+import '../../../core/state/settings_cubit.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/l10n_ext.dart';
 import '../../../models/on_boarding_model.dart';
+import '../../settings/prayer_notifications_prompt.dart';
 import '../layout_view.dart';
 import 'dot_indicator.dart';
 
@@ -22,7 +27,8 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
   final PageController _pageController = PageController();
   int _currentIndex = 0;
 
-  int get _lastIndex => OnBoardingSlide.values.length - 1;
+  /// The slides, then one page that sets up location and the adhan.
+  int get _lastIndex => OnBoardingSlide.values.length;
 
   (String, String) _copy(BuildContext context, OnBoardingSlide slide) {
     final l10n = context.l10n;
@@ -79,12 +85,13 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
-                itemCount: pages.length,
+                itemCount: pages.length + 1,
                 // Driven from onPageChanged rather than a scroll listener that
                 // called setState on every pixel of the drag.
                 onPageChanged: (index) =>
                     setState(() => _currentIndex = index),
                 itemBuilder: (context, index) {
+                  if (index == pages.length) return const _SetupPage();
                   final page = pages[index];
                   final (title, body) = _copy(context, page);
                   return Padding(
@@ -140,7 +147,7 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(
-                        pages.length,
+                        pages.length + 1,
                         (i) => DotIndicator(isActive: i == _currentIndex),
                       ),
                     ),
@@ -162,6 +169,150 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
                 ],
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The last onboarding page: the two things without which prayer times are
+/// wrong and the adhan never sounds. Both are optional and can be done later
+/// from Settings and the Prayer tab.
+class _SetupPage extends StatefulWidget {
+  const _SetupPage();
+
+  @override
+  State<_SetupPage> createState() => _SetupPageState();
+}
+
+class _SetupPageState extends State<_SetupPage> {
+  bool _locating = false;
+  PrayerLocation _location = PrayerTimesService.currentLocation();
+
+  Future<void> _locate() async {
+    setState(() => _locating = true);
+    final fresh = await PrayerTimesService.refreshLocation();
+    if (!mounted) return;
+    setState(() {
+      _location = fresh;
+      _locating = false;
+    });
+    // The times move with the place, and so does the adhan if it is on.
+    final settings = context.read<SettingsCubit>().state;
+    NotificationRefresh.reschedule(settings, Localizations.localeOf(context));
+    if (fresh.isFallback && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.setupLocationFailed)),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final scheme = context.colors;
+    final notificationsOn = context.select<SettingsCubit, bool>((c) => c.state.prayerNotifications);
+    final located = !_location.isFallback;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 44,
+            backgroundColor: scheme.primaryContainer,
+            child: Icon(Icons.mosque_outlined, size: 44, color: scheme.onPrimaryContainer),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Text(
+            l10n.setupTitle,
+            textAlign: TextAlign.center,
+            style: context.texts.headlineSmall?.copyWith(color: scheme.primary),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            l10n.setupBody,
+            textAlign: TextAlign.center,
+            style: context.texts.bodyLarge?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          _SetupStep(
+            icon: Icons.my_location,
+            title: l10n.setupLocationTitle,
+            body: located ? (_location.name ?? l10n.setupLocationDone) : l10n.setupLocationBody,
+            done: located,
+            busy: _locating,
+            action: l10n.setupLocationAction,
+            onPressed: _locate,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          _SetupStep(
+            icon: Icons.notifications_active_outlined,
+            title: l10n.setupAdhanTitle,
+            body: notificationsOn ? l10n.setupAdhanDone : l10n.setupAdhanBody,
+            done: notificationsOn,
+            action: l10n.setupAdhanAction,
+            onPressed: () => turnOnPrayerNotifications(context),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Text(
+            l10n.setupLater,
+            textAlign: TextAlign.center,
+            style: context.texts.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SetupStep extends StatelessWidget {
+  const _SetupStep({
+    required this.icon,
+    required this.title,
+    required this.body,
+    required this.done,
+    required this.action,
+    required this.onPressed,
+    this.busy = false,
+  });
+
+  final IconData icon;
+  final String title;
+  final String body;
+  final bool done;
+  final bool busy;
+  final String action;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = context.colors;
+    return Card(
+      color: done ? scheme.primaryContainer : scheme.surfaceContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Row(
+          children: [
+            Icon(done ? Icons.check_circle : icon, color: scheme.primary, size: 28),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: context.texts.titleMedium),
+                  const SizedBox(height: 2),
+                  Text(body, style: context.texts.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
+                ],
+              ),
+            ),
+            if (!done) ...[
+              const SizedBox(width: AppSpacing.sm),
+              busy
+                  ? const SizedBox.square(dimension: 24, child: CircularProgressIndicator(strokeWidth: 2.5))
+                  : FilledButton.tonal(onPressed: onPressed, child: Text(action)),
+            ],
           ],
         ),
       ),

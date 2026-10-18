@@ -17,6 +17,8 @@ import 'core/services/notification_refresh.dart';
 import 'core/services/prayer_notification_service.dart';
 import 'core/services/hadeth_favourites.dart';
 import 'core/services/quran_meta.dart';
+import 'core/services/review_prompt.dart';
+import 'core/services/sleep_timer.dart';
 import 'core/services/shared_prefs_helper.dart';
 import 'core/state/settings_cubit.dart';
 import 'core/state/settings_state.dart';
@@ -40,6 +42,7 @@ Future<void> main() async {
   // Its notifier was built before storage was ready.
   HadethFavourites.reload();
   await PrayerNotificationService.init();
+  ReviewPrompt.noteLaunch();
   // Recitation and radio are "music" to the OS: they pause for a phone call
   // and resume after, and other apps duck rather than talk over them.
   try {
@@ -94,7 +97,13 @@ class SakinaApp extends StatelessWidget {
         BlocProvider<QuranPlayerCubit>(
           create: (ctx) {
             final radio = ctx.read<RadioCubit>();
-            final player = QuranPlayerCubit(radio: radio);
+            final player = QuranPlayerCubit(radio: radio)
+              ..continuous = () => settings.state.continuousRecitation;
+            // The sleep timer silences whichever is playing.
+            SleepTimer.onFire = () {
+              player.pause();
+              radio.stop();
+            };
             // Mutual exclusion both ways: the player already stops the radio,
             // and this stops the player when a station starts.
             radio.onBeforePlay = player.stop;
