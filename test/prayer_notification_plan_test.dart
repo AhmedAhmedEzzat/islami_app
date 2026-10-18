@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:adhan/adhan.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakina/core/constants/muezzins.dart';
@@ -170,6 +172,14 @@ void main() {
         PrayerNotificationService.adhanChannel,
         PrayerNotificationService.standardChannel,
       ]);
+    });
+
+    test('the bundled recordings are where the muezzins expect them', () {
+      for (final id in ['default', 'short']) {
+        final m = Muezzins.byId(id);
+        expect(File('android/app/src/main/res/raw/${m.sound}.ogg').existsSync(), isTrue, reason: m.sound);
+        expect(File('android/app/src/main/res/raw/keep.xml').readAsStringSync(), contains('@raw/${m.sound},'));
+      }
     });
 
     test('the default muezzin keeps the channels existing installs already have', () {

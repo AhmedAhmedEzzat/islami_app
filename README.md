@@ -72,20 +72,32 @@ so any overflow fails the test.
 
 ## Adhan recordings
 
-The recordings are not in the repository. Put audio files in
-`android/app/src/main/res/raw/`. Each muezzin in Settings > Muezzin is a pair:
-one file for Dhuhr, Asr, Maghrib and Isha, and one for Fajr (the adhan with
-*as-salatu khayrun min an-nawm*):
+Two public-domain recordings ship in `android/app/src/main/res/raw/`:
+
+| File | Recording | Licence |
+| --- | --- | --- |
+| `adhan.ogg` | [Beautiful adhan.ogg](https://commons.wikimedia.org/wiki/File:Beautiful_adhan.ogg) by Adam-synagda, 2:34 | CC0 1.0 |
+| `adhan_short.ogg` | [Adhan.ogg](https://commons.wikimedia.org/wiki/File:Adhan.ogg), 0:42, volume raised 8 dB | CC0 1.0 |
+
+Both came from Wikimedia Commons by way of the
+[qibla-mobile](https://github.com/rahmanSaaed/qibla-mobile) project, which
+bundles the same files with the same credits. Neither has a separate Fajr
+version, so Fajr plays the same recording until one is added.
+
+More can be added. Each muezzin in Settings > Muezzin is a pair of files (`.ogg`
+or `.mp3`, never both for one name): one for Dhuhr, Asr, Maghrib and Isha, and
+one for Fajr (the adhan with *as-salatu khayrun min an-nawm*):
 
 | Muezzin | Four prayers | Fajr |
 | --- | --- | --- |
-| Default | `adhan.mp3` | `adhan_fajr.mp3` |
+| Default | `adhan.ogg` (bundled) | `adhan_fajr.ogg` |
+| Short adhan | `adhan_short.ogg` (bundled) | `adhan_short_fajr.ogg` |
 | Makkah | `adhan_makkah.mp3` | `adhan_makkah_fajr.mp3` |
 | Madinah | `adhan_madinah.mp3` | `adhan_madinah_fajr.mp3` |
 | Al-Aqsa | `adhan_aqsa.mp3` | `adhan_aqsa_fajr.mp3` |
 | Egypt | `adhan_egypt.mp3` | `adhan_egypt_fajr.mp3` |
 
-Add only the ones you want; at least the default pair is recommended. Names
+Add only the ones you want. Names
 must be lowercase letters, digits and underscores (Android resource rules).
 A missing file falls back in order: the muezzin's own adhan (for Fajr), then
 the default adhan, then the usual notification sound, so no alert is lost.
