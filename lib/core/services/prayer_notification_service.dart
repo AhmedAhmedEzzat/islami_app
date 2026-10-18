@@ -86,6 +86,9 @@ abstract final class PrayerNotificationService {
   static const String fajrAdhanChannel = 'prayer_adhan_fajr';
   static const String silentChannel = 'prayer_silent';
 
+  /// The id of the Stop button on an adhan notification.
+  static const String stopAction = 'stop_adhan';
+
   /// Recordings in android/app/src/main/res/raw, named without the extension.
   static const String _adhanSound = 'adhan';
   static const String _fajrAdhanSound = 'adhan_fajr';
@@ -352,12 +355,14 @@ abstract final class PrayerNotificationService {
         l10n.adhanChannelName,
         l10n.adhanChannelDescription,
         sound: _adhanSound,
+        stopLabel: l10n.stopAdhan,
       ),
       fajrAdhanChannel: _details(
         fajrAdhanChannel,
         l10n.fajrAdhanChannelName,
         l10n.adhanChannelDescription,
         sound: _fajrAdhanSound,
+        stopLabel: l10n.stopAdhan,
       ),
       silentChannel: _details(
         silentChannel,
@@ -440,6 +445,7 @@ abstract final class PrayerNotificationService {
     String description, {
     String? sound,
     bool playSound = true,
+    String? stopLabel,
   }) {
     return NotificationDetails(
       android: AndroidNotificationDetails(
@@ -451,6 +457,12 @@ abstract final class PrayerNotificationService {
         category: AndroidNotificationCategory.reminder,
         playSound: playSound,
         sound: sound == null ? null : RawResourceAndroidNotificationSound(sound),
+        // Dismissing the notification is what stops its sound, so Stop just
+        // cancels it, without opening the app.
+        actions: [
+          if (stopLabel != null)
+            AndroidNotificationAction(stopAction, stopLabel, cancelNotification: true),
+        ],
       ),
       // iOS caps a notification sound at 30 seconds, too short for the adhan,
       // so it keeps the system sound.

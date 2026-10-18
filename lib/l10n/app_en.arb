@@ -609,5 +609,6 @@
   "adhanChannelName": "Adhan",
   "adhanChannelDescription": "The adhan when each prayer time begins",
   "fajrAdhanChannelName": "Fajr adhan",
-  "silentChannelName": "Prayer times (silent)"
+  "silentChannelName": "Prayer times (silent)",
+  "stopAdhan": "Stop"
 }

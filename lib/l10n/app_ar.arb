@@ -319,5 +319,6 @@
   "adhanChannelName": "الأذان",
   "adhanChannelDescription": "الأذان عند دخول وقت كل صلاة",
   "fajrAdhanChannelName": "أذان الفجر",
-  "silentChannelName": "مواقيت الصلاة (صامت)"
+  "silentChannelName": "مواقيت الصلاة (صامت)",
+  "stopAdhan": "إيقاف الأذان"
 }
