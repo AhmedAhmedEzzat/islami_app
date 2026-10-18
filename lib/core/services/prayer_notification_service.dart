@@ -9,6 +9,7 @@ import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../l10n/gen/app_localizations.dart';
+import '../constants/muezzins.dart';
 import 'islamic_calendar.dart';
 import 'prayer_config.dart';
 import 'prayer_times_service.dart';
@@ -91,16 +92,13 @@ abstract final class PrayerNotificationService {
   /// each sound gets a channel of its own. Renaming a recording means a new
   /// channel id, or phones that already have the channel keep the old sound.
   static const String standardChannel = 'prayer_times';
-  static const String adhanChannel = 'prayer_adhan';
-  static const String fajrAdhanChannel = 'prayer_adhan_fajr';
+  static final String adhanChannel = Muezzins.standard.channel;
+  static final String fajrAdhanChannel = Muezzins.standard.fajrChannel;
   static const String silentChannel = 'prayer_silent';
 
   /// The id of the Stop button on an adhan notification.
   static const String stopAction = 'stop_adhan';
 
-  /// Recordings in android/app/src/main/res/raw, named without the extension.
-  static const String _adhanSound = 'adhan';
-  static const String _fajrAdhanSound = 'adhan_fajr';
 
   /// Notification ids are `_idBase + day * 10 + prayer`, so the prayer set can
   /// be cancelled without touching any other notification the app posts.
@@ -349,12 +347,35 @@ abstract final class PrayerNotificationService {
 
   /// The channel [kind] posts on. Only the prayer alert itself follows
   /// [sound]; everything else is a plain notification.
-  static String channelFor(AlertKind kind, PrayerName? prayer, PrayerSound sound) {
-    if (kind != AlertKind.prayer) return standardChannel;
+  static String channelFor(
+    AlertKind kind,
+    PrayerName? prayer,
+    PrayerSound sound, [
+    Muezzin muezzin = Muezzins.standard,
+  ]) => channelsFor(kind, prayer, sound, muezzin).first;
+
+  /// [channelFor] and then what to fall back to, in order, when a recording
+  /// is missing: the muezzin's own adhan for Fajr, then the default adhan,
+  /// and finally the phone's notification sound.
+  static List<String> channelsFor(
+    AlertKind kind,
+    PrayerName? prayer,
+    PrayerSound sound, [
+    Muezzin muezzin = Muezzins.standard,
+  ]) {
+    if (kind != AlertKind.prayer) return [standardChannel];
     return switch (sound) {
-      PrayerSound.adhan => prayer == PrayerName.fajr ? fajrAdhanChannel : adhanChannel,
-      PrayerSound.standard => standardChannel,
-      PrayerSound.silent => silentChannel,
+      PrayerSound.adhan => [
+        ...{
+          if (prayer == PrayerName.fajr) muezzin.fajrChannel,
+          muezzin.channel,
+          if (prayer == PrayerName.fajr) fajrAdhanChannel,
+          adhanChannel,
+        },
+        standardChannel,
+      ],
+      PrayerSound.standard => [standardChannel],
+      PrayerSound.silent => [silentChannel],
     };
   }
 
@@ -397,6 +418,7 @@ abstract final class PrayerNotificationService {
     Set<FastingAlert> fasting = const {},
     int hijriOffset = 0,
     PrayerSound sound = PrayerSound.adhan,
+    Muezzin muezzin = Muezzins.standard,
     bool adhkar = false,
     bool khatma = false,
   }) async {
@@ -466,27 +488,41 @@ abstract final class PrayerNotificationService {
         payload: alert.kind.name,
       );
 
-      final channel = channelFor(alert.kind, alert.prayer, sound);
-      if (missingSounds.contains(channel)) {
-        await schedule(standardChannel);
-        continue;
-      }
+      await _postWithFallback(
+        channelsFor(alert.kind, alert.prayer, sound, muezzin),
+        missingSounds,
+        schedule,
+      );
+    }
+  }
+
+  /// Posts on the first of [channels] whose recording exists. A missing one
+  /// is remembered in [missing], so the rest of the schedule skips it, rather
+  /// than losing this alert and every one after it.
+  static Future<void> _postWithFallback(
+    List<String> channels,
+    Set<String> missing,
+    Future<void> Function(String channel) post,
+  ) async {
+    for (final channel in channels) {
+      if (missing.contains(channel)) continue;
       try {
-        await schedule(channel);
+        return await post(channel);
       } on PlatformException catch (e) {
-        // The recording is not in res/raw. Fall back to the usual sound
-        // rather than lose this alert and every one after it.
-        if (e.code != 'invalid_sound') rethrow;
-        debugPrint('No sound for $channel, using the standard one: ${e.message}');
-        missingSounds.add(channel);
-        await schedule(standardChannel);
+        if (e.code != 'invalid_sound' || channel == channels.last) rethrow;
+        debugPrint('No recording for $channel: ${e.message}');
+        missing.add(channel);
       }
     }
   }
 
   /// Posts the prayer alert now, as it will sound at the next prayer, so the
   /// user can hear the adhan and check the phone lets it through.
-  static Future<void> showTest({required Locale locale, PrayerSound sound = PrayerSound.adhan}) async {
+  static Future<void> showTest({
+    required Locale locale,
+    PrayerSound sound = PrayerSound.adhan,
+    Muezzin muezzin = Muezzins.standard,
+  }) async {
     if (kIsWeb) return;
     await init();
     final l10n = _l10n(locale);
@@ -499,13 +535,7 @@ abstract final class PrayerNotificationService {
       notificationDetails: details[channel],
       payload: AlertKind.prayer.name,
     );
-    final channel = channelFor(AlertKind.prayer, PrayerName.dhuhr, sound);
-    try {
-      await show(channel);
-    } on PlatformException catch (e) {
-      if (e.code != 'invalid_sound') rethrow;
-      await show(standardChannel);
-    }
+    await _postWithFallback(channelsFor(AlertKind.prayer, PrayerName.dhuhr, sound, muezzin), {}, show);
   }
 
   /// Outside every scheduled range, so a test never replaces a real alert.
@@ -522,20 +552,22 @@ abstract final class PrayerNotificationService {
 
   static Map<String, NotificationDetails> _channels(AppLocalizations l10n) => {
     standardChannel: _details(standardChannel, l10n.prayerChannelName, l10n.prayerChannelDescription),
-    adhanChannel: _details(
-      adhanChannel,
-      l10n.adhanChannelName,
-      l10n.adhanChannelDescription,
-      sound: _adhanSound,
-      stopLabel: l10n.stopAdhan,
-    ),
-    fajrAdhanChannel: _details(
-      fajrAdhanChannel,
-      l10n.fajrAdhanChannelName,
-      l10n.adhanChannelDescription,
-      sound: _fajrAdhanSound,
-      stopLabel: l10n.stopAdhan,
-    ),
+    for (final m in Muezzins.all) ...{
+      m.channel: _details(
+        m.channel,
+        m == Muezzins.standard ? l10n.adhanChannelName : '${l10n.adhanChannelName} · ${l10n.localeName == 'ar' ? m.nameAr : m.nameEn}',
+        l10n.adhanChannelDescription,
+        sound: m.sound,
+        stopLabel: l10n.stopAdhan,
+      ),
+      m.fajrChannel: _details(
+        m.fajrChannel,
+        m == Muezzins.standard ? l10n.fajrAdhanChannelName : '${l10n.fajrAdhanChannelName} · ${l10n.localeName == 'ar' ? m.nameAr : m.nameEn}',
+        l10n.adhanChannelDescription,
+        sound: m.fajrSound,
+        stopLabel: l10n.stopAdhan,
+      ),
+    },
     silentChannel: _details(
       silentChannel,
       l10n.silentChannelName,

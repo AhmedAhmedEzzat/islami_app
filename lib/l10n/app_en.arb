@@ -779,5 +779,7 @@
   "khatmaReminderTitle": "Today's Quran portion",
   "khatmaReminderBody": "Keep your khatma on track: read today's pages",
   "khatmaReminderSetting": "Daily khatma reminder",
-  "khatmaReminderSubtitle": "Half an hour after Isha, while a khatma is under way"
+  "khatmaReminderSubtitle": "Half an hour after Isha, while a khatma is under way",
+  "muezzinSetting": "Muezzin",
+  "muezzinDefault": "Default"
 }

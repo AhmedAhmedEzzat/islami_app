@@ -8,6 +8,7 @@ import '../../core/services/prayer_config.dart';
 import '../../core/services/prayer_times_service.dart';
 import '../../core/utils/prayer_labels.dart';
 import '../../core/services/recitation_downloads.dart';
+import '../../core/constants/muezzins.dart';
 import '../../core/services/prayer_notification_service.dart';
 import '../more/downloads_view.dart';
 import '../../core/state/settings_cubit.dart';
@@ -283,6 +284,22 @@ class SettingsView extends StatelessWidget {
                   if (picked != null) cubit.setPrayerSound(picked);
                 },
               ),
+              if (state.prayerSound == PrayerSound.adhan)
+                ListTile(
+                  enabled: state.prayerNotifications,
+                  leading: const Icon(Icons.mosque_outlined),
+                  title: Text(context.l10n.muezzinSetting),
+                  subtitle: Text(_muezzinName(context, Muezzins.byId(state.muezzinId))),
+                  onTap: () async {
+                    final picked = await _pick<String>(
+                      context,
+                      context.l10n.muezzinSetting,
+                      {for (final m in Muezzins.all) m.id: _muezzinName(context, m)},
+                      state.muezzinId,
+                    );
+                    if (picked != null) cubit.setMuezzin(picked);
+                  },
+                ),
               ListTile(
                 enabled: state.prayerNotifications,
                 leading: const Icon(Icons.play_circle_outline),
@@ -291,6 +308,7 @@ class SettingsView extends StatelessWidget {
                 onTap: () => PrayerNotificationService.showTest(
                   locale: Localizations.localeOf(context),
                   sound: state.prayerSound,
+                  muezzin: Muezzins.byId(state.muezzinId),
                 ),
               ),
               ListTile(
@@ -424,6 +442,10 @@ class SettingsView extends StatelessWidget {
         'twilight' => context.l10n.highLatTwilight,
         _ => context.l10n.highLatMiddle,
       };
+
+  static String _muezzinName(BuildContext context, Muezzin m) => m == Muezzins.standard
+      ? context.l10n.muezzinDefault
+      : (context.isArabic ? m.nameAr : m.nameEn);
 
   static String _prayerSoundLabel(BuildContext context, PrayerSound sound) =>
       switch (sound) {

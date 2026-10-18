@@ -56,6 +56,7 @@ class SettingsCubit extends Cubit<SettingsState> {
         mushafView: LocalStorageServices.getBool(PrefsKeys.mushafView) ?? true,
         adhkarReminders: LocalStorageServices.getBool(PrefsKeys.adhkarReminders) ?? true,
         khatmaReminders: LocalStorageServices.getBool(PrefsKeys.khatmaReminders) ?? true,
+        muezzinId: LocalStorageServices.getString(PrefsKeys.muezzin) ?? 'default',
       ),
     );
   }
@@ -168,6 +169,11 @@ class SettingsCubit extends Cubit<SettingsState> {
   Future<void> setKhatmaReminders(bool on) async {
     emit(state.copyWith(khatmaReminders: on));
     await LocalStorageServices.setBool(PrefsKeys.khatmaReminders, on);
+  }
+
+  Future<void> setMuezzin(String id) async {
+    emit(state.copyWith(muezzinId: id));
+    await LocalStorageServices.setString(PrefsKeys.muezzin, id);
   }
 
   Future<void> setHijriOffset(int days) async {

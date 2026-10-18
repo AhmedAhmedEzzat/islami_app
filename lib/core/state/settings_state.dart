@@ -27,6 +27,7 @@ class SettingsState {
     this.mushafView = true,
     this.adhkarReminders = true,
     this.khatmaReminders = true,
+    this.muezzinId = 'default',
   });
 
   final ThemeMode themeMode;
@@ -81,6 +82,9 @@ class SettingsState {
   /// A daily reminder of the khatma portion, while a khatma is under way.
   final bool khatmaReminders;
 
+  /// Whose adhan the prayer alert plays; see Muezzins.
+  final String muezzinId;
+
   static const Set<FastingAlert> defaultFastingAlerts = {
     FastingAlert.mondayThursday,
     FastingAlert.whiteDays,
@@ -127,6 +131,7 @@ class SettingsState {
     bool? mushafView,
     bool? adhkarReminders,
     bool? khatmaReminders,
+    String? muezzinId,
     // Distinguishes "leave unchanged" from "back to the system language".
     bool clearLocale = false,
   }) {
@@ -149,6 +154,7 @@ class SettingsState {
       mushafView: mushafView ?? this.mushafView,
       adhkarReminders: adhkarReminders ?? this.adhkarReminders,
       khatmaReminders: khatmaReminders ?? this.khatmaReminders,
+      muezzinId: muezzinId ?? this.muezzinId,
     );
   }
 
@@ -172,7 +178,8 @@ class SettingsState {
         other.prayerSound == prayerSound &&
         other.mushafView == mushafView &&
         other.adhkarReminders == adhkarReminders &&
-        other.khatmaReminders == khatmaReminders;
+        other.khatmaReminders == khatmaReminders &&
+        other.muezzinId == muezzinId;
   }
 
   @override
@@ -195,5 +202,6 @@ class SettingsState {
     mushafView,
     adhkarReminders,
     khatmaReminders,
+    muezzinId,
   );
 }

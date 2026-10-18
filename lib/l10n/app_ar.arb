@@ -387,5 +387,7 @@
   "khatmaReminderTitle": "ورد اليوم من القرآن",
   "khatmaReminderBody": "حافظ على ختمتك: اقرأ صفحات اليوم",
   "khatmaReminderSetting": "تذكير يومي بالختمة",
-  "khatmaReminderSubtitle": "بعد العشاء بنصف ساعة، ما دامت لديك ختمة"
+  "khatmaReminderSubtitle": "بعد العشاء بنصف ساعة، ما دامت لديك ختمة",
+  "muezzinSetting": "المؤذن",
+  "muezzinDefault": "الافتراضي"
 }

@@ -1,5 +1,6 @@
 import 'package:adhan/adhan.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sakina/core/constants/muezzins.dart';
 import 'package:sakina/core/services/prayer_config.dart';
 import 'package:sakina/core/services/prayer_notification_service.dart';
 import 'package:sakina/core/services/prayer_times_service.dart';
@@ -153,6 +154,32 @@ void main() {
         expect(channel(AlertKind.prayer, p, PrayerSound.standard), PrayerNotificationService.standardChannel);
         expect(channel(AlertKind.prayer, p, PrayerSound.silent), PrayerNotificationService.silentChannel);
       }
+    });
+
+    test('a muezzin falls back to their own adhan, then the default, then the plain sound', () {
+      final makkah = Muezzins.byId('makkah');
+      expect(PrayerNotificationService.channelsFor(AlertKind.prayer, PrayerName.fajr, PrayerSound.adhan, makkah), [
+        'prayer_adhan_makkah_fajr',
+        'prayer_adhan_makkah',
+        PrayerNotificationService.fajrAdhanChannel,
+        PrayerNotificationService.adhanChannel,
+        PrayerNotificationService.standardChannel,
+      ]);
+      expect(PrayerNotificationService.channelsFor(AlertKind.prayer, PrayerName.isha, PrayerSound.adhan, makkah), [
+        'prayer_adhan_makkah',
+        PrayerNotificationService.adhanChannel,
+        PrayerNotificationService.standardChannel,
+      ]);
+    });
+
+    test('the default muezzin keeps the channels existing installs already have', () {
+      expect(PrayerNotificationService.adhanChannel, 'prayer_adhan');
+      expect(PrayerNotificationService.fajrAdhanChannel, 'prayer_adhan_fajr');
+      expect(
+        PrayerNotificationService.channelsFor(AlertKind.prayer, PrayerName.fajr, PrayerSound.adhan),
+        ['prayer_adhan_fajr', 'prayer_adhan', PrayerNotificationService.standardChannel],
+      );
+      expect(Muezzins.byId('nobody'), Muezzins.standard);
     });
 
     test('reminders and other alerts never play the adhan', () {

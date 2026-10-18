@@ -20,7 +20,8 @@ The bottom bar is **Home · Quran · Prayer · Adhkar · More**.
 **Notifications** (off by default): an adhan-time alert for each prayer you
 choose, an optional reminder N minutes before, and an optional Friday reminder
 to read Al-Kahf, and morning and evening **adhkar reminders** half an hour after
-Fajr and Asr. Tapping a notification opens its screen. The prayer alert plays the **adhan** (a separate recording for
+Fajr and Asr, and a daily khatma reminder after Isha while a khatma is under way.
+Tapping a notification opens its screen. The prayer alert plays the **adhan** (a separate recording for
 Fajr), the phone's usual notification sound, or nothing, as chosen in
 Settings. Reminders and the other alerts always use the usual sound.
 The adhan notification has a **Stop** button. Settings has **Test the adhan**
@@ -32,6 +33,10 @@ the app is not opened.
 Fasting reminders, each with its own switch: the evening before Monday and
 Thursday, before the White Days and before Arafah and Ashura, and suhoor and
 iftar during Ramadan. None is sent before Eid or the days of Tashreeq.
+
+**Home screen widget** (Android): the next prayer with a live countdown and the
+day's five prayer times. It keeps working without the app open: the app saves two
+weeks of times, and the widget moves on by itself at each prayer.
 
 **Settings**: language, theme (light, dark or follow the phone), Quran text size,
 reciter, calculation method, madhab, high-latitude rule, prayer adjustments,
@@ -57,7 +62,7 @@ iOS and desktop configuration is written but **has not been built or tested**,
 because the development machine has no Xcode.
 
 ```bash
-flutter test      # 208 tests
+flutter test      # 214 tests
 flutter analyze   # clean
 ```
 
@@ -67,17 +72,24 @@ so any overflow fails the test.
 
 ## Adhan recordings
 
-The recordings are not in the repository. Put two audio files in
-`android/app/src/main/res/raw/`:
+The recordings are not in the repository. Put audio files in
+`android/app/src/main/res/raw/`. Each muezzin in Settings > Muezzin is a pair:
+one file for Dhuhr, Asr, Maghrib and Isha, and one for Fajr (the adhan with
+*as-salatu khayrun min an-nawm*):
 
-| File | Plays at |
-| --- | --- |
-| `adhan.mp3` | Dhuhr, Asr, Maghrib and Isha |
-| `adhan_fajr.mp3` | Fajr (the adhan with *as-salatu khayrun min an-nawm*) |
+| Muezzin | Four prayers | Fajr |
+| --- | --- | --- |
+| Default | `adhan.mp3` | `adhan_fajr.mp3` |
+| Makkah | `adhan_makkah.mp3` | `adhan_makkah_fajr.mp3` |
+| Madinah | `adhan_madinah.mp3` | `adhan_madinah_fajr.mp3` |
+| Al-Aqsa | `adhan_aqsa.mp3` | `adhan_aqsa_fajr.mp3` |
+| Egypt | `adhan_egypt.mp3` | `adhan_egypt_fajr.mp3` |
 
-Names must be lowercase letters, digits and underscores (Android resource
-rules). With only one recording, copy it under both names. If a file is
-missing, that prayer falls back to the usual notification sound.
+Add only the ones you want; at least the default pair is recommended. Names
+must be lowercase letters, digits and underscores (Android resource rules).
+A missing file falls back in order: the muezzin's own adhan (for Fajr), then
+the default adhan, then the usual notification sound, so no alert is lost.
+Use recordings you have the right to distribute.
 
 Android fixes a channel's sound the first time it posts, so after **replacing**
 a recording on a phone that already played the old one, uninstall the app (or

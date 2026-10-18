@@ -5,6 +5,8 @@ import 'package:flutter/widgets.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:workmanager/workmanager.dart';
 
+import '../constants/muezzins.dart';
+
 import '../state/settings_cubit.dart';
 import '../state/settings_state.dart';
 import 'khatma.dart';
@@ -37,6 +39,7 @@ abstract final class NotificationRefresh {
       fasting: state.fastingAlerts,
       hijriOffset: state.hijriOffset,
       sound: state.prayerSound,
+      muezzin: Muezzins.byId(state.muezzinId),
       adhkar: state.adhkarReminders,
       // Only while a khatma is under way.
       khatma: state.khatmaReminders && Khatma.isActive,
