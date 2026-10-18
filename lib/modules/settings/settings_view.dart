@@ -254,6 +254,24 @@ class SettingsView extends StatelessWidget {
               ),
               ListTile(
                 enabled: state.prayerNotifications,
+                leading: const Icon(Icons.volume_up_outlined),
+                title: Text(context.l10n.prayerSoundSetting),
+                subtitle: Text(_prayerSoundLabel(context, state.prayerSound)),
+                onTap: () async {
+                  final picked = await _pick<PrayerSound>(
+                    context,
+                    context.l10n.prayerSoundSetting,
+                    {
+                      for (final s in PrayerSound.values)
+                        s: _prayerSoundLabel(context, s),
+                    },
+                    state.prayerSound,
+                  );
+                  if (picked != null) cubit.setPrayerSound(picked);
+                },
+              ),
+              ListTile(
+                enabled: state.prayerNotifications,
                 leading: const Icon(Icons.alarm),
                 title: Text(context.l10n.reminderTitleSetting),
                 subtitle: Text(
@@ -359,6 +377,13 @@ class SettingsView extends StatelessWidget {
         'seventh' => context.l10n.highLatSeventh,
         'twilight' => context.l10n.highLatTwilight,
         _ => context.l10n.highLatMiddle,
+      };
+
+  static String _prayerSoundLabel(BuildContext context, PrayerSound sound) =>
+      switch (sound) {
+        PrayerSound.adhan => context.l10n.prayerSoundAdhan,
+        PrayerSound.standard => context.l10n.prayerSoundStandard,
+        PrayerSound.silent => context.l10n.prayerSoundSilent,
       };
 
   /// A single-choice dialog. Returns the picked value, or null if dismissed.

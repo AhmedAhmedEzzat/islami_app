@@ -601,5 +601,13 @@
   "fastMondayThursdaySubtitle": "The evening before",
   "fastWhiteDaysSetting": "White Days (13th-15th)",
   "fastRamadanSetting": "Ramadan: suhoor and iftar",
-  "fastArafahAshuraSetting": "Arafah and Ashura"
+  "fastArafahAshuraSetting": "Arafah and Ashura",
+  "prayerSoundSetting": "Prayer-time sound",
+  "prayerSoundAdhan": "Adhan",
+  "prayerSoundStandard": "Notification sound",
+  "prayerSoundSilent": "Silent",
+  "adhanChannelName": "Adhan",
+  "adhanChannelDescription": "The adhan when each prayer time begins",
+  "fajrAdhanChannelName": "Fajr adhan",
+  "silentChannelName": "Prayer times (silent)"
 }

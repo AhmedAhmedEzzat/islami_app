@@ -311,5 +311,13 @@
   "fastMondayThursdaySubtitle": "في مساء اليوم السابق",
   "fastWhiteDaysSetting": "الأيام البيض (١٣-١٥)",
   "fastRamadanSetting": "رمضان: السحور والإفطار",
-  "fastArafahAshuraSetting": "يوم عرفة وعاشوراء"
+  "fastArafahAshuraSetting": "يوم عرفة وعاشوراء",
+  "prayerSoundSetting": "صوت التنبيه عند الصلاة",
+  "prayerSoundAdhan": "الأذان",
+  "prayerSoundStandard": "صوت الإشعار العادي",
+  "prayerSoundSilent": "صامت",
+  "adhanChannelName": "الأذان",
+  "adhanChannelDescription": "الأذان عند دخول وقت كل صلاة",
+  "fajrAdhanChannelName": "أذان الفجر",
+  "silentChannelName": "مواقيت الصلاة (صامت)"
 }

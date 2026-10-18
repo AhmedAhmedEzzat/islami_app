@@ -19,7 +19,9 @@ The bottom bar is **Home · Quran · Prayer · Adhkar · More**.
 
 **Notifications** (off by default): an adhan-time alert for each prayer you
 choose, an optional reminder N minutes before, and an optional Friday reminder
-to read Al-Kahf.
+to read Al-Kahf. The prayer alert plays the **adhan** (a separate recording for
+Fajr), the phone's usual notification sound, or nothing, as chosen in
+Settings. Reminders and the other alerts always use the usual sound.
 Fasting reminders, each with its own switch: the evening before Monday and
 Thursday, before the White Days and before Arafah and Ashura, and suhoor and
 iftar during Ramadan. None is sent before Eid or the days of Tashreeq.
@@ -48,13 +50,34 @@ iOS and desktop configuration is written but **has not been built or tested**,
 because the development machine has no Xcode.
 
 ```bash
-flutter test      # 172 tests
+flutter test      # 184 tests
 flutter analyze   # clean
 ```
 
 `test/new_screens_smoke_test.dart` lays out Home, More, Zakat and Settings at
 the target phone's size and 1.1 font scale, in both languages and both themes,
 so any overflow fails the test.
+
+## Adhan recordings
+
+The recordings are not in the repository. Put two audio files in
+`android/app/src/main/res/raw/`:
+
+| File | Plays at |
+| --- | --- |
+| `adhan.mp3` | Dhuhr, Asr, Maghrib and Isha |
+| `adhan_fajr.mp3` | Fajr (the adhan with *as-salatu khayrun min an-nawm*) |
+
+Names must be lowercase letters, digits and underscores (Android resource
+rules). With only one recording, copy it under both names. If a file is
+missing, that prayer falls back to the usual notification sound.
+
+Android fixes a channel's sound the first time it posts, so after **replacing**
+a recording on a phone that already played the old one, uninstall the app (or
+clear its data) to hear the new one.
+
+On iOS a notification sound is capped at 30 seconds, so iOS keeps the system
+sound.
 
 ## Religious content
 

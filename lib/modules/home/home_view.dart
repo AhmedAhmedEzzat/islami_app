@@ -107,6 +107,7 @@ class _HomeViewState extends State<HomeView> {
       fridayKahf: s.fridayKahf,
       fasting: s.fastingAlerts,
       hijriOffset: s.hijriOffset,
+      sound: s.prayerSound,
     );
   }
 

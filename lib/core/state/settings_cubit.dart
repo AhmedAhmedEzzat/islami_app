@@ -50,6 +50,9 @@ class SettingsCubit extends Cubit<SettingsState> {
         fastingAlerts: _decodeFasting(
           LocalStorageServices.getString(PrefsKeys.fastingAlerts),
         ),
+        prayerSound: _decodePrayerSound(
+          LocalStorageServices.getString(PrefsKeys.prayerSound),
+        ),
       ),
     );
   }
@@ -144,6 +147,11 @@ class SettingsCubit extends Cubit<SettingsState> {
     );
   }
 
+  Future<void> setPrayerSound(PrayerSound sound) async {
+    emit(state.copyWith(prayerSound: sound));
+    await LocalStorageServices.setString(PrefsKeys.prayerSound, sound.name);
+  }
+
   Future<void> setHijriOffset(int days) async {
     final clamped = days.clamp(-2, 2);
     emit(state.copyWith(hijriOffset: clamped));
@@ -165,6 +173,13 @@ class SettingsCubit extends Cubit<SettingsState> {
       for (final name in stored.split(','))
         ...FastingAlert.values.where((a) => a.name == name),
     };
+  }
+
+  static PrayerSound _decodePrayerSound(String? stored) {
+    return PrayerSound.values.firstWhere(
+      (s) => s.name == stored,
+      orElse: () => PrayerSound.adhan,
+    );
   }
 
   static Locale? _decodeLocale(String? stored) {

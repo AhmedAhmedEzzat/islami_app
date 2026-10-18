@@ -98,4 +98,36 @@ void main() {
         .firstWhere((a) => a.prayer == PrayerName.asr);
     expect(hanafi.time.isAfter(standard.time), isTrue);
   });
+
+  group('channelFor', () {
+    String channel(AlertKind kind, PrayerName? prayer, PrayerSound sound) =>
+        PrayerNotificationService.channelFor(kind, prayer, sound);
+
+    test('Fajr gets its own adhan, the other four share one', () {
+      expect(
+        channel(AlertKind.prayer, PrayerName.fajr, PrayerSound.adhan),
+        PrayerNotificationService.fajrAdhanChannel,
+      );
+      for (final p in [PrayerName.dhuhr, PrayerName.asr, PrayerName.maghrib, PrayerName.isha]) {
+        expect(channel(AlertKind.prayer, p, PrayerSound.adhan), PrayerNotificationService.adhanChannel);
+      }
+    });
+
+    test('the other sounds apply to every prayer, Fajr included', () {
+      for (final p in PrayerNotificationService.notifiedPrayers) {
+        expect(channel(AlertKind.prayer, p, PrayerSound.standard), PrayerNotificationService.standardChannel);
+        expect(channel(AlertKind.prayer, p, PrayerSound.silent), PrayerNotificationService.silentChannel);
+      }
+    });
+
+    test('reminders and other alerts never play the adhan', () {
+      // A reminder ten minutes early that sounds like the adhan would be
+      // mistaken for the prayer itself.
+      for (final kind in AlertKind.values.where((k) => k != AlertKind.prayer)) {
+        for (final sound in PrayerSound.values) {
+          expect(channel(kind, PrayerName.fajr, sound), PrayerNotificationService.standardChannel);
+        }
+      }
+    });
+  });
 }

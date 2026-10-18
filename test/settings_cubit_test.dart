@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sakina/core/constants/prefs_keys.dart';
+import 'package:sakina/core/services/prayer_notification_service.dart';
 import 'package:sakina/core/services/shared_prefs_helper.dart';
 import 'package:sakina/core/state/settings_cubit.dart';
 import 'package:sakina/core/state/settings_state.dart';
@@ -73,5 +75,20 @@ void main() {
     final second = SettingsCubit()..load();
     expect(second.state.reciterId, 'abdulbasit');
     expect(second.state.calculationMethod, 'ummAlQura');
+  });
+
+  test('the prayer sound defaults to the adhan and persists', () async {
+    final first = SettingsCubit()..load();
+    expect(first.state.prayerSound, PrayerSound.adhan);
+    await first.setPrayerSound(PrayerSound.silent);
+
+    final second = SettingsCubit()..load();
+    expect(second.state.prayerSound, PrayerSound.silent);
+  });
+
+  test('an unrecognised stored prayer sound falls back to the adhan', () async {
+    await LocalStorageServices.setString(PrefsKeys.prayerSound, 'trumpet');
+    final cubit = SettingsCubit()..load();
+    expect(cubit.state.prayerSound, PrayerSound.adhan);
   });
 }

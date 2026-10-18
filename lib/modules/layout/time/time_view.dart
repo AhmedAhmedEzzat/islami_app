@@ -81,6 +81,7 @@ class _TimeViewState extends State<TimeView> {
       fridayKahf: s.fridayKahf,
       fasting: s.fastingAlerts,
       hijriOffset: s.hijriOffset,
+      sound: s.prayerSound,
     );
   }
 

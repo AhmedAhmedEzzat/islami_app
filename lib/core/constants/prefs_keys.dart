@@ -25,6 +25,7 @@ abstract final class PrefsKeys {
   static const String fridayKahf = 'settings.fridayKahf';
   static const String hijriOffset = 'settings.hijriOffset';
   static const String fastingAlerts = 'settings.fastingAlerts';
+  static const String prayerSound = 'settings.prayerSound';
   static const String hadethFavourites = 'hadeth.favourites';
   static const String zakatInputs = 'zakat.inputs';
 

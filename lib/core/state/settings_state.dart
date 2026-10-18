@@ -23,6 +23,7 @@ class SettingsState {
     this.fridayKahf = true,
     this.hijriOffset = 0,
     this.fastingAlerts = defaultFastingAlerts,
+    this.prayerSound = PrayerSound.adhan,
   });
 
   final ThemeMode themeMode;
@@ -62,6 +63,9 @@ class SettingsState {
 
   /// Which fasting reminders are on. They post only while [prayerNotifications] is.
   final Set<FastingAlert> fastingAlerts;
+
+  /// What the prayer-time notification sounds like.
+  final PrayerSound prayerSound;
 
   static const Set<FastingAlert> defaultFastingAlerts = {
     FastingAlert.mondayThursday,
@@ -105,6 +109,7 @@ class SettingsState {
     bool? fridayKahf,
     int? hijriOffset,
     Set<FastingAlert>? fastingAlerts,
+    PrayerSound? prayerSound,
     // Distinguishes "leave unchanged" from "back to the system language".
     bool clearLocale = false,
   }) {
@@ -123,6 +128,7 @@ class SettingsState {
       fridayKahf: fridayKahf ?? this.fridayKahf,
       hijriOffset: hijriOffset ?? this.hijriOffset,
       fastingAlerts: fastingAlerts ?? this.fastingAlerts,
+      prayerSound: prayerSound ?? this.prayerSound,
     );
   }
 
@@ -142,7 +148,8 @@ class SettingsState {
         setEquals(other.notifiedPrayers, notifiedPrayers) &&
         other.fridayKahf == fridayKahf &&
         other.hijriOffset == hijriOffset &&
-        setEquals(other.fastingAlerts, fastingAlerts);
+        setEquals(other.fastingAlerts, fastingAlerts) &&
+        other.prayerSound == prayerSound;
   }
 
   @override
@@ -161,5 +168,6 @@ class SettingsState {
     fridayKahf,
     hijriOffset,
     Object.hashAllUnordered(fastingAlerts),
+    prayerSound,
   );
 }

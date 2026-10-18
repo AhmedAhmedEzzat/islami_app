@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:adhan/adhan.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
@@ -39,6 +40,19 @@ enum AlertKind {
 /// The fasting reminders a user can turn on, each with its own switch.
 enum FastingAlert { mondayThursday, whiteDays, ramadan, arafahAshura }
 
+/// What a prayer-time notification sounds like. Reminders, Al-Kahf and the
+/// fasting alerts always use the phone's notification sound.
+enum PrayerSound {
+  /// The full adhan, with its own recording for Fajr.
+  adhan,
+
+  /// The phone's usual notification sound.
+  standard,
+
+  /// No sound; the notification still appears.
+  silent,
+}
+
 /// One notification the schedule will post.
 @immutable
 class ScheduledAlert {
@@ -63,7 +77,18 @@ enum NotificationPermission { granted, grantedInexact, denied }
 /// the app opens or a setting that affects the times changes.
 abstract final class PrayerNotificationService {
   static const int daysAhead = 14;
-  static const String _channelId = 'prayer_times';
+
+  /// Android fixes a channel's sound when the channel is first created, so
+  /// each sound gets a channel of its own. Renaming a recording means a new
+  /// channel id, or phones that already have the channel keep the old sound.
+  static const String standardChannel = 'prayer_times';
+  static const String adhanChannel = 'prayer_adhan';
+  static const String fajrAdhanChannel = 'prayer_adhan_fajr';
+  static const String silentChannel = 'prayer_silent';
+
+  /// Recordings in android/app/src/main/res/raw, named without the extension.
+  static const String _adhanSound = 'adhan';
+  static const String _fajrAdhanSound = 'adhan_fajr';
 
   /// Notification ids are `_idBase + day * 10 + prayer`, so the prayer set can
   /// be cancelled without touching any other notification the app posts.
@@ -254,6 +279,17 @@ abstract final class PrayerNotificationService {
     return result;
   }
 
+  /// The channel [kind] posts on. Only the prayer alert itself follows
+  /// [sound]; everything else is a plain notification.
+  static String channelFor(AlertKind kind, PrayerName? prayer, PrayerSound sound) {
+    if (kind != AlertKind.prayer) return standardChannel;
+    return switch (sound) {
+      PrayerSound.adhan => prayer == PrayerName.fajr ? fajrAdhanChannel : adhanChannel,
+      PrayerSound.standard => standardChannel,
+      PrayerSound.silent => silentChannel,
+    };
+  }
+
   /// What to remind about on the evening of [eve], for the fast the next day:
   /// at most one reminder an evening, the rarer occasion first.
   ///
@@ -292,6 +328,7 @@ abstract final class PrayerNotificationService {
     bool fridayKahf = false,
     Set<FastingAlert> fasting = const {},
     int hijriOffset = 0,
+    PrayerSound sound = PrayerSound.adhan,
   }) async {
     if (kIsWeb) return;
     await init();
@@ -308,17 +345,27 @@ abstract final class PrayerNotificationService {
     );
 
     final exact = await _android?.canScheduleExactNotifications() ?? true;
-    final details = NotificationDetails(
-      android: AndroidNotificationDetails(
-        _channelId,
-        l10n.prayerChannelName,
-        channelDescription: l10n.prayerChannelDescription,
-        importance: Importance.high,
-        priority: Priority.high,
-        category: AndroidNotificationCategory.reminder,
+    final details = {
+      standardChannel: _details(standardChannel, l10n.prayerChannelName, l10n.prayerChannelDescription),
+      adhanChannel: _details(
+        adhanChannel,
+        l10n.adhanChannelName,
+        l10n.adhanChannelDescription,
+        sound: _adhanSound,
       ),
-      iOS: const DarwinNotificationDetails(presentSound: true),
-    );
+      fajrAdhanChannel: _details(
+        fajrAdhanChannel,
+        l10n.fajrAdhanChannelName,
+        l10n.adhanChannelDescription,
+        sound: _fajrAdhanSound,
+      ),
+      silentChannel: _details(
+        silentChannel,
+        l10n.silentChannelName,
+        l10n.prayerChannelDescription,
+        playSound: false,
+      ),
+    };
 
     final alerts = plan(
       coordinates: coordinates,
@@ -331,6 +378,7 @@ abstract final class PrayerNotificationService {
       hijriOffset: hijriOffset,
     );
 
+    final missingSounds = <String>{};
     for (final alert in alerts) {
       final name = alert.prayer == null ? '' : _label(l10n, alert.prayer!);
       final (title, body) = switch (alert.kind) {
@@ -355,10 +403,10 @@ abstract final class PrayerNotificationService {
         AlertKind.suhoor => (l10n.suhoorTitle, l10n.suhoorBody),
         AlertKind.iftar => (l10n.iftarNotificationTitle, l10n.iftarNotificationBody),
       };
-      await _plugin.zonedSchedule(
+      Future<void> schedule(String channel) => _plugin.zonedSchedule(
         id: alert.id,
         scheduledDate: tz.TZDateTime.from(alert.time, tz.local),
-        notificationDetails: details,
+        notificationDetails: details[channel]!,
         // Exact when the user has allowed it; otherwise Android batches the
         // alarm and it can arrive several minutes late.
         androidScheduleMode: exact
@@ -367,7 +415,47 @@ abstract final class PrayerNotificationService {
         title: title,
         body: body,
       );
+
+      final channel = channelFor(alert.kind, alert.prayer, sound);
+      if (missingSounds.contains(channel)) {
+        await schedule(standardChannel);
+        continue;
+      }
+      try {
+        await schedule(channel);
+      } on PlatformException catch (e) {
+        // The recording is not in res/raw. Fall back to the usual sound
+        // rather than lose this alert and every one after it.
+        if (e.code != 'invalid_sound') rethrow;
+        debugPrint('No sound for $channel, using the standard one: ${e.message}');
+        missingSounds.add(channel);
+        await schedule(standardChannel);
+      }
     }
+  }
+
+  static NotificationDetails _details(
+    String channel,
+    String name,
+    String description, {
+    String? sound,
+    bool playSound = true,
+  }) {
+    return NotificationDetails(
+      android: AndroidNotificationDetails(
+        channel,
+        name,
+        channelDescription: description,
+        importance: Importance.high,
+        priority: Priority.high,
+        category: AndroidNotificationCategory.reminder,
+        playSound: playSound,
+        sound: sound == null ? null : RawResourceAndroidNotificationSound(sound),
+      ),
+      // iOS caps a notification sound at 30 seconds, too short for the adhan,
+      // so it keeps the system sound.
+      iOS: DarwinNotificationDetails(presentSound: playSound),
+    );
   }
 
   static String _label(AppLocalizations l10n, PrayerName prayer) {
