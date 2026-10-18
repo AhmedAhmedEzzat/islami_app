@@ -403,5 +403,11 @@
   "setupAdhanDone": "الأذان مفعّل",
   "setupLater": "يمكنك تغيير ذلك في أي وقت من الإعدادات.",
   "rateApp": "قيّم سكينة",
-  "rateAppSubtitle": "تقييمك يساعد غيرك على الوصول للتطبيق"
+  "rateAppSubtitle": "تقييمك يساعد غيرك على الوصول للتطبيق",
+  "sleepTimer": "مؤقت النوم",
+  "sleepEndOfSura": "عند نهاية السورة",
+  "sleepEndOfSuraShort": "نهاية السورة",
+  "sleepTimerOff": "إيقاف المؤقت",
+  "continuousRecitation": "المتابعة إلى السورة التالية",
+  "removeDownload": "حذف التحميل"
 }

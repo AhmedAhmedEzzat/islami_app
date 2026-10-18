@@ -7,6 +7,7 @@ import '../../../core/state/radio_state.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/widgets/app_background.dart';
 import '../../../models/radio_channel.dart';
+import '../widgets/sleep_timer_sheet.dart';
 import 'radio_card.dart';
 import '../../../core/utils/l10n_ext.dart';
 
@@ -26,6 +27,7 @@ class RadioView extends StatelessWidget {
     return AppBackground(
       ornament: Assets.radioBackground,
       title: context.l10n.radioTitle,
+      actions: const [SleepTimerButton()],
       child: BlocConsumer<RadioCubit, RadioState>(
         listenWhen: (a, b) => a.errorKey != b.errorKey && b.errorKey != null,
         listener: (context, state) {

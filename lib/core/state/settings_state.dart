@@ -28,6 +28,7 @@ class SettingsState {
     this.adhkarReminders = true,
     this.khatmaReminders = true,
     this.muezzinId = 'default',
+    this.continuousRecitation = true,
   });
 
   final ThemeMode themeMode;
@@ -85,6 +86,9 @@ class SettingsState {
   /// Whose adhan the prayer alert plays; see Muezzins.
   final String muezzinId;
 
+  /// Recitation carries on into the next sura when one ends.
+  final bool continuousRecitation;
+
   static const Set<FastingAlert> defaultFastingAlerts = {
     FastingAlert.mondayThursday,
     FastingAlert.whiteDays,
@@ -132,6 +136,7 @@ class SettingsState {
     bool? adhkarReminders,
     bool? khatmaReminders,
     String? muezzinId,
+    bool? continuousRecitation,
     // Distinguishes "leave unchanged" from "back to the system language".
     bool clearLocale = false,
   }) {
@@ -155,6 +160,7 @@ class SettingsState {
       adhkarReminders: adhkarReminders ?? this.adhkarReminders,
       khatmaReminders: khatmaReminders ?? this.khatmaReminders,
       muezzinId: muezzinId ?? this.muezzinId,
+      continuousRecitation: continuousRecitation ?? this.continuousRecitation,
     );
   }
 
@@ -179,7 +185,8 @@ class SettingsState {
         other.mushafView == mushafView &&
         other.adhkarReminders == adhkarReminders &&
         other.khatmaReminders == khatmaReminders &&
-        other.muezzinId == muezzinId;
+        other.muezzinId == muezzinId &&
+        other.continuousRecitation == continuousRecitation;
   }
 
   @override
@@ -203,5 +210,6 @@ class SettingsState {
     adhkarReminders,
     khatmaReminders,
     muezzinId,
+    continuousRecitation,
   );
 }
