@@ -58,6 +58,12 @@ class SettingsCubit extends Cubit<SettingsState> {
         khatmaReminders: LocalStorageServices.getBool(PrefsKeys.khatmaReminders) ?? true,
         muezzinId: LocalStorageServices.getString(PrefsKeys.muezzin) ?? 'default',
         continuousRecitation: LocalStorageServices.getBool(PrefsKeys.continuousRecitation) ?? true,
+        sunnahAlerts: _decodeSunnah(LocalStorageServices.getString(PrefsKeys.sunnahAlerts)),
+        verseRepeat: LocalStorageServices.getInt(PrefsKeys.verseRepeat) ?? 1,
+        mushafPaper: MushafPaper.values.firstWhere(
+          (p) => p.name == LocalStorageServices.getString(PrefsKeys.mushafPaper),
+          orElse: () => MushafPaper.auto,
+        ),
       ),
     );
   }
@@ -182,6 +188,23 @@ class SettingsCubit extends Cubit<SettingsState> {
     await LocalStorageServices.setBool(PrefsKeys.continuousRecitation, on);
   }
 
+  Future<void> toggleSunnahAlert(SunnahAlert alert) async {
+    final next = Set<SunnahAlert>.from(state.sunnahAlerts);
+    next.contains(alert) ? next.remove(alert) : next.add(alert);
+    emit(state.copyWith(sunnahAlerts: next));
+    await LocalStorageServices.setString(PrefsKeys.sunnahAlerts, next.map((a) => a.name).join(','));
+  }
+
+  Future<void> setVerseRepeat(int times) async {
+    emit(state.copyWith(verseRepeat: times));
+    await LocalStorageServices.setInt(PrefsKeys.verseRepeat, times);
+  }
+
+  Future<void> setMushafPaper(MushafPaper paper) async {
+    emit(state.copyWith(mushafPaper: paper));
+    await LocalStorageServices.setString(PrefsKeys.mushafPaper, paper.name);
+  }
+
   Future<void> setHijriOffset(int days) async {
     final clamped = days.clamp(-2, 2);
     emit(state.copyWith(hijriOffset: clamped));
@@ -210,6 +233,14 @@ class SettingsCubit extends Cubit<SettingsState> {
       (s) => s.name == stored,
       orElse: () => PrayerSound.adhan,
     );
+  }
+
+  static Set<SunnahAlert> _decodeSunnah(String? stored) {
+    if (stored == null) return SettingsState.defaultSunnahAlerts;
+    return {
+      for (final name in stored.split(','))
+        ...SunnahAlert.values.where((a) => a.name == name),
+    };
   }
 
   static Locale? _decodeLocale(String? stored) {

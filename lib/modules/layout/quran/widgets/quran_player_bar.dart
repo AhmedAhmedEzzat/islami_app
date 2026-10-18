@@ -6,6 +6,7 @@ import '../../../../core/services/recitation_downloads.dart';
 import '../../../../core/state/quran_player_cubit.dart';
 import '../../../../core/state/quran_player_state.dart';
 import '../../../../core/state/settings_cubit.dart';
+import '../../../../core/state/settings_state.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/l10n_ext.dart';
@@ -147,7 +148,7 @@ class QuranPlayerBar extends StatelessWidget {
   }
 }
 
-enum _MenuAction { sleep, continuous, download }
+enum _MenuAction { sleep, continuous, verseRepeat, download }
 
 /// Sleep timer, continuous play and this sura's download, which do not need
 /// a button each on the bar.
@@ -182,6 +183,8 @@ class _MoreMenu extends StatelessWidget {
                 );
               case _MenuAction.continuous:
                 settings.setContinuousRecitation(!settings.state.continuousRecitation);
+              case _MenuAction.verseRepeat:
+                _pickVerseRepeat(context);
               case _MenuAction.download:
                 if (downloaded) {
                   RecitationDownloads.delete(reciter, sura);
@@ -209,6 +212,14 @@ class _MoreMenu extends StatelessWidget {
               checked: settings.state.continuousRecitation,
               child: Text(l10n.continuousRecitation),
             ),
+            PopupMenuItem(
+              value: _MenuAction.verseRepeat,
+              child: ListTile(
+                leading: const Icon(Icons.school_outlined),
+                title: Text(l10n.verseRepeat),
+                subtitle: Text(l10n.verseRepeatTimes(settings.state.verseRepeat)),
+              ),
+            ),
             if (RecitationDownloads.supported)
               PopupMenuItem(
                 value: _MenuAction.download,
@@ -229,5 +240,30 @@ class _MoreMenu extends StatelessWidget {
         );
       },
     );
+  }
+
+  /// Each verse several times before the next, for memorising. A change
+  /// applies at once, from the verse playing.
+  static Future<void> _pickVerseRepeat(BuildContext context) async {
+    final settings = context.read<SettingsCubit>();
+    final player = context.read<QuranPlayerCubit>();
+    final picked = await showDialog<int>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text(context.l10n.verseRepeat),
+        children: [
+          for (final n in SettingsState.verseRepeatChoices)
+            ListTile(
+              title: Text(context.l10n.verseRepeatTimes(n)),
+              trailing: n == settings.state.verseRepeat ? Icon(Icons.check, color: context.colors.primary) : null,
+              onTap: () => Navigator.pop(context, n),
+            ),
+        ],
+      ),
+    );
+    if (picked == null || picked == settings.state.verseRepeat) return;
+    await settings.setVerseRepeat(picked);
+    // Applies at once whether playing or paused.
+    if (player.state.suraId != null) await player.restartFromCurrentVerse();
   }
 }

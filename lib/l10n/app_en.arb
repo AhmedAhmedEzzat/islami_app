@@ -817,5 +817,62 @@
   "qadaDays": "Days",
   "qadaAdd": "Add",
   "qadaMadeUp": "Made one up",
-  "qadaMissed": "Add a missed prayer"
+  "qadaMissed": "Add a missed prayer",
+  "tasbehAdd": "Add dhikr",
+  "tasbehAddHint": "For example: أستغفر الله",
+  "tasbehRemove": "Remove \"{zikr}\"?",
+  "@tasbehRemove": {
+    "placeholders": {
+      "zikr": {
+        "type": "String"
+      }
+    }
+  },
+  "tasbehTarget": "Count per round",
+  "tasbehTargetValue": "Target: {n}",
+  "@tasbehTargetValue": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "tasbehToday": "Today: {n}",
+  "@tasbehToday": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "sunnahRemindersHeader": "Sunnah reminders",
+  "jumuahSetting": "Friday (Jumu'ah)",
+  "jumuahSubtitle": "An hour before the Friday prayer",
+  "jumuahTitle": "Jumu'ah today",
+  "jumuahBody": "Ghusl, go early to the mosque, and send blessings on the Prophet ﷺ",
+  "duhaSetting": "Duha prayer",
+  "duhaSubtitle": "Halfway between sunrise and Dhuhr",
+  "duhaTitle": "Duha prayer",
+  "duhaBody": "Time for Duha, the prayer of those who turn back to Allah",
+  "qiyamSetting": "Night prayer (Qiyam)",
+  "qiyamSubtitle": "When the last third of the night begins",
+  "qiyamTitle": "The last third of the night",
+  "qiyamBody": "Our Lord descends and says: who is calling upon Me, that I may answer him?",
+  "verseRepeat": "Repeat each verse",
+  "verseRepeatTimes": "{n, plural, =1{Once} =2{Twice} other{{n} times}}",
+  "@verseRepeatTimes": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "readingToday": "pages today",
+  "readingWeek": "pages this week",
+  "readingStreak": "days in a row",
+  "mushafPaperSetting": "Mushaf paper",
+  "paperAuto": "Automatic (cream by day, dark at night)",
+  "paperWhite": "White",
+  "paperSepia": "Sepia (easy on the eyes)",
+  "paperNight": "Night"
 }

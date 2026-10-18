@@ -8,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/l10n_ext.dart';
 import '../../../core/utils/prayer_labels.dart';
+import '../../../core/widgets/text_prompt_dialog.dart';
 
 /// Log each of the five prayers as you pray it, with a streak and the week
 /// at a glance, and count the missed prayers still to make up.
@@ -142,40 +143,16 @@ class _QadaSection extends StatelessWidget {
   final VoidCallback onChanged;
 
   Future<void> _addDays(BuildContext context) async {
-    final controller = TextEditingController();
-    final days = await showDialog<int>(
-      context: context,
-      builder: (context) {
-        void submit() => Navigator.pop(context, int.tryParse(controller.text));
-        return AlertDialog(
-          title: Text(context.l10n.qadaAddDays),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(context.l10n.qadaAddDaysHint),
-              const SizedBox(height: AppSpacing.md),
-              TextField(
-                controller: controller,
-                autofocus: true,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(5)],
-                decoration: InputDecoration(labelText: context.l10n.qadaDays, border: const OutlineInputBorder()),
-                onSubmitted: (_) => submit(),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
-            ),
-            FilledButton(onPressed: submit, child: Text(context.l10n.qadaAdd)),
-          ],
-        );
-      },
+    final text = await showTextPrompt(
+      context,
+      title: context.l10n.qadaAddDays,
+      confirm: context.l10n.qadaAdd,
+      message: context.l10n.qadaAddDaysHint,
+      label: context.l10n.qadaDays,
+      numeric: true,
+      maxLength: 5,
     );
-    controller.dispose();
+    final days = int.tryParse(text ?? '');
     if (days == null || days <= 0) return;
     await Qada.addDays(days);
     onChanged();

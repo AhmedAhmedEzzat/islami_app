@@ -105,13 +105,38 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
   /// Builds the playlist for [sura] starting at [fromAyah]. Pure, so the
   /// basmala rules can be tested without audio.
   @visibleForTesting
-  static List<int> playlistAyahs(int sura, int fromAyah, int totalAyahs) {
+  static List<int> playlistAyahs(int sura, int fromAyah, int totalAyahs, {int repeatEach = 1}) {
     final start = fromAyah.clamp(1, totalAyahs);
     final needsBasmala = start == 1 && sura != 1 && sura != 9;
     return [
       if (needsBasmala) 0,
-      for (var a = start; a <= totalAyahs; a++) a,
+      // For memorising: each verse several times before the next.
+      for (var a = start; a <= totalAyahs; a++)
+        for (var r = 0; r < repeatEach.clamp(1, 20); r++) a,
     ];
+  }
+
+  /// How many times each verse is recited, for memorising. Set from `main()`
+  /// to read the user's setting.
+  int Function() repeatEach = () => 1;
+
+  /// Rebuilds the playlist with a new [repeatEach] at the verse playing,
+  /// keeping it paused if it was. When the sura repeats, the whole sura is
+  /// rebuilt so the loop still covers it, and play resumes at the same verse.
+  Future<void> restartFromCurrentVerse() async {
+    final sura = state.suraId;
+    final ayah = state.ayah;
+    if (sura == null || ayah == null) return;
+    final verse = ayah == 0 ? 1 : ayah;
+    final wholeSura = state.repeat == RecitationRepeat.sura;
+    await playFrom(
+      suraId: sura,
+      fromAyah: wholeSura ? 1 : verse,
+      startAtAyah: wholeSura ? verse : null,
+      totalAyahs: state.totalAyahs,
+      reciterId: _reciterId,
+      autoplay: state.isPlaying,
+    );
   }
 
   /// Starts [suraId] at [fromAyah] (1-based).
@@ -121,6 +146,8 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
     required int totalAyahs,
     required String reciterId,
     bool quiet = false,
+    int? startAtAyah,
+    bool autoplay = true,
   }) async {
     final sura = int.tryParse(suraId);
     if (sura == null || totalAyahs <= 0) return;
@@ -131,7 +158,7 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
 
     final reciter = Reciters.byId(reciterId);
     _reciterId = reciter.id;
-    _ayahAt = playlistAyahs(sura, fromAyah, totalAyahs);
+    _ayahAt = playlistAyahs(sura, fromAyah, totalAyahs, repeatEach: repeatEach());
     _lastIndex = null;
 
     emit(
@@ -152,6 +179,9 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
       await _applyRepeat(state.repeat);
       // Paused (the sleep timer) or stopped (the radio) while loading.
       if (isClosed || generation != _generation) return;
+      final at = startAtAyah == null ? -1 : _ayahAt.indexOf(startAtAyah);
+      if (at > 0) await _player.seek(Duration.zero, index: at);
+      if (isClosed || generation != _generation || !autoplay) return;
       unawaited(_player.play());
     } catch (e) {
       debugPrint('Recitation failed for sura $suraId: $e');
@@ -196,12 +226,33 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
     _player.playing ? await _player.pause() : unawaited(_player.play());
   }
 
+  /// The next verse, skipping the rest of this one's repeats. When the sura
+  /// repeats, the last verse leads back to the first.
   Future<void> nextVerse() async {
-    if (_player.hasNext) await _player.seekToNext();
+    final i = _player.currentIndex;
+    // A new playlist may still be loading, its index meant for the old one.
+    if (i == null || i >= _ayahAt.length) return;
+    var next = _ayahAt.indexWhere((a) => a != _ayahAt[i], i);
+    if (next == -1 && _player.loopMode == LoopMode.all && _ayahAt.isNotEmpty) next = 0;
+    if (next != -1) await _player.seek(Duration.zero, index: next);
   }
 
+  /// The first recitation of the verse before this one. When the sura
+  /// repeats, the first verse leads back to the last.
   Future<void> previousVerse() async {
-    if (_player.hasPrevious) await _player.seekToPrevious();
+    final i = _player.currentIndex;
+    if (i == null || i >= _ayahAt.length) return;
+    final current = _ayahAt[i];
+    var before = _ayahAt.lastIndexWhere((a) => a != current, i);
+    if (before == -1 && _player.loopMode == LoopMode.all) {
+      before = _ayahAt.lastIndexWhere((a) => a != current);
+    }
+    if (before == -1) return;
+    var start = before;
+    while (start > 0 && _ayahAt[start - 1] == _ayahAt[before]) {
+      start--;
+    }
+    await _player.seek(Duration.zero, index: start);
   }
 
   Future<void> seek(Duration position) => _player.seek(position);

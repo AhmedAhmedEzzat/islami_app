@@ -233,7 +233,7 @@ abstract class PrayerTimesService {
     if (next == null) {
       final tomorrow = PrayerTimes(
         coordinates,
-        DateComponents.from(date.add(const Duration(days: 1))),
+        DateComponents.from(DateTime(date.year, date.month, date.day + 1)),
         params,
       );
       next = PrayerEntry(PrayerName.fajr, tomorrow.fajr);

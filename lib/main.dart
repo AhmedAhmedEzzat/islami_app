@@ -98,7 +98,8 @@ class SakinaApp extends StatelessWidget {
           create: (ctx) {
             final radio = ctx.read<RadioCubit>();
             final player = QuranPlayerCubit(radio: radio)
-              ..continuous = () => settings.state.continuousRecitation;
+              ..continuous = (() => settings.state.continuousRecitation)
+              ..repeatEach = (() => settings.state.verseRepeat);
             // The sleep timer silences whichever is playing.
             SleepTimer.onFire = () {
               player.pause();
@@ -126,7 +127,8 @@ class SakinaApp extends StatelessWidget {
             a.prayerSound != b.prayerSound ||
             a.adhkarReminders != b.adhkarReminders ||
             a.khatmaReminders != b.khatmaReminders ||
-            a.muezzinId != b.muezzinId,
+            a.muezzinId != b.muezzinId ||
+            !setEquals(a.sunnahAlerts, b.sunnahAlerts),
         listener: (_, state) => _reschedule(state),
         child: BlocBuilder<SettingsCubit, SettingsState>(
           builder: (context, state) {

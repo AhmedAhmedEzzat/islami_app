@@ -40,12 +40,15 @@ abstract final class IslamicCalendar {
 
   /// The Hijri date of Gregorian [date].
   static HijriCalendar of(DateTime date, {int offset = 0}) =>
-      HijriCalendar.fromDate(_date(date).add(Duration(days: offset)));
+      HijriCalendar.fromDate(DateTime(date.year, date.month, date.day + offset));
 
   /// The Gregorian date of a Hijri date.
   static DateTime toGregorian(int year, int month, int day, {int offset = 0}) =>
-      _date(HijriCalendar().hijriToGregorian(year, month, day))
-          .subtract(Duration(days: offset));
+      _shift(HijriCalendar().hijriToGregorian(year, month, day), -offset);
+
+  /// [days] calendar days after [d], at midnight. Adding 24-hour spans
+  /// instead lands on the wrong date across a clock change.
+  static DateTime _shift(DateTime d, int days) => DateTime(d.year, d.month, d.day + days);
 
   static int daysInMonth(int year, int month) =>
       HijriCalendar().getDaysInMonth(year, month);

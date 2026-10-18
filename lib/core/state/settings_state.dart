@@ -5,6 +5,9 @@ import '../services/prayer_config.dart';
 import '../services/prayer_notification_service.dart';
 import '../services/prayer_times_service.dart';
 
+/// The mushaf's paper: [auto] is cream by day and dark at night.
+enum MushafPaper { auto, white, sepia, night }
+
 /// User preferences that affect the whole app.
 @immutable
 class SettingsState {
@@ -29,6 +32,9 @@ class SettingsState {
     this.khatmaReminders = true,
     this.muezzinId = 'default',
     this.continuousRecitation = true,
+    this.sunnahAlerts = defaultSunnahAlerts,
+    this.verseRepeat = 1,
+    this.mushafPaper = MushafPaper.auto,
   });
 
   final ThemeMode themeMode;
@@ -89,6 +95,20 @@ class SettingsState {
   /// Recitation carries on into the next sura when one ends.
   final bool continuousRecitation;
 
+  /// Which sunnah reminders are on. They post only while [prayerNotifications] is.
+  final Set<SunnahAlert> sunnahAlerts;
+
+  /// Times each verse is recited before the next, for memorising.
+  final int verseRepeat;
+
+  static const List<int> verseRepeatChoices = [1, 2, 3, 5, 10];
+
+  final MushafPaper mushafPaper;
+
+  /// Friday is on from the start; the daily ones, one of them at night, are
+  /// for the user to choose.
+  static const Set<SunnahAlert> defaultSunnahAlerts = {SunnahAlert.jumuah};
+
   static const Set<FastingAlert> defaultFastingAlerts = {
     FastingAlert.mondayThursday,
     FastingAlert.whiteDays,
@@ -137,6 +157,9 @@ class SettingsState {
     bool? khatmaReminders,
     String? muezzinId,
     bool? continuousRecitation,
+    Set<SunnahAlert>? sunnahAlerts,
+    int? verseRepeat,
+    MushafPaper? mushafPaper,
     // Distinguishes "leave unchanged" from "back to the system language".
     bool clearLocale = false,
   }) {
@@ -161,6 +184,9 @@ class SettingsState {
       khatmaReminders: khatmaReminders ?? this.khatmaReminders,
       muezzinId: muezzinId ?? this.muezzinId,
       continuousRecitation: continuousRecitation ?? this.continuousRecitation,
+      sunnahAlerts: sunnahAlerts ?? this.sunnahAlerts,
+      verseRepeat: verseRepeat ?? this.verseRepeat,
+      mushafPaper: mushafPaper ?? this.mushafPaper,
     );
   }
 
@@ -186,11 +212,14 @@ class SettingsState {
         other.adhkarReminders == adhkarReminders &&
         other.khatmaReminders == khatmaReminders &&
         other.muezzinId == muezzinId &&
-        other.continuousRecitation == continuousRecitation;
+        other.continuousRecitation == continuousRecitation &&
+        setEquals(other.sunnahAlerts, sunnahAlerts) &&
+        other.verseRepeat == verseRepeat &&
+        other.mushafPaper == mushafPaper;
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     themeMode,
     quranFontScale,
     reciterId,
@@ -211,5 +240,8 @@ class SettingsState {
     khatmaReminders,
     muezzinId,
     continuousRecitation,
-  );
+    Object.hashAllUnordered(sunnahAlerts),
+    verseRepeat,
+    mushafPaper,
+  ]);
 }

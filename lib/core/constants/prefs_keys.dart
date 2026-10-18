@@ -31,12 +31,19 @@ abstract final class PrefsKeys {
   static const String khatmaReminders = 'settings.khatmaReminders';
   static const String muezzin = 'settings.muezzin';
   static const String continuousRecitation = 'settings.continuousRecitation';
+  static const String sunnahAlerts = 'settings.sunnahAlerts';
+  static const String verseRepeat = 'settings.verseRepeat';
+  static const String mushafPaper = 'settings.mushafPaper';
   static const String reviewFirstUse = 'review.firstUse';
   static const String reviewLastAsked = 'review.lastAsked';
   static const String reviewMoments = 'review.moments';
   static const String reviewAsks = 'review.asks';
   static const String reviewTrackerDay = 'review.trackerDay';
   static const String lastMushafPage = 'quran.lastMushafPage';
+
+  /// Mushaf pages read on one day, and the days that have such a list.
+  static String readingDay(String day) => 'reading.$day';
+  static const String readingDays = 'reading.days';
   static const String khatma = 'quran.khatma';
   static const String focusHintShown = 'quran.focusHintShown';
 
@@ -58,6 +65,10 @@ abstract final class PrefsKeys {
   static String qada(String prayer) => 'qada.$prayer';
   static const String tasbehZikrIndex = 'tasbeh.zikrIndex';
   static const String tasbehRounds = 'tasbeh.rounds';
+  static const String tasbehTarget = 'tasbeh.target';
+  static const String tasbehCustom = 'tasbeh.custom';
+  static const String tasbehToday = 'tasbeh.today';
+  static const String tasbehTodayDate = 'tasbeh.todayDate';
   static const String bookmarks = 'quran.bookmarks';
   static const String lastRead = 'quran.lastRead';
 

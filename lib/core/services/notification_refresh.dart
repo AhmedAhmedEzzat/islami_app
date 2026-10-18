@@ -43,6 +43,7 @@ abstract final class NotificationRefresh {
       adhkar: state.adhkarReminders,
       // Only while a khatma is under way.
       khatma: state.khatmaReminders && Khatma.isActive,
+      sunnah: state.sunnahAlerts,
     );
   }
 

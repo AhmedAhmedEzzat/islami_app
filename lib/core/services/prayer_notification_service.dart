@@ -45,7 +45,19 @@ enum AlertKind {
 
   /// The day's khatma portion, [khatmaAfterIsha] after Isha.
   khatma,
+
+  /// Duha, halfway between sunrise and Dhuhr.
+  duha,
+
+  /// Night prayer, when the last third of the night begins.
+  qiyam,
+
+  /// Friday, [jumuahBeforeDhuhr] before Dhuhr.
+  jumuah,
 }
+
+/// Optional reminders of sunnah acts, each with its own switch.
+enum SunnahAlert { duha, qiyam, jumuah }
 
 /// The fasting reminders a user can turn on, each with its own switch.
 enum FastingAlert { mondayThursday, whiteDays, ramadan, arafahAshura }
@@ -202,11 +214,18 @@ abstract final class PrayerNotificationService {
   ///   fasting   4000 + day * 10 + slot (0 the evening before, 1 suhoor, 2 iftar)
   ///   adhkar    5000 + day * 10 + slot (0 morning, 1 evening)
   ///   khatma    6000 + day
+  ///   sunnah    7000 + day * 10 + slot (0 duha, 1 qiyam, 2 jumuah,
+  ///             3 the qiyam of the night already under way, on day 0)
   static const int _reminderBase = 2000;
   static const int _kahfBase = 3000;
   static const int _fastingBase = 4000;
   static const int _adhkarBase = 5000;
   static const int _khatmaBase = 6000;
+  static const int _sunnahBase = 7000;
+
+  /// The Friday reminder comes this long before Dhuhr, in time to prepare
+  /// and go early.
+  static const Duration jumuahBeforeDhuhr = Duration(hours: 1);
 
   /// The khatma reminder comes this long after Isha, when the day's work is
   /// usually done.
@@ -241,6 +260,9 @@ abstract final class PrayerNotificationService {
         await _plugin.cancel(id: _adhkarBase + day * 10 + slot);
       }
       await _plugin.cancel(id: _khatmaBase + day);
+      for (var slot = 0; slot < 4; slot++) {
+        await _plugin.cancel(id: _sunnahBase + day * 10 + slot);
+      }
     }
   }
 
@@ -264,12 +286,15 @@ abstract final class PrayerNotificationService {
     int hijriOffset = 0,
     bool adhkar = false,
     bool khatma = false,
+    Set<SunnahAlert> sunnah = const {},
   }) {
     final result = <ScheduledAlert>[];
     final today = DateTime(now.year, now.month, now.day);
 
     for (var day = 0; day < daysAhead; day++) {
-      final date = today.add(Duration(days: day));
+      // By calendar date, not 24-hour steps, which a 23- or 25-hour day (a
+      // clock change) would turn into a repeated or skipped date.
+      final date = DateTime(today.year, today.month, today.day + day);
       final times = PrayerTimesService.computeFor(
         coordinates: coordinates,
         date: date,
@@ -321,6 +346,31 @@ abstract final class PrayerNotificationService {
         }
       }
 
+      void addSunnah(int slot, AlertKind kind, DateTime time) {
+        if (time.isAfter(now)) result.add(ScheduledAlert(_sunnahBase + day * 10 + slot, kind, null, time));
+      }
+      if (sunnah.contains(SunnahAlert.duha)) {
+        final sunrise = times.entry(PrayerName.sunrise).time;
+        final dhuhr = times.entry(PrayerName.dhuhr).time;
+        addSunnah(0, AlertKind.duha, sunrise.add(dhuhr.difference(sunrise) ~/ 2));
+      }
+      if (sunnah.contains(SunnahAlert.qiyam)) {
+        addSunnah(1, AlertKind.qiyam, lastThirdOfNight(times.entry(PrayerName.maghrib).time, coordinates, config));
+        // After midnight, tonight's last third belongs to the night that began
+        // at yesterday's Maghrib; rebuilding the schedule then must keep it.
+        if (day == 0) {
+          final yesterday = PrayerTimesService.computeFor(
+            coordinates: coordinates,
+            date: DateTime(today.year, today.month, today.day - 1),
+            config: config,
+          );
+          addSunnah(3, AlertKind.qiyam, lastThirdOfNight(yesterday.entry(PrayerName.maghrib).time, coordinates, config));
+        }
+      }
+      if (sunnah.contains(SunnahAlert.jumuah) && date.weekday == DateTime.friday) {
+        addSunnah(2, AlertKind.jumuah, times.entry(PrayerName.dhuhr).time.subtract(jumuahBeforeDhuhr));
+      }
+
       if (khatma) {
         final time = times.entry(PrayerName.isha).time.add(khatmaAfterIsha);
         if (time.isAfter(now)) {
@@ -343,6 +393,16 @@ abstract final class PrayerNotificationService {
 
     result.sort((a, b) => a.time.compareTo(b.time));
     return result;
+  }
+
+  /// When the last third of the night after [maghrib] begins: the night runs
+  /// from Maghrib to the next Fajr.
+  static DateTime lastThirdOfNight(DateTime maghrib, Coordinates coordinates, PrayerConfig config) {
+    final next = DateTime(maghrib.year, maghrib.month, maghrib.day + 1);
+    final fajr = PrayerTimesService.computeFor(coordinates: coordinates, date: next, config: config)
+        .entry(PrayerName.fajr)
+        .time;
+    return fajr.subtract(fajr.difference(maghrib) ~/ 3);
   }
 
   /// The channel [kind] posts on. Only the prayer alert itself follows
@@ -388,7 +448,7 @@ abstract final class PrayerNotificationService {
   /// Ramadan, which is fasted anyway.
   static AlertKind? _fastTomorrow(DateTime eve, Set<FastingAlert> fasting, int hijriOffset) {
     if (fasting.isEmpty) return null;
-    final tomorrow = eve.add(const Duration(days: 1));
+    final tomorrow = DateTime(eve.year, eve.month, eve.day + 1);
     final h = IslamicCalendar.of(tomorrow, offset: hijriOffset);
     final forbidden = (h.hMonth == 10 && h.hDay == 1) || (h.hMonth == 12 && h.hDay >= 10 && h.hDay <= 13);
     if (forbidden || h.hMonth == 9) return null;
@@ -421,6 +481,7 @@ abstract final class PrayerNotificationService {
     Muezzin muezzin = Muezzins.standard,
     bool adhkar = false,
     bool khatma = false,
+    Set<SunnahAlert> sunnah = const {},
   }) async {
     if (kIsWeb) return;
     await init();
@@ -444,6 +505,7 @@ abstract final class PrayerNotificationService {
       hijriOffset: hijriOffset,
       adhkar: adhkar,
       khatma: khatma,
+      sunnah: sunnah,
     );
 
     final missingSounds = <String>{};
@@ -473,6 +535,9 @@ abstract final class PrayerNotificationService {
         AlertKind.morningAdhkar => (l10n.morningAdhkarTitle, l10n.morningAdhkarBody),
         AlertKind.eveningAdhkar => (l10n.eveningAdhkarTitle, l10n.eveningAdhkarBody),
         AlertKind.khatma => (l10n.khatmaReminderTitle, l10n.khatmaReminderBody),
+        AlertKind.duha => (l10n.duhaTitle, l10n.duhaBody),
+        AlertKind.qiyam => (l10n.qiyamTitle, l10n.qiyamBody),
+        AlertKind.jumuah => (l10n.jumuahTitle, l10n.jumuahBody),
       };
       Future<void> schedule(String channel) => _plugin.zonedSchedule(
         id: alert.id,
