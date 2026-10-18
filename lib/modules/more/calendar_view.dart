@@ -8,6 +8,7 @@ import '../../core/state/settings_cubit.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../core/utils/l10n_ext.dart';
+import 'date_converter_view.dart';
 
 String eventLabel(BuildContext context, IslamicEvent e) {
   final l10n = context.l10n;
@@ -76,7 +77,19 @@ class _CalendarViewState extends State<CalendarView> {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.calendarTitle)),
+      appBar: AppBar(
+        title: Text(l10n.calendarTitle),
+        actions: [
+          IconButton(
+            tooltip: l10n.dateConverter,
+            icon: const Icon(Icons.swap_horiz),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute<void>(builder: (_) => const DateConverterView()),
+            ),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         children: [

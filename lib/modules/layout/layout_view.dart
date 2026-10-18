@@ -255,10 +255,15 @@ class _LayoutViewState extends State<LayoutView> {
             children: [
               for (var i = 0; i < _roots.length; i++)
                 if (_visited[i])
-                  TabNavigator(
-                    navigatorKey: _navKeys[i],
-                    observer: _observers[i],
-                    root: _roots[i],
+                  // Hidden tabs stay built but still: no animations, and
+                  // their listeners know they are not the one on screen.
+                  TickerMode(
+                    enabled: i == _selectedIndex,
+                    child: TabNavigator(
+                      navigatorKey: _navKeys[i],
+                      observer: _observers[i],
+                      root: _roots[i],
+                    ),
                   )
                 else
                   const SizedBox.shrink(),

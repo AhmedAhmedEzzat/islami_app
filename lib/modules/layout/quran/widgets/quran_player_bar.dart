@@ -10,6 +10,7 @@ import '../../../../core/state/settings_state.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/l10n_ext.dart';
+import '../../../../core/utils/on_screen.dart';
 import '../../../../models/sura_data_model.dart';
 import '../../widgets/sleep_timer_sheet.dart';
 
@@ -28,9 +29,12 @@ class QuranPlayerBar extends StatelessWidget {
     return BlocConsumer<QuranPlayerCubit, QuranPlayerState>(
       listenWhen: (a, b) => a.errorKey != b.errorKey && b.errorKey != null,
       listener: (context, state) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.recitationOffline)),
-        );
+        // Only the screen in view says so; another may be listening too.
+        if (isOnScreen(context)) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(context.l10n.recitationOffline)),
+          );
+        }
         context.read<QuranPlayerCubit>().clearError();
       },
       builder: (context, state) {

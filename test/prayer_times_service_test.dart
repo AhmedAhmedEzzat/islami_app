@@ -26,6 +26,9 @@ void main() {
       for (var d = 0; d <= 366; d++) {
         final day = DateTime(2026, 1, 1 + d);
         final prayers = PrayerTimesService.computeFor(coordinates: place, date: day).prayers;
+        for (final p in prayers) {
+          expect(p.time.second, 0, reason: '$name ${p.prayer.name} $day is not on the minute');
+        }
         if (last != null) {
           for (var p = 0; p < prayers.length; p++) {
             // Instants, so a clock change does not count. The library does

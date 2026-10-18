@@ -24,6 +24,7 @@ class MushafPage extends StatefulWidget {
     this.onVerseTap,
     this.highlightVerse,
     this.bookmarkedVerses = const {},
+    this.tintedVerses = const {},
     this.initialAyah,
   });
 
@@ -40,6 +41,9 @@ class MushafPage extends StatefulWidget {
 
   /// 1-based verses the reader has bookmarked; their rosettes are filled.
   final Set<int> bookmarkedVerses;
+
+  /// 1-based verses the reader has highlighted, with their colours.
+  final Map<int, Color> tintedVerses;
 
   /// Open at this 1-based verse instead of the saved reading position, e.g.
   /// when arriving from a juz, a bookmark or a search result.
@@ -214,6 +218,7 @@ class _MushafPageState extends State<MushafPage> {
           ? end
           : _text.verseEnd[verse];
       final highlighted = live && verse == widget.highlightVerse;
+      final tint = live ? widget.tintedVerses[verse + 1] : null;
       children.add(
         TextSpan(
           text: '${_text.words.sublist(i, segmentEnd).join(' ')} ',
@@ -225,6 +230,8 @@ class _MushafPageState extends State<MushafPage> {
                     alpha: 0.22,
                   ),
                 )
+              : tint != null
+              ? TextStyle(backgroundColor: tint.withValues(alpha: 0.35))
               : null,
         ),
       );

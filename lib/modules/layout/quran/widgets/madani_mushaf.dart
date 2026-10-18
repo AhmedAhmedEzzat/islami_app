@@ -25,6 +25,7 @@ class MadaniMushaf extends StatefulWidget {
     this.onVerseTap,
     this.highlight,
     this.isBookmarked,
+    this.verseTint,
     this.onTapPage,
   });
 
@@ -40,6 +41,9 @@ class MadaniMushaf extends StatefulWidget {
   /// The verse being recited. Highlighted, and followed onto its page.
   final VerseRef? highlight;
   final bool Function(VerseRef verse)? isBookmarked;
+
+  /// The highlighter colour the reader gave a verse, if any.
+  final Color? Function(VerseRef verse)? verseTint;
 
   /// A tap on the page outside any word, e.g. to hide the app's bars.
   final VoidCallback? onTapPage;
@@ -201,6 +205,7 @@ class MadaniMushafState extends State<MadaniMushaf> {
       words: _textFor(page),
       highlight: widget.highlight,
       isBookmarked: widget.isBookmarked,
+      verseTint: widget.verseTint,
       onVerseTap: widget.onVerseTap,
     );
   }
@@ -273,6 +278,7 @@ class MushafSheet extends StatelessWidget {
     required this.words,
     this.highlight,
     this.isBookmarked,
+    this.verseTint,
     this.onVerseTap,
   });
 
@@ -283,6 +289,9 @@ class MushafSheet extends StatelessWidget {
   final Map<int, List<List<String>>>? words;
   final VerseRef? highlight;
   final bool Function(VerseRef verse)? isBookmarked;
+
+  /// The highlighter colour the reader gave a verse, if any.
+  final Color? Function(VerseRef verse)? verseTint;
   final ValueChanged<VerseRef>? onVerseTap;
 
   /// Width of a typical full line in em of Amiri Quran: wide enough for 98% of
@@ -426,6 +435,7 @@ class MushafSheet extends StatelessWidget {
                                 paper: paper,
                                 highlight: highlight,
                                 isBookmarked: isBookmarked,
+                                verseTint: verseTint,
                                 onVerseTap: onVerseTap,
                               ),
                       ),
@@ -612,6 +622,7 @@ class _Lines extends StatelessWidget {
     required this.paper,
     this.highlight,
     this.isBookmarked,
+    this.verseTint,
     this.onVerseTap,
   });
 
@@ -622,6 +633,9 @@ class _Lines extends StatelessWidget {
   final _Paper paper;
   final VerseRef? highlight;
   final bool Function(VerseRef verse)? isBookmarked;
+
+  /// The highlighter colour the reader gave a verse, if any.
+  final Color? Function(VerseRef verse)? verseTint;
   final ValueChanged<VerseRef>? onVerseTap;
 
   /// Al-Fatiha and the opening of Al-Baqarah are set as short centred lines.
@@ -692,7 +706,8 @@ class _Lines extends StatelessWidget {
     var w = line.first!;
     while (true) {
       final verseWords = words[w.sura]![w.ayah - 1];
-      items.add(_Item(verseWords[w.word - 1], w.verse));
+      final tint = verseTint?.call(w.verse);
+      items.add(_Item(verseWords[w.word - 1], w.verse, tint: tint));
       final endsVerse = w.word == verseWords.length;
       if (endsVerse) {
         items.add(
@@ -702,6 +717,7 @@ class _Lines extends StatelessWidget {
             w.verse,
             rosette: true,
             bookmarked: isBookmarked?.call(w.verse) ?? false,
+            tint: tint,
           ),
         );
       }
@@ -723,12 +739,14 @@ class _Item {
     this.verse, {
     this.rosette = false,
     this.bookmarked = false,
+    this.tint,
   });
 
   final String text;
   final VerseRef verse;
   final bool rosette;
   final bool bookmarked;
+  final Color? tint;
 }
 
 /// One line of words, justified edge to edge like the print.
@@ -807,10 +825,13 @@ class _TextLine extends StatelessWidget {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onVerseTap == null ? null : () => onVerseTap!(item.verse),
-      child: lit
+      // The verse being recited outshines the reader's own highlight.
+      child: lit || item.tint != null
           ? DecoratedBox(
               decoration: BoxDecoration(
-                color: context.colors.primary.withValues(alpha: 0.18),
+                color: lit
+                    ? context.colors.primary.withValues(alpha: 0.18)
+                    : item.tint!.withValues(alpha: paper.paper.computeLuminance() < 0.3 ? 0.32 : 0.38),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: text,

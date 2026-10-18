@@ -14,6 +14,7 @@ import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/l10n_ext.dart';
 import '../../../../models/sura_data_model.dart';
 import 'verse_image_share.dart';
+import 'verse_note_section.dart';
 
 /// Everything you can do with one verse: read its translation and tafsir,
 /// play from it, bookmark, copy or share it.
@@ -190,6 +191,8 @@ class _VerseSheetState extends State<VerseSheet> {
           ),
         ),
         const SizedBox(height: AppSpacing.xl),
+        VerseNoteSection(verse: _ref, title: _SectionTitle(l10n.myNotesSection)),
+        const SizedBox(height: AppSpacing.xl),
         _SectionTitle(l10n.translationTitle, subtitle: l10n.translationSource),
         FutureBuilder<List<String>>(
           future: _translation,
@@ -225,7 +228,8 @@ class _VerseSheetState extends State<VerseSheet> {
             final list = snap.data;
             if (list == null || widget.ayah > list.length) {
               return Text(
-                l10n.tafsirUnavailable,
+                // Saving it all for later is a phone feature.
+                TafsirService.supported ? l10n.tafsirUnavailable : l10n.tafsirUnavailableWeb,
                 style: context.texts.bodyMedium?.copyWith(
                   color: scheme.onSurfaceVariant,
                 ),

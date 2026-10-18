@@ -16,6 +16,8 @@ Future<String?> showTextPrompt(
   bool numeric = false,
   int? maxLength,
   TextDirection? textDirection,
+  String? initialText,
+  bool multiline = false,
 }) {
   return showDialog<String>(
     context: context,
@@ -28,6 +30,8 @@ Future<String?> showTextPrompt(
       numeric: numeric,
       maxLength: maxLength,
       textDirection: textDirection,
+      initialText: initialText,
+      multiline: multiline,
     ),
   );
 }
@@ -42,6 +46,8 @@ class _TextPromptDialog extends StatefulWidget {
     this.numeric = false,
     this.maxLength,
     this.textDirection,
+    this.initialText,
+    this.multiline = false,
   });
 
   final String title;
@@ -52,13 +58,17 @@ class _TextPromptDialog extends StatefulWidget {
   final bool numeric;
   final int? maxLength;
   final TextDirection? textDirection;
+  final String? initialText;
+
+  /// Several lines, with Enter starting a new one rather than confirming.
+  final bool multiline;
 
   @override
   State<_TextPromptDialog> createState() => _TextPromptDialogState();
 }
 
 class _TextPromptDialogState extends State<_TextPromptDialog> {
-  final TextEditingController _controller = TextEditingController();
+  late final TextEditingController _controller = TextEditingController(text: widget.initialText);
 
   @override
   void dispose() {
@@ -85,14 +95,20 @@ class _TextPromptDialogState extends State<_TextPromptDialog> {
             autofocus: true,
             maxLength: widget.maxLength,
             textDirection: widget.textDirection,
-            keyboardType: widget.numeric ? TextInputType.number : null,
+            keyboardType: widget.numeric
+                ? TextInputType.number
+                : widget.multiline
+                ? TextInputType.multiline
+                : null,
+            minLines: widget.multiline ? 3 : null,
+            maxLines: widget.multiline ? 8 : 1,
             inputFormatters: widget.numeric ? [FilteringTextInputFormatter.digitsOnly] : null,
             decoration: InputDecoration(
               hintText: widget.hint,
               labelText: widget.label,
               border: widget.label == null ? null : const OutlineInputBorder(),
             ),
-            onSubmitted: (_) => _submit(),
+            onSubmitted: widget.multiline ? null : (_) => _submit(),
           ),
         ],
       ),

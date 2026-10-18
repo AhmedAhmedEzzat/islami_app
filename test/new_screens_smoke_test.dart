@@ -5,12 +5,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sakina/core/services/recent_suras.dart';
 import 'package:sakina/core/services/shared_prefs_helper.dart';
 import 'package:sakina/core/state/bookmarks_cubit.dart';
+import 'package:sakina/core/state/verse_notes_cubit.dart';
 import 'package:sakina/core/state/quran_player_cubit.dart';
 import 'package:sakina/core/state/radio_cubit.dart';
 import 'package:sakina/core/state/settings_cubit.dart';
 import 'package:sakina/core/theme/app_theme.dart';
 import 'package:sakina/l10n/gen/app_localizations.dart';
 import 'package:sakina/modules/home/home_view.dart';
+import 'package:sakina/modules/more/date_converter_view.dart';
+import 'package:sakina/modules/more/hifz_view.dart';
 import 'package:sakina/modules/more/listen_view.dart';
 import 'package:sakina/modules/more/more_view.dart';
 import 'package:sakina/modules/more/zakat_view.dart';
@@ -25,6 +28,7 @@ Widget _host(Widget page, Locale locale, ThemeData theme) => MultiBlocProvider(
     BlocProvider<SettingsCubit>(create: (_) => SettingsCubit()..load()),
     BlocProvider<RadioCubit>(create: (_) => RadioCubit()),
     BlocProvider<BookmarksCubit>(create: (_) => BookmarksCubit()),
+    BlocProvider<VerseNotesCubit>(create: (_) => VerseNotesCubit()),
     BlocProvider<QuranPlayerCubit>(
       create: (ctx) => QuranPlayerCubit(radio: ctx.read<RadioCubit>()),
     ),
@@ -70,6 +74,8 @@ void main() {
     'Zakat': () => const ZakatView(),
     'Settings': () => const SettingsView(),
     'Listen': () => const ListenView(),
+    'Memorisation': () => const HifzView(),
+    'Date converter': () => const DateConverterView(),
   };
 
   for (final locale in const [Locale('en'), Locale('ar')]) {

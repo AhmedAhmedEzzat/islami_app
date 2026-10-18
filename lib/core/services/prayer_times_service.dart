@@ -268,14 +268,16 @@ abstract class PrayerTimesService {
   /// half a day from its location has no right answer, only a steady one.
   @visibleForTesting
   static List<PrayerEntry> entriesOn(Coordinates coordinates, DateTime date, CalculationParameters params) {
-    final entries = _solarDay(coordinates, date, params);
-    final drift = entries[2].time.difference(DateTime(date.year, date.month, date.day, 12));
+    // Judged by mean solar noon, which unlike Dhuhr does not wander with the
+    // seasons, so the answer only changes when the clock does.
+    final meanNoon = DateTime.utc(date.year, date.month, date.day, 12)
+        .subtract(Duration(seconds: (coordinates.longitude * 240).round()));
+    final drift = meanNoon.difference(DateTime(date.year, date.month, date.day, 12));
     final shift = drift > const Duration(hours: 18)
         ? -1
         : drift < const Duration(hours: -18)
         ? 1
         : 0;
-    if (shift == 0) return entries;
     return _solarDay(coordinates, DateTime(date.year, date.month, date.day + shift), params);
   }
 
@@ -302,15 +304,22 @@ abstract class PrayerTimesService {
       DateComponents.from(date),
       params,
     );
-    // Further east, the sun gets there sooner.
+    // Further east, the sun gets there sooner. Rounded back to the whole
+    // minute, as the library's own times are.
     final back = Duration(seconds: -(beyond * 240).round());
+    DateTime moved(DateTime time) {
+      if (beyond == 0) return time;
+      final ms = time.add(back).millisecondsSinceEpoch;
+      return DateTime.fromMillisecondsSinceEpoch((ms + 30000) ~/ 60000 * 60000);
+    }
+
     return [
-      PrayerEntry(PrayerName.fajr, t.fajr.add(back)),
-      PrayerEntry(PrayerName.sunrise, t.sunrise.add(back)),
-      PrayerEntry(PrayerName.dhuhr, t.dhuhr.add(back)),
-      PrayerEntry(PrayerName.asr, t.asr.add(back)),
-      PrayerEntry(PrayerName.maghrib, t.maghrib.add(back)),
-      PrayerEntry(PrayerName.isha, t.isha.add(back)),
+      PrayerEntry(PrayerName.fajr, moved(t.fajr)),
+      PrayerEntry(PrayerName.sunrise, moved(t.sunrise)),
+      PrayerEntry(PrayerName.dhuhr, moved(t.dhuhr)),
+      PrayerEntry(PrayerName.asr, moved(t.asr)),
+      PrayerEntry(PrayerName.maghrib, moved(t.maghrib)),
+      PrayerEntry(PrayerName.isha, moved(t.isha)),
     ];
   }
 

@@ -10,6 +10,7 @@ import 'l10n/gen/app_localizations.dart';
 
 import 'core/constants/prefs_keys.dart';
 import 'core/state/bookmarks_cubit.dart';
+import 'core/state/verse_notes_cubit.dart';
 import 'core/state/quran_player_cubit.dart';
 import 'core/state/radio_cubit.dart';
 import 'core/services/khatma.dart';
@@ -94,6 +95,7 @@ class SakinaApp extends StatelessWidget {
         // Owned above the tabs so playback survives switching between them.
         BlocProvider<RadioCubit>(create: (_) => RadioCubit()),
         BlocProvider<BookmarksCubit>(create: (_) => BookmarksCubit()..load()),
+        BlocProvider<VerseNotesCubit>(create: (_) => VerseNotesCubit()..load()),
         BlocProvider<QuranPlayerCubit>(
           create: (ctx) {
             final radio = ctx.read<RadioCubit>();
