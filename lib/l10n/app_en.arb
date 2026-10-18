@@ -745,7 +745,7 @@
   "hifzFilterAll": "All",
   "hifzAllSuras": "All suras",
   "hifzPercent": "{percent}% of the Quran by heart",
-  "hifzSummary": "{memorised} suras memorised · {learning} being learnt · {verses} verses",
+  "hifzSummary": "Memorised: {memorised} · Learning: {learning} · Verses: {verses}",
   "hifzIntro": "Tap a sura to mark it as being learnt or memorised. Memorised suras come back for revision: the next day, then further apart each time it goes well.",
   "hifzDueToday": "{count, plural, =1{1 sura to revise} other{{count} suras to revise}}",
   "hifzOverdue": "{days, plural, =1{1 day overdue} other{{days} days overdue}}",

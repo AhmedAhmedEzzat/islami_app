@@ -15,9 +15,10 @@ import '../../core/utils/l10n_ext.dart';
 class DateConverterView extends StatefulWidget {
   const DateConverterView({super.key});
 
-  /// The years the Umm al-Qura tables cover.
-  static const int firstHijriYear = 1357;
-  static const int lastHijriYear = 1499;
+  /// The years the Umm al-Qura tables cover: 14 March 1937 to 16 November
+  /// 2077, which takes in every date the Gregorian picker offers.
+  static const int firstHijriYear = 1356;
+  static const int lastHijriYear = 1500;
 
   @override
   State<DateConverterView> createState() => _DateConverterViewState();
@@ -132,7 +133,10 @@ class _DateConverterViewState extends State<DateConverterView> {
                     label: l10n.monthLabel,
                     value: _hMonth,
                     items: {for (var m = 1; m <= 12; m++) m: (HijriCalendar()..hMonth = m).getLongMonthName()},
-                    onChanged: (v) => setState(() => _hMonth = v),
+                    onChanged: (v) => setState(() {
+                      _hMonth = v;
+                      _hDay = _hDay.clamp(1, IslamicCalendar.daysInMonth(_hYear, _hMonth));
+                    }),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
@@ -144,7 +148,10 @@ class _DateConverterViewState extends State<DateConverterView> {
                       for (var y = DateConverterView.firstHijriYear; y <= DateConverterView.lastHijriYear; y++)
                         y: context.isArabic ? ArabicText.digits(y) : '$y',
                     },
-                    onChanged: (v) => setState(() => _hYear = v),
+                    onChanged: (v) => setState(() {
+                      _hYear = v;
+                      _hDay = _hDay.clamp(1, IslamicCalendar.daysInMonth(_hYear, _hMonth));
+                    }),
                   ),
                 ),
               ],

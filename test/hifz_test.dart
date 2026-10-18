@@ -100,6 +100,6 @@ void main() {
     await tester.tap(find.text('Memorised').last);
     await tester.pumpAndSettle();
     expect(Hifz.of(1)!.status, HifzStatus.memorised);
-    expect(find.textContaining('2 suras memorised'), findsOneWidget);
+    expect(find.textContaining('Memorised: 2'), findsOneWidget);
   });
 }

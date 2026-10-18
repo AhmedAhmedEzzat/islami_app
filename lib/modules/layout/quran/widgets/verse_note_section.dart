@@ -123,6 +123,8 @@ class _Swatch extends StatelessWidget {
       label: label,
       child: Tooltip(
         message: label,
+        // The Semantics above already says it.
+        excludeFromSemantics: true,
         child: InkResponse(
           onTap: onTap,
           radius: 24,

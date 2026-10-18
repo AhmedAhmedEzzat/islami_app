@@ -31,6 +31,15 @@ void main() {
     }
   });
 
+  test('every date the picker offers lands in a year the dropdown lists', () {
+    for (final d in [DateTime(1938), DateTime(2076, 12, 31)]) {
+      for (final offset in [-2, 0, 2]) {
+        final y = IslamicCalendar.of(d, offset: offset).hYear;
+        expect(y, inInclusiveRange(DateConverterView.firstHijriYear, DateConverterView.lastHijriYear));
+      }
+    }
+  });
+
   testWidgets('switching direction carries the same day across', (tester) async {
     await tester.pumpWidget(
       BlocProvider(
