@@ -125,7 +125,9 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
         final ayah = (_initialAyah ?? MushafPage.savedPosition(suraId) + 1)
             .clamp(1, verses.length);
         _page =
-            _initialPage ?? layout.pageOf(VerseRef(int.parse(suraId), ayah));
+            _initialPage ??
+            _resumePage(layout, int.parse(suraId)) ??
+            layout.pageOf(VerseRef(int.parse(suraId), ayah));
         // The flowing view has no pages; it opens at the page's first verse.
         if (_initialPage != null && _initialAyah == null) {
           final first = layout.firstWord(_page);
@@ -148,6 +150,15 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
   }
 
   static SuraDataModel _model(int sura) => Constants.suraDataLists[sura - 1];
+
+  /// The page last read, if [sura] is on it and no verse was asked for. More
+  /// exact than the saved verse, which may have begun on the page before.
+  int? _resumePage(MushafLayout layout, int sura) {
+    if (_initialAyah != null) return null;
+    final last = LocalStorageServices.getInt(PrefsKeys.lastMushafPage);
+    if (last == null || last < 1 || last > MushafLayout.pageCount) return null;
+    return layout.surasOn(last).contains(sura) ? last : null;
+  }
 
   void _onPageChanged(int page) {
     final layout = _layout;
