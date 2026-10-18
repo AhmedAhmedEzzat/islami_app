@@ -160,7 +160,7 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
     return layout.surasOn(last).contains(sura) ? last : null;
   }
 
-  void _onPageChanged(int page) {
+  void _onPageChanged(int page, [int? facing]) {
     final layout = _layout;
     if (layout == null) return;
     final suras = layout.surasOn(page);
@@ -170,7 +170,7 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
     final shown = suras.contains(current) ? current : suras.first;
 
     LocalStorageServices.setInt(PrefsKeys.lastMushafPage, page);
-    if (Khatma.notePage(page)) {
+    if (Khatma.notePage(page) || (facing != null && Khatma.notePage(facing))) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(

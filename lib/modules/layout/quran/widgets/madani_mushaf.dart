@@ -29,7 +29,9 @@ class MadaniMushaf extends StatefulWidget {
 
   /// 1-based.
   final int initialPage;
-  final ValueChanged<int>? onPageChanged;
+
+  /// The page now on screen and, in a two-page spread, the page facing it.
+  final void Function(int page, int? facing)? onPageChanged;
   final ValueChanged<VerseRef>? onVerseTap;
 
   /// The verse being recited. Highlighted, and followed onto its page.
@@ -44,13 +46,23 @@ class MadaniMushaf extends StatefulWidget {
 }
 
 class MadaniMushafState extends State<MadaniMushaf> {
-  late final PageController _controller = PageController(
-    initialPage: widget.initialPage.clamp(1, MushafLayout.pageCount) - 1,
-  );
+  /// Two facing pages, like an open book, when the screen is wide enough.
+  static bool showsSpread(Size size) =>
+      size.width > size.height && size.width >= 640;
+
+  /// The page on screen (the right-hand one of a spread), 1-based.
+  late int _current = widget.initialPage.clamp(1, MushafLayout.pageCount);
+
+  PageController? _controller;
+  bool? _spread;
 
   /// Words of each verse, per sura, once the sura's text has loaded.
   final Map<int, List<List<String>>> _words = {};
   final Set<int> _loading = {};
+
+  /// The PageView index of [page]: spreads pair 1-2, 3-4 and so on, with the
+  /// odd page on the right as in the print.
+  int _indexOf(int page) => _spread! ? (page - 1) ~/ 2 : page - 1;
 
   @override
   void didUpdateWidget(MadaniMushaf oldWidget) {
@@ -60,21 +72,38 @@ class MadaniMushafState extends State<MadaniMushaf> {
   }
 
   void _follow(VerseRef verse) {
-    if (!_controller.hasClients) return;
-    final target = widget.layout.pageOf(verse) - 1;
-    if ((_controller.page ?? 0).round() == target) return;
-    _controller.animateToPage(target, duration: AppDurations.slow, curve: Curves.easeInOut);
+    final controller = _controller;
+    if (controller == null || !controller.hasClients) return;
+    final target = _indexOf(widget.layout.pageOf(verse));
+    if ((controller.page ?? 0).round() == target) return;
+    controller.animateToPage(
+      target,
+      duration: AppDurations.slow,
+      curve: Curves.easeInOut,
+    );
   }
 
   /// Turns straight to [page] (1-based).
   void goTo(int page) {
-    if (_controller.hasClients) _controller.jumpToPage(page.clamp(1, MushafLayout.pageCount) - 1);
+    final controller = _controller;
+    if (controller != null && controller.hasClients) {
+      controller.jumpToPage(_indexOf(page.clamp(1, MushafLayout.pageCount)));
+    }
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
+  }
+
+  void _onIndexChanged(int index) {
+    final page = _spread! ? index * 2 + 1 : index + 1;
+    _current = page;
+    widget.onPageChanged?.call(
+      page,
+      _spread! && page < MushafLayout.pageCount ? page + 1 : null,
+    );
   }
 
   /// The words of every sura on [page], or null while any is still loading.
@@ -108,27 +137,68 @@ class MadaniMushafState extends State<MadaniMushaf> {
 
   @override
   Widget build(BuildContext context) {
-    // A mushaf opens right-to-left whatever language the app is in: the next
-    // page lies to the left.
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: PageView.builder(
-        controller: _controller,
-        itemCount: MushafLayout.pageCount,
-        onPageChanged: (i) => widget.onPageChanged?.call(i + 1),
-        itemBuilder: (context, i) {
-          final text = _textFor(i + 1);
-          final sheet = MushafSheet(
-            layout: widget.layout,
-            page: i + 1,
-            words: text,
-            highlight: widget.highlight,
-            isBookmarked: widget.isBookmarked,
-            onVerseTap: widget.onVerseTap,
-          );
-          return GestureDetector(onTap: widget.onTapPage, child: sheet);
-        },
-      ),
+    return LayoutBuilder(
+      builder: (context, box) {
+        final spread = showsSpread(box.biggest);
+        if (spread != _spread) {
+          // Turning the phone keeps the same page in view.
+          final old = _controller;
+          _spread = spread;
+          _controller = PageController(initialPage: _indexOf(_current));
+          if (old != null) {
+            WidgetsBinding.instance.addPostFrameCallback((_) => old.dispose());
+          }
+        }
+
+        // A mushaf opens right-to-left whatever language the app is in: the
+        // next page lies to the left.
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: PageView.builder(
+            key: ValueKey(spread),
+            controller: _controller,
+            itemCount: spread
+                ? (MushafLayout.pageCount + 1) ~/ 2
+                : MushafLayout.pageCount,
+            onPageChanged: _onIndexChanged,
+            itemBuilder: (context, i) => GestureDetector(
+              onTap: widget.onTapPage,
+              child: spread
+                  ? Row(
+                      children: [
+                        Expanded(child: _sheet(i * 2 + 1)),
+                        // The binding between the two pages.
+                        Container(
+                          width: 2,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.black.withValues(alpha: 0.18),
+                                Colors.black.withValues(alpha: 0.02),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Expanded(child: _sheet(i * 2 + 2)),
+                      ],
+                    )
+                  : _sheet(i + 1),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _sheet(int page) {
+    if (page > MushafLayout.pageCount) return const SizedBox.shrink();
+    return MushafSheet(
+      layout: widget.layout,
+      page: page,
+      words: _textFor(page),
+      highlight: widget.highlight,
+      isBookmarked: widget.isBookmarked,
+      onVerseTap: widget.onVerseTap,
     );
   }
 }
@@ -136,7 +206,12 @@ class MadaniMushafState extends State<MadaniMushaf> {
 /// The colours of the printed page, for day and night.
 @immutable
 class _Paper {
-  const _Paper({required this.paper, required this.ink, required this.frame, required this.accent});
+  const _Paper({
+    required this.paper,
+    required this.ink,
+    required this.frame,
+    required this.accent,
+  });
 
   final Color paper;
   final Color ink;
@@ -147,7 +222,8 @@ class _Paper {
   /// Verse rosettes and margin marks.
   final Color accent;
 
-  static _Paper of(BuildContext context) => Theme.of(context).brightness == Brightness.dark
+  static _Paper of(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
       ? const _Paper(
           paper: Color(0xFF1C1B17),
           ink: Color(0xFFEDE6D3),
@@ -193,19 +269,47 @@ class MushafSheet extends StatelessWidget {
   static const String basmala = 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ';
 
   static const List<String> _juzNames = [
-    'الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع', 'الثامن',
-    'التاسع', 'العاشر', 'الحادي عشر', 'الثاني عشر', 'الثالث عشر', 'الرابع عشر',
-    'الخامس عشر', 'السادس عشر', 'السابع عشر', 'الثامن عشر', 'التاسع عشر', 'العشرون',
-    'الحادي والعشرون', 'الثاني والعشرون', 'الثالث والعشرون', 'الرابع والعشرون',
-    'الخامس والعشرون', 'السادس والعشرون', 'السابع والعشرون', 'الثامن والعشرون',
-    'التاسع والعشرون', 'الثلاثون',
+    'الأول',
+    'الثاني',
+    'الثالث',
+    'الرابع',
+    'الخامس',
+    'السادس',
+    'السابع',
+    'الثامن',
+    'التاسع',
+    'العاشر',
+    'الحادي عشر',
+    'الثاني عشر',
+    'الثالث عشر',
+    'الرابع عشر',
+    'الخامس عشر',
+    'السادس عشر',
+    'السابع عشر',
+    'الثامن عشر',
+    'التاسع عشر',
+    'العشرون',
+    'الحادي والعشرون',
+    'الثاني والعشرون',
+    'الثالث والعشرون',
+    'الرابع والعشرون',
+    'الخامس والعشرون',
+    'السادس والعشرون',
+    'السابع والعشرون',
+    'الثامن والعشرون',
+    'التاسع والعشرون',
+    'الثلاثون',
   ];
 
   /// "الجزء السابع والعشرون".
   static String juzName(int juz) => 'الجزء ${_juzNames[juz - 1]}';
 
   /// For each line of [page] on which a hizb quarter begins, the quarter.
-  static Map<int, int> quarterMarks(MushafLayout layout, QuranMeta meta, int page) {
+  static Map<int, int> quarterMarks(
+    MushafLayout layout,
+    QuranMeta meta,
+    int page,
+  ) {
     final lines = layout.page(page);
     final marks = <int, int>{};
     for (var q = 0; q < meta.hizbStarts.length; q++) {
@@ -226,8 +330,15 @@ class MushafSheet extends StatelessWidget {
     final lines = layout.page(page);
     final lastText = lines.lastWhere((l) => l.kind == MushafLineKind.text);
     final firstWord = layout.firstWord(page);
-    final head = TextStyle(fontFamily: 'Janna', fontSize: 12, color: paper.frame, height: 1.2);
-    final marks = meta == null ? const <int, int>{} : quarterMarks(layout, meta, page);
+    final head = TextStyle(
+      fontFamily: 'Janna',
+      fontSize: 12,
+      color: paper.frame,
+      height: 1.2,
+    );
+    final marks = meta == null
+        ? const <int, int>{}
+        : quarterMarks(layout, meta, page);
     // Odd pages are right-hand pages; their outer margin is on the left.
     final outerIsLeft = page.isOdd;
 
@@ -237,7 +348,12 @@ class MushafSheet extends StatelessWidget {
         top: false,
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(6, AppSpacing.sm, 6, AppSpacing.xs),
+          padding: const EdgeInsets.fromLTRB(
+            6,
+            AppSpacing.sm,
+            6,
+            AppSpacing.xs,
+          ),
           child: Column(
             children: [
               // Running heads: juz on the right, sura on the left.
@@ -246,9 +362,14 @@ class MushafSheet extends StatelessWidget {
                 child: Row(
                   textDirection: TextDirection.rtl,
                   children: [
-                    if (meta != null) Text(juzName(meta.juzOf(firstWord.verse)), style: head),
+                    if (meta != null)
+                      Text(juzName(meta.juzOf(firstWord.verse)), style: head),
                     const Spacer(),
-                    if (meta != null) Text('سورة ${_plainName(meta.sura(lastText.sura).nameAr)}', style: head),
+                    if (meta != null)
+                      Text(
+                        'سورة ${_plainName(meta.sura(lastText.sura).nameAr)}',
+                        style: head,
+                      ),
                   ],
                 ),
               ),
@@ -257,12 +378,21 @@ class MushafSheet extends StatelessWidget {
                 child: Row(
                   textDirection: TextDirection.ltr,
                   children: [
-                    _Margin(show: outerIsLeft, marks: marks, lineCount: lines.length, paper: paper),
+                    _Margin(
+                      show: outerIsLeft,
+                      marks: marks,
+                      lineCount: lines.length,
+                      paper: paper,
+                    ),
                     Expanded(
                       child: _Frame(
                         color: paper.frame,
                         child: words == null
-                            ? Center(child: CircularProgressIndicator(color: paper.frame))
+                            ? Center(
+                                child: CircularProgressIndicator(
+                                  color: paper.frame,
+                                ),
+                              )
                             : _Lines(
                                 layout: layout,
                                 page: page,
@@ -275,7 +405,12 @@ class MushafSheet extends StatelessWidget {
                               ),
                       ),
                     ),
-                    _Margin(show: !outerIsLeft, marks: marks, lineCount: lines.length, paper: paper),
+                    _Margin(
+                      show: !outerIsLeft,
+                      marks: marks,
+                      lineCount: lines.length,
+                      paper: paper,
+                    ),
                   ],
                 ),
               ),
@@ -292,7 +427,9 @@ class MushafSheet extends StatelessWidget {
   /// without vowels.
   static String _plainName(String name) => String.fromCharCodes([
     for (final c in name.runes)
-      if (!(c >= 0x064B && c <= 0x065F) && c != 0x0670 && !(c >= 0x06D6 && c <= 0x06ED))
+      if (!(c >= 0x064B && c <= 0x065F) &&
+          c != 0x0670 &&
+          !(c >= 0x06D6 && c <= 0x06ED))
         c == 0x0671 ? 0x0627 : c,
   ]);
 }
@@ -310,7 +447,9 @@ class _Frame extends StatelessWidget {
       decoration: BoxDecoration(border: Border.all(color: color, width: 1.6)),
       padding: const EdgeInsets.all(2),
       child: Container(
-        decoration: BoxDecoration(border: Border.all(color: color.withValues(alpha: 0.55), width: 0.8)),
+        decoration: BoxDecoration(
+          border: Border.all(color: color.withValues(alpha: 0.55), width: 0.8),
+        ),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         child: child,
       ),
@@ -320,7 +459,12 @@ class _Frame extends StatelessWidget {
 
 /// The outer margin, where the start of each hizb quarter is marked.
 class _Margin extends StatelessWidget {
-  const _Margin({required this.show, required this.marks, required this.lineCount, required this.paper});
+  const _Margin({
+    required this.show,
+    required this.marks,
+    required this.lineCount,
+    required this.paper,
+  });
 
   final bool show;
   final Map<int, int> marks;
@@ -340,7 +484,11 @@ class _Margin extends StatelessWidget {
         child: Column(
           children: [
             for (var i = 0; i < lineCount; i++)
-              Expanded(child: marks[i] == null ? const SizedBox() : _QuarterMark(quarter: marks[i]!, paper: paper)),
+              Expanded(
+                child: marks[i] == null
+                    ? const SizedBox()
+                    : _QuarterMark(quarter: marks[i]!, paper: paper),
+              ),
           ],
         ),
       ),
@@ -359,7 +507,13 @@ class _QuarterMark extends StatelessWidget {
   Widget build(BuildContext context) {
     final hizb = (quarter - 1) ~/ 4 + 1;
     final part = const ['', '¼', '½', '¾'][(quarter - 1) % 4];
-    final style = TextStyle(fontFamily: 'Janna', fontSize: 8, height: 1.1, color: paper.accent, fontWeight: FontWeight.w700);
+    final style = TextStyle(
+      fontFamily: 'Janna',
+      fontSize: 8,
+      height: 1.1,
+      color: paper.accent,
+      fontWeight: FontWeight.w700,
+    );
     return FittedBox(
       fit: BoxFit.scaleDown,
       child: Container(
@@ -371,8 +525,16 @@ class _QuarterMark extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(part.isEmpty ? 'الحزب' : part, style: style, textDirection: TextDirection.rtl),
-            Text(ArabicText.digits(hizb), style: style, textDirection: TextDirection.rtl),
+            Text(
+              part.isEmpty ? 'الحزب' : part,
+              style: style,
+              textDirection: TextDirection.rtl,
+            ),
+            Text(
+              ArabicText.digits(hizb),
+              style: style,
+              textDirection: TextDirection.rtl,
+            ),
           ],
         ),
       ),
@@ -389,15 +551,27 @@ class _PageNumber extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 1),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: 1,
+      ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: paper.frame.withValues(alpha: 0.7), width: 0.8),
+        border: Border.all(
+          color: paper.frame.withValues(alpha: 0.7),
+          width: 0.8,
+        ),
       ),
       child: Text(
         ArabicText.digits(page),
         textDirection: TextDirection.rtl,
-        style: TextStyle(fontFamily: 'Janna', fontSize: 13, fontWeight: FontWeight.w700, color: paper.frame, height: 1.3),
+        style: TextStyle(
+          fontFamily: 'Janna',
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: paper.frame,
+          height: 1.3,
+        ),
       ),
     );
   }
@@ -438,7 +612,7 @@ class _Lines extends StatelessWidget {
         final lineHeight = box.maxHeight / slots;
         final fontSize = [
           box.maxWidth / MushafSheet.lineEm,
-          lineHeight / 1.75,
+          lineHeight / 1.95,
         ].reduce((a, b) => a < b ? a : b);
         final style = TextStyle(
           fontFamily: 'AmiriQuran',
@@ -452,9 +626,17 @@ class _Lines extends StatelessWidget {
             SizedBox(
               height: lineHeight,
               child: switch (line.kind) {
-                MushafLineKind.suraTitle => _SuraTitle(sura: line.sura, style: style, paper: paper),
+                MushafLineKind.suraTitle => _SuraTitle(
+                  sura: line.sura,
+                  style: style,
+                  paper: paper,
+                ),
                 MushafLineKind.basmala => Center(
-                  child: Text(MushafSheet.basmala, style: style, textDirection: TextDirection.rtl),
+                  child: Text(
+                    MushafSheet.basmala,
+                    style: style,
+                    textDirection: TextDirection.rtl,
+                  ),
                 ),
                 MushafLineKind.text => _TextLine(
                   items: _items(line),
@@ -470,7 +652,9 @@ class _Lines extends StatelessWidget {
         ];
 
         return Column(
-          mainAxisAlignment: _opening ? MainAxisAlignment.center : MainAxisAlignment.start,
+          mainAxisAlignment: _opening
+              ? MainAxisAlignment.center
+              : MainAxisAlignment.start,
           children: children,
         );
       },
@@ -486,17 +670,21 @@ class _Lines extends StatelessWidget {
       items.add(_Item(verseWords[w.word - 1], w.verse));
       final endsVerse = w.word == verseWords.length;
       if (endsVerse) {
-        items.add(_Item(
-          // U+06DD ARABIC END OF AYAH: Amiri Quran draws it round the digits.
-          '۝${ArabicText.digits(w.ayah)}',
-          w.verse,
-          rosette: true,
-          bookmarked: isBookmarked?.call(w.verse) ?? false,
-        ));
+        items.add(
+          _Item(
+            // U+06DD ARABIC END OF AYAH: Amiri Quran draws it round the digits.
+            '۝${ArabicText.digits(w.ayah)}',
+            w.verse,
+            rosette: true,
+            bookmarked: isBookmarked?.call(w.verse) ?? false,
+          ),
+        );
       }
       if (w == line.last) break;
       w = endsVerse
-          ? (w.ayah < words[w.sura]!.length ? WordRef(w.sura, w.ayah + 1, 1) : WordRef(w.sura + 1, 1, 1))
+          ? (w.ayah < words[w.sura]!.length
+                ? WordRef(w.sura, w.ayah + 1, 1)
+                : WordRef(w.sura + 1, 1, 1))
           : WordRef(w.sura, w.ayah, w.word + 1);
     }
     return items;
@@ -505,7 +693,12 @@ class _Lines extends StatelessWidget {
 
 @immutable
 class _Item {
-  const _Item(this.text, this.verse, {this.rosette = false, this.bookmarked = false});
+  const _Item(
+    this.text,
+    this.verse, {
+    this.rosette = false,
+    this.bookmarked = false,
+  });
 
   final String text;
   final VerseRef verse;
@@ -562,7 +755,9 @@ class _TextLine extends StatelessWidget {
     if (natural > width) {
       return FittedBox(fit: BoxFit.scaleDown, child: spaced(MainAxisSize.min));
     }
-    if (center || natural < width * _stretchFrom) return spaced(MainAxisSize.max);
+    if (center || natural < width * _stretchFrom) {
+      return spaced(MainAxisSize.max);
+    }
     return Row(
       textDirection: TextDirection.rtl,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -579,7 +774,9 @@ class _TextLine extends StatelessWidget {
       maxLines: 1,
       softWrap: false,
       style: item.rosette
-          ? style.copyWith(color: item.bookmarked ? context.colors.primary : paper.accent)
+          ? style.copyWith(
+              color: item.bookmarked ? context.colors.primary : paper.accent,
+            )
           : style,
     );
     return GestureDetector(
@@ -600,7 +797,11 @@ class _TextLine extends StatelessWidget {
 
 /// The framed title that opens a sura.
 class _SuraTitle extends StatelessWidget {
-  const _SuraTitle({required this.sura, required this.style, required this.paper});
+  const _SuraTitle({
+    required this.sura,
+    required this.style,
+    required this.paper,
+  });
 
   final int sura;
   final TextStyle style;
@@ -619,7 +820,10 @@ class _SuraTitle extends StatelessWidget {
             'سُورَةُ $name',
             textDirection: TextDirection.rtl,
             textScaler: TextScaler.noScaling,
-            style: style.copyWith(color: paper.frame, fontSize: style.fontSize! * 0.95),
+            style: style.copyWith(
+              color: paper.frame,
+              fontSize: style.fontSize! * 0.95,
+            ),
           ),
         ),
       ),

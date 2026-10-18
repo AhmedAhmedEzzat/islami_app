@@ -163,13 +163,12 @@ class _HomeViewState extends State<HomeView> {
           final offset = settings.hijriOffset;
           final ramadanDay = IslamicCalendar.ramadanDay(_now, offset: offset);
 
+          // On a tablet the cards keep a readable width instead of
+          // stretching edge to edge.
+          final side = ((MediaQuery.sizeOf(context).width - 720) / 2)
+              .clamp(AppSpacing.lg, double.infinity);
           return ListView(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              0,
-              AppSpacing.lg,
-              AppSpacing.xl,
-            ),
+            padding: EdgeInsets.fromLTRB(side, 0, side, AppSpacing.xl),
             children: [
               _DateHeader(now: _now, hijriOffset: offset),
               const SizedBox(height: AppSpacing.md),
