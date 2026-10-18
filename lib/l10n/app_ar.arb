@@ -439,5 +439,8 @@
   "qiyamTitle": "الثلث الأخير من الليل",
   "qiyamBody": "ينزل ربنا فيقول: من يدعوني فأستجيب له؟",
   "verseRepeat": "تكرار كل آية",
-  "verseRepeatTimes": "{n, plural, =1{مرة واحدة} =2{مرتان} few{{n} مرات} other{{n} مرة}}"
+  "verseRepeatTimes": "{n, plural, =1{مرة واحدة} =2{مرتان} few{{n} مرات} other{{n} مرة}}",
+  "readingToday": "صفحة اليوم",
+  "readingWeek": "صفحة هذا الأسبوع",
+  "readingStreak": "يوم متتالٍ"
 }

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/assets.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/services/quran_meta.dart';
+import '../../../core/services/reading_stats.dart';
 import '../../../core/services/recent_suras.dart';
 import '../../../core/state/bookmarks_cubit.dart';
 import '../../../core/theme/app_colors.dart';
@@ -117,6 +118,7 @@ class _SurasTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomScrollView(
       slivers: [
+        const SliverToBoxAdapter(child: _ReadingStatsStrip()),
         if (recent.isNotEmpty) ...[
           const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.lg)),
           SliverToBoxAdapter(
@@ -254,6 +256,52 @@ class _BookmarksTab extends StatelessWidget {
               ),
             );
           },
+        );
+      },
+    );
+  }
+}
+
+/// Today's pages, the week's and the reading streak, once there is any
+/// reading to show.
+class _ReadingStatsStrip extends StatelessWidget {
+  const _ReadingStatsStrip();
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<int>(
+      valueListenable: ReadingStats.changes,
+      builder: (context, _, _) {
+        final now = DateTime.now();
+        final week = ReadingStats.pagesThisWeek(now);
+        if (week == 0) return const SizedBox.shrink();
+        final l10n = context.l10n;
+        final scheme = context.colors;
+        Widget stat(IconData icon, String value, String label) => Expanded(
+          child: Column(
+            children: [
+              Icon(icon, size: 20, color: scheme.primary),
+              const SizedBox(height: 2),
+              Text(value, style: context.texts.titleMedium?.copyWith(color: scheme.onSurface)),
+              Text(label, style: context.texts.labelSmall?.copyWith(color: scheme.onSurfaceVariant)),
+            ],
+          ),
+        );
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 0),
+          child: Card(
+            color: scheme.surfaceContainer,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+              child: Row(
+                children: [
+                  stat(Icons.today_outlined, '${ReadingStats.pagesOn(now)}', l10n.readingToday),
+                  stat(Icons.date_range_outlined, '$week', l10n.readingWeek),
+                  stat(Icons.local_fire_department_outlined, '${ReadingStats.streak(now)}', l10n.readingStreak),
+                ],
+              ),
+            ),
+          ),
         );
       },
     );

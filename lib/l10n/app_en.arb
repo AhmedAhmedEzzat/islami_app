@@ -866,5 +866,8 @@
         "type": "int"
       }
     }
-  }
+  },
+  "readingToday": "pages today",
+  "readingWeek": "pages this week",
+  "readingStreak": "days in a row"
 }

@@ -39,6 +39,10 @@ abstract final class PrefsKeys {
   static const String reviewAsks = 'review.asks';
   static const String reviewTrackerDay = 'review.trackerDay';
   static const String lastMushafPage = 'quran.lastMushafPage';
+
+  /// Mushaf pages read on one day, and the days that have such a list.
+  static String readingDay(String day) => 'reading.$day';
+  static const String readingDays = 'reading.days';
   static const String khatma = 'quran.khatma';
   static const String focusHintShown = 'quran.focusHintShown';
 

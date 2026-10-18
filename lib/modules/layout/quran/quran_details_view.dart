@@ -11,6 +11,7 @@ import '../../../core/services/khatma.dart';
 import '../../../core/services/mushaf_layout.dart';
 import '../../../core/services/quran_meta.dart';
 import '../../../core/services/quran_service.dart';
+import '../../../core/services/reading_stats.dart';
 import '../../../core/services/recent_suras.dart';
 import '../../../core/services/review_prompt.dart';
 import '../../../core/services/shared_prefs_helper.dart';
@@ -159,6 +160,8 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
   /// completes it. Finishing today's portion is a good moment to ask for a
   /// rating.
   bool _noteKhatma(int page, int? facing) {
+    // One after the other: both write the same day's list.
+    unawaited(ReadingStats.notePage(page).then((_) => facing == null ? null : ReadingStats.notePage(facing)));
     final leftBefore =
         Khatma.notifier.value?.pagesLeftToday(DateTime.now()) ?? 0;
     final completed =
