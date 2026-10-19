@@ -792,6 +792,8 @@
   "dhikrOff": "Off",
   "dhikrEvery": "{hours, plural, =1{Every hour} other{Every {hours} hours}}, from sunrise to Isha",
   "@dhikrEvery": {"placeholders": {"hours": {"type": "int"}}},
+  "qadaFasts": "Fasts to make up",
+  "qadaFastsHint": "Missed days of Ramadan",
   "offlineRecitations": "Offline recitations",
   "offlineRecitationsSubtitle": "Play any sura with any reciter, or save it for offline listening",
   "surasDownloaded": "{n} suras downloaded",

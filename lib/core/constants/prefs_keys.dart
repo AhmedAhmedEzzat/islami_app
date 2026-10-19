@@ -65,6 +65,7 @@ abstract final class PrefsKeys {
   static const String tasbehCount = 'tasbeh.count';
 
   /// Missed prayers still to make up, per prayer name.
+  static const String qadaFasts = 'qada.fasts';
   static String qada(String prayer) => 'qada.$prayer';
   static const String tasbehZikrIndex = 'tasbeh.zikrIndex';
   static const String tasbehRounds = 'tasbeh.rounds';

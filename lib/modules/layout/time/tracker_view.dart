@@ -225,6 +225,44 @@ class _QadaSection extends StatelessWidget {
             ],
           ),
         ),
+        const SizedBox(height: AppSpacing.md),
+        Card(
+          color: scheme.surfaceContainerLow,
+          child: ListTile(
+            leading: Icon(Icons.nightlight_outlined, color: scheme.primary),
+            title: Text(l10n.qadaFasts),
+            subtitle: Text(l10n.qadaFastsHint),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  tooltip: l10n.qadaMadeUp,
+                  onPressed: Qada.fasts == 0
+                      ? null
+                      : () async {
+                          HapticFeedback.selectionClick();
+                          await Qada.addFasts(-1);
+                          onChanged();
+                        },
+                  icon: const Icon(Icons.remove_circle_outline),
+                ),
+                SizedBox(
+                  width: 40,
+                  child: Text('${Qada.fasts}', textAlign: TextAlign.center, style: context.texts.titleMedium),
+                ),
+                IconButton(
+                  tooltip: l10n.qadaMissed,
+                  onPressed: () async {
+                    HapticFeedback.selectionClick();
+                    await Qada.addFasts(1);
+                    onChanged();
+                  },
+                  icon: const Icon(Icons.add_circle_outline),
+                ),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }

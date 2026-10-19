@@ -26,4 +26,13 @@ void main() {
     expect(Qada.count(PrayerName.dhuhr), 30);
     expect(Qada.count(PrayerName.sunrise), 0);
   });
+
+  test('fasts to make up count up and down, never below zero', () async {
+    expect(Qada.fasts, 0);
+    await Qada.addFasts(3);
+    await Qada.addFasts(-1);
+    expect(Qada.fasts, 2);
+    await Qada.addFasts(-5);
+    expect(Qada.fasts, 0);
+  });
 }
