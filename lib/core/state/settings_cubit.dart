@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../constants/muezzins.dart';
 import '../constants/prefs_keys.dart';
 import '../services/prayer_config.dart';
 import '../services/prayer_notification_service.dart';
@@ -64,6 +67,8 @@ class SettingsCubit extends Cubit<SettingsState> {
           (p) => p.name == LocalStorageServices.getString(PrefsKeys.mushafPaper),
           orElse: () => MushafPaper.auto,
         ),
+        customAdhan: _decodeSound(LocalStorageServices.getString(PrefsKeys.customAdhan)),
+        customFajrAdhan: _decodeSound(LocalStorageServices.getString(PrefsKeys.customFajrAdhan)),
       ),
     );
   }
@@ -181,6 +186,37 @@ class SettingsCubit extends Cubit<SettingsState> {
   Future<void> setMuezzin(String id) async {
     emit(state.copyWith(muezzinId: id));
     await LocalStorageServices.setString(PrefsKeys.muezzin, id);
+  }
+
+  /// Sets the user's own adhan recording ([fajr]: the one for Fajr); null
+  /// removes it. Setting the main one also chooses it as the muezzin, and
+  /// removing it goes back to the default adhan.
+  Future<void> setCustomAdhan(CustomSound? sound, {bool fajr = false}) async {
+    final key = fajr ? PrefsKeys.customFajrAdhan : PrefsKeys.customAdhan;
+    if (fajr) {
+      emit(state.copyWith(customFajrAdhan: sound, clearCustomFajrAdhan: sound == null));
+    } else if (sound == null) {
+      emit(state.copyWith(
+        clearCustomAdhan: true,
+        clearCustomFajrAdhan: true,
+        muezzinId: state.muezzinId == Muezzins.customId ? Muezzins.standard.id : null,
+      ));
+      await LocalStorageServices.setString(PrefsKeys.customFajrAdhan, '');
+      await LocalStorageServices.setString(PrefsKeys.muezzin, state.muezzinId);
+    } else {
+      emit(state.copyWith(customAdhan: sound, muezzinId: Muezzins.customId));
+      await LocalStorageServices.setString(PrefsKeys.muezzin, Muezzins.customId);
+    }
+    await LocalStorageServices.setString(key, sound == null ? '' : jsonEncode(sound.toJson()));
+  }
+
+  static CustomSound? _decodeSound(String? raw) {
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      return CustomSound.fromJson(jsonDecode(raw));
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> setContinuousRecitation(bool on) async {

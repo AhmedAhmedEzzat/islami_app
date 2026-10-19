@@ -1,10 +1,13 @@
 package com.ahmedezzat.sakina
 
+import android.content.Intent
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
+    private val sounds = AdhanSounds(this)
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         // Lets the app redraw the home screen widget as soon as the times change.
@@ -17,5 +20,15 @@ class MainActivity : FlutterActivity() {
                     result.notImplemented()
                 }
             }
+        // Choosing the user's own adhan recording.
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "sakina/sounds")
+            .setMethodCallHandler(sounds)
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (!sounds.onActivityResult(requestCode, resultCode, data)) {
+            super.onActivityResult(requestCode, resultCode, data)
+        }
     }
 }

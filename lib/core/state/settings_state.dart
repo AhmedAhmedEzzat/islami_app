@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../constants/muezzins.dart';
 import '../services/prayer_config.dart';
 import '../services/prayer_notification_service.dart';
 import '../services/prayer_times_service.dart';
@@ -35,6 +36,8 @@ class SettingsState {
     this.sunnahAlerts = defaultSunnahAlerts,
     this.verseRepeat = 1,
     this.mushafPaper = MushafPaper.auto,
+    this.customAdhan,
+    this.customFajrAdhan,
   });
 
   final ThemeMode themeMode;
@@ -105,6 +108,16 @@ class SettingsState {
 
   final MushafPaper mushafPaper;
 
+  /// The user's own adhan recording, and a separate one for Fajr if chosen.
+  final CustomSound? customAdhan;
+  final CustomSound? customFajrAdhan;
+
+  /// The muezzin the prayer alert plays: the user's own recording when that
+  /// is chosen and still set, otherwise a bundled one.
+  Muezzin get muezzin => muezzinId == Muezzins.customId && customAdhan != null
+      ? Muezzins.custom(customAdhan!, customFajrAdhan)
+      : Muezzins.byId(muezzinId);
+
   /// Friday is on from the start; the daily ones, one of them at night, are
   /// for the user to choose.
   static const Set<SunnahAlert> defaultSunnahAlerts = {SunnahAlert.jumuah};
@@ -160,8 +173,12 @@ class SettingsState {
     Set<SunnahAlert>? sunnahAlerts,
     int? verseRepeat,
     MushafPaper? mushafPaper,
+    CustomSound? customAdhan,
+    CustomSound? customFajrAdhan,
     // Distinguishes "leave unchanged" from "back to the system language".
     bool clearLocale = false,
+    bool clearCustomAdhan = false,
+    bool clearCustomFajrAdhan = false,
   }) {
     return SettingsState(
       themeMode: themeMode ?? this.themeMode,
@@ -187,6 +204,8 @@ class SettingsState {
       sunnahAlerts: sunnahAlerts ?? this.sunnahAlerts,
       verseRepeat: verseRepeat ?? this.verseRepeat,
       mushafPaper: mushafPaper ?? this.mushafPaper,
+      customAdhan: clearCustomAdhan ? null : (customAdhan ?? this.customAdhan),
+      customFajrAdhan: clearCustomFajrAdhan ? null : (customFajrAdhan ?? this.customFajrAdhan),
     );
   }
 
@@ -215,7 +234,9 @@ class SettingsState {
         other.continuousRecitation == continuousRecitation &&
         setEquals(other.sunnahAlerts, sunnahAlerts) &&
         other.verseRepeat == verseRepeat &&
-        other.mushafPaper == mushafPaper;
+        other.mushafPaper == mushafPaper &&
+        other.customAdhan == customAdhan &&
+        other.customFajrAdhan == customFajrAdhan;
   }
 
   @override
@@ -243,5 +264,7 @@ class SettingsState {
     Object.hashAllUnordered(sunnahAlerts),
     verseRepeat,
     mushafPaper,
+    customAdhan,
+    customFajrAdhan,
   ]);
 }

@@ -100,8 +100,16 @@ Both came from Wikimedia Commons by way of the
 bundles the same files with the same credits. Neither has a separate Fajr
 version, so Fajr plays the same recording until one is added.
 
-Settings > Muezzin offers only these two, so every choice plays what its name
-says. More can be added. Each muezzin is a pair of files (`.ogg` or `.mp3`,
+Settings > Muezzin offers these two, and on Android **your own recording**:
+any adhan on the phone (an audio file, or a sound already installed), with a
+separate one for Fajr if wanted. A picked file is copied into the shared
+`Notifications/Sakina` folder through MediaStore (`AdhanSounds.kt`), because a
+notification sound has to be a URI the system itself can read; picking a file
+needs Android 10 or later, installed sounds work on any version. Each recording
+gets its own notification channel, old ones are deleted, and if the file later
+disappears the alert falls back to the default adhan.
+
+More can be bundled. Each muezzin is a pair of files (`.ogg` or `.mp3`,
 never both for one name): one for Dhuhr, Asr, Maghrib and Isha, and one for
 Fajr (the adhan with *as-salatu khayrun min an-nawm*):
 

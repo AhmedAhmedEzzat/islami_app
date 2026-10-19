@@ -492,7 +492,8 @@ abstract final class PrayerNotificationService {
     final l10n = _l10n(locale);
 
     final exact = await _android?.canScheduleExactNotifications() ?? true;
-    final details = _channels(l10n);
+    final details = _channels(l10n, muezzin);
+    await _dropOldCustomChannels(muezzin);
 
     final alerts = plan(
       coordinates: coordinates,
@@ -591,7 +592,7 @@ abstract final class PrayerNotificationService {
     if (kIsWeb) return;
     await init();
     final l10n = _l10n(locale);
-    final details = _channels(l10n);
+    final details = _channels(l10n, muezzin);
     final name = _label(l10n, PrayerName.dhuhr);
     Future<void> show(String channel) => _plugin.show(
       id: _testId,
@@ -615,21 +616,53 @@ abstract final class PrayerNotificationService {
         : const Locale('en'),
   );
 
-  static Map<String, NotificationDetails> _channels(AppLocalizations l10n) => {
+  /// Deletes the channels of recordings the user has since replaced or
+  /// removed, so Settings > Notifications does not fill up with them.
+  static Future<void> _dropOldCustomChannels(Muezzin current) async {
+    try {
+      for (final c in await _android?.getNotificationChannels() ?? const <AndroidNotificationChannel>[]) {
+        if (c.id.startsWith(Muezzin.customChannelPrefix) &&
+            !(current.isCustom && (c.id == current.channel || c.id == current.fajrChannel))) {
+          await _android?.deleteNotificationChannel(channelId: c.id);
+        }
+      }
+    } on PlatformException catch (e) {
+      debugPrint('Old adhan channels not cleared: $e');
+    }
+  }
+
+  static Map<String, NotificationDetails> _channels(AppLocalizations l10n, [Muezzin? muezzin]) => {
     standardChannel: _details(standardChannel, l10n.prayerChannelName, l10n.prayerChannelDescription),
+    if (muezzin != null && muezzin.isCustom) ...{
+      muezzin.channel: _details(
+        muezzin.channel,
+        '${l10n.adhanChannelName} · ${muezzin.nameEn}',
+        l10n.adhanChannelDescription,
+        sound: UriAndroidNotificationSound(muezzin.uri!),
+        stopLabel: l10n.stopAdhan,
+      ),
+      if (muezzin.fajrUri != null)
+        muezzin.fajrChannel: _details(
+          muezzin.fajrChannel,
+          '${l10n.fajrAdhanChannelName} · ${l10n.customAdhanTitle}',
+          l10n.adhanChannelDescription,
+          sound: UriAndroidNotificationSound(muezzin.fajrUri!),
+          stopLabel: l10n.stopAdhan,
+        ),
+    },
     for (final m in Muezzins.all) ...{
       m.channel: _details(
         m.channel,
         m == Muezzins.standard ? l10n.adhanChannelName : '${l10n.adhanChannelName} · ${l10n.localeName == 'ar' ? m.nameAr : m.nameEn}',
         l10n.adhanChannelDescription,
-        sound: m.sound,
+        sound: RawResourceAndroidNotificationSound(m.sound),
         stopLabel: l10n.stopAdhan,
       ),
       m.fajrChannel: _details(
         m.fajrChannel,
         m == Muezzins.standard ? l10n.fajrAdhanChannelName : '${l10n.fajrAdhanChannelName} · ${l10n.localeName == 'ar' ? m.nameAr : m.nameEn}',
         l10n.adhanChannelDescription,
-        sound: m.fajrSound,
+        sound: RawResourceAndroidNotificationSound(m.fajrSound),
         stopLabel: l10n.stopAdhan,
       ),
     },
@@ -645,7 +678,7 @@ abstract final class PrayerNotificationService {
     String channel,
     String name,
     String description, {
-    String? sound,
+    AndroidNotificationSound? sound,
     bool playSound = true,
     String? stopLabel,
   }) {
@@ -658,7 +691,7 @@ abstract final class PrayerNotificationService {
         priority: Priority.high,
         category: AndroidNotificationCategory.reminder,
         playSound: playSound,
-        sound: sound == null ? null : RawResourceAndroidNotificationSound(sound),
+        sound: sound,
         // Dismissing the notification is what stops its sound, so Stop just
         // cancels it, without opening the app.
         actions: [
