@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../core/utils/l10n_ext.dart';
+import 'names_learn_view.dart';
 
 class AllahName {
   const AllahName(this.number, this.arabic, this.transliteration, this.meaning);
@@ -43,7 +44,19 @@ class NamesView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(context.l10n.namesTitle)),
+      appBar: AppBar(
+        title: Text(context.l10n.namesTitle),
+        actions: [
+          IconButton(
+            tooltip: context.l10n.namesLearnTitle,
+            icon: const Icon(Icons.school_outlined),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute<void>(builder: (_) => const NamesLearnView()),
+            ),
+          ),
+        ],
+      ),
       body: FutureBuilder<List<AllahName>>(
         future: AllahName.load(),
         builder: (context, snap) {

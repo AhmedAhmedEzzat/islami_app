@@ -27,6 +27,10 @@ abstract final class DailyDeeds {
   static const String _hiddenKey = 'deeds.hidden';
   static String _dayKey(DateTime d) => 'deeds.${d.year}-${d.month}-${d.day}';
 
+  /// Whether the day was a full one, decided against the list as it stood
+  /// then, so adding or hiding a deed later does not rewrite past days.
+  static String _fullKey(DateTime d) => 'deeds.full.${d.year}-${d.month}-${d.day}';
+
   static List<String> _strings(String key) {
     final raw = LocalStorageServices.getString(key);
     if (raw == null || raw.isEmpty) return [];
@@ -57,9 +61,15 @@ abstract final class DailyDeeds {
 
   /// The deeds on the checklist.
   static List<Deed> visible() {
+    // Home rebuilds every second; the list only changes with [changes].
+    if (_visibleAt == changes.value && _visible != null) return _visible!;
     final off = hidden();
-    return [for (final d in all()) if (!off.contains(d.id)) d];
+    _visibleAt = changes.value;
+    return _visible = [for (final d in all()) if (!off.contains(d.id)) d];
   }
+
+  static List<Deed>? _visible;
+  static int? _visibleAt;
 
   static Set<String> doneOn(DateTime day) => _strings(_dayKey(day)).toSet();
 
@@ -67,35 +77,49 @@ abstract final class DailyDeeds {
     final done = doneOn(day);
     done.contains(id) ? done.remove(id) : done.add(id);
     await LocalStorageServices.setString(_dayKey(day), jsonEncode(done.toList()));
+    await _record(day);
     changes.value++;
   }
 
-  static Future<void> setShown(String id, bool shown) async {
+  static Future<void> setShown(String id, bool shown, {DateTime? now}) async {
     final off = hidden();
     shown ? off.remove(id) : off.add(id);
     await LocalStorageServices.setString(_hiddenKey, jsonEncode(off.toList()));
+    await _listChanged(now);
+  }
+
+  /// A new list only re-decides today; earlier days keep their outcome.
+  static Future<void> _listChanged(DateTime? now) async {
+    changes.value++;
+    await _record(now ?? DateTime.now());
     changes.value++;
   }
+
+  static Future<void> _record(DateTime day) =>
+      LocalStorageServices.setBool(_fullKey(day), allDoneOn(day, visible()));
+
+  /// Days from before outcomes were recorded are judged against today's list.
+  static bool _wasFull(DateTime day) => LocalStorageServices.getBool(_fullKey(day)) ?? allDoneOn(day, visible());
 
   static Future<void> addCustom(String title, {DateTime? now}) async {
     final text = title.trim();
     if (text.isEmpty) return;
     final list = custom()..add(Deed('c${(now ?? DateTime.now()).microsecondsSinceEpoch}', title: text));
-    await _saveCustom(list);
+    await _saveCustom(list, now);
   }
 
-  static Future<void> removeCustom(String id) async {
-    await _saveCustom(custom()..removeWhere((d) => d.id == id));
+  static Future<void> removeCustom(String id, {DateTime? now}) async {
+    await _saveCustom(custom()..removeWhere((d) => d.id == id), now);
     // Nor kept in the hidden list, which would otherwise only grow.
-    await setShown(id, true);
+    await setShown(id, true, now: now);
   }
 
-  static Future<void> _saveCustom(List<Deed> list) async {
+  static Future<void> _saveCustom(List<Deed> list, DateTime? now) async {
     await LocalStorageServices.setString(
       _customKey,
       jsonEncode([for (final d in list) {'id': d.id, 'title': d.title}]),
     );
-    changes.value++;
+    await _listChanged(now);
   }
 
   /// Whether every deed on today's list was done on [day].
@@ -109,14 +133,19 @@ abstract final class DailyDeeds {
   /// [today]; an unfinished today does not break a run that reached
   /// yesterday. By calendar date, so clock changes cannot skip a day.
   static int streak(DateTime today) {
-    final deeds = visible();
-    var day = DateTime(today.year, today.month, today.day);
-    if (!allDoneOn(day, deeds)) day = DateTime(day.year, day.month, day.day - 1);
+    final key = (DateTime(today.year, today.month, today.day), changes.value);
+    if (_streakFor == key && _streak != null) return _streak!;
+    var day = key.$1;
+    if (!_wasFull(day)) day = DateTime(day.year, day.month, day.day - 1);
     var n = 0;
-    while (allDoneOn(day, deeds) && n < 3650) {
+    while (_wasFull(day) && n < 3650) {
       n++;
       day = DateTime(day.year, day.month, day.day - 1);
     }
-    return n;
+    _streakFor = key;
+    return _streak = n;
   }
+
+  static (DateTime, int)? _streakFor;
+  static int? _streak;
 }

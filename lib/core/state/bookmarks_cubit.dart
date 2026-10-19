@@ -33,7 +33,7 @@ class BookmarksCubit extends Cubit<List<Bookmark>> {
 
   void load() {
     final raw = LocalStorageServices.getString(PrefsKeys.bookmarks);
-    if (raw == null || raw.isEmpty) return;
+    if (raw == null || raw.isEmpty) return emit(const []);
     try {
       final list = (jsonDecode(raw) as List)
           .map((e) => Bookmark.fromJson(e as Map<String, dynamic>))

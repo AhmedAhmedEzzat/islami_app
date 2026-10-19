@@ -60,7 +60,7 @@ class VerseNotesCubit extends Cubit<List<VerseNote>> {
 
   void load() {
     final raw = LocalStorageServices.getString(PrefsKeys.verseNotes);
-    if (raw == null || raw.isEmpty) return;
+    if (raw == null || raw.isEmpty) return emit(const []);
     try {
       emit([
         for (final e in jsonDecode(raw) as List)

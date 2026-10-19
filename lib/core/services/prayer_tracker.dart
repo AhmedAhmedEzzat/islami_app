@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import '../constants/prefs_keys.dart';
 import 'prayer_times_service.dart';
@@ -85,7 +86,8 @@ abstract final class PrayerTracker {
       run = maskFor(day) == _all ? run + 1 : 0;
       if (run > best) best = run;
     }
-    return best;
+    // A run longer than the lookback is still the best, and still going.
+    return max(best, streak(today));
   }
 
   /// Share of prayers logged this month up to and including [today], 0..100.

@@ -13,6 +13,8 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     await LocalStorageServices.init();
+    // Storage swapped underneath, as a restore does: the caches must re-read.
+    DailyDeeds.changes.value++;
   });
 
   final today = DateTime(2026, 10, 19, 15);
@@ -62,6 +64,18 @@ void main() {
       await doAll(DateTime(2026, 11, 2 - n));
     }
     expect(DailyDeeds.streak(nov), 4);
+  });
+
+  test('adding or hiding a deed later does not rewrite past days', () async {
+    for (final n in [1, 2, 3]) {
+      await doAll(ago(n));
+    }
+    expect(DailyDeeds.streak(today), 3);
+    await DailyDeeds.addCustom('Call my parents', now: today);
+    expect(DailyDeeds.streak(today), 3);
+    // Hiding the new one again does not complete anything retroactively either.
+    await DailyDeeds.setShown('witr', false, now: today);
+    expect(DailyDeeds.streak(today), 3);
   });
 
   testWidgets('the card ticks a deed and adds one of your own', (tester) async {

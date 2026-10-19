@@ -6,6 +6,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../core/utils/l10n_ext.dart';
 import '../../core/widgets/text_prompt_dialog.dart';
+import '../more/listen_view.dart' show confirmDelete;
 
 /// Today's good deeds, ticked off as they are done, with the run of days on
 /// which all of them were.
@@ -140,17 +141,30 @@ class _EditDeedsSheet extends StatelessWidget {
                   child: Text(l10n.deedsEdit, style: context.texts.titleMedium),
                 ),
                 for (final d in DailyDeeds.all())
-                  SwitchListTile(
-                    value: !hidden.contains(d.id),
+                  // A plain tile, so the switch and the delete button stay two
+                  // controls for a screen reader too.
+                  ListTile(
                     title: Text(DailyDeedsCard.deedTitle(context, d)),
-                    secondary: d.builtIn
-                        ? null
-                        : IconButton(
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (!d.builtIn)
+                          IconButton(
                             tooltip: l10n.delete,
                             icon: const Icon(Icons.delete_outline),
-                            onPressed: () => DailyDeeds.removeCustom(d.id),
+                            onPressed: () async {
+                              final name = DailyDeedsCard.deedTitle(context, d);
+                              if (await confirmDelete(context, l10n.deedsDeleteConfirm(name))) {
+                                await DailyDeeds.removeCustom(d.id);
+                              }
+                            },
                           ),
-                    onChanged: (on) => DailyDeeds.setShown(d.id, on),
+                        Switch(
+                          value: !hidden.contains(d.id),
+                          onChanged: (on) => DailyDeeds.setShown(d.id, on),
+                        ),
+                      ],
+                    ),
                   ),
                 ListTile(
                   leading: const Icon(Icons.add),

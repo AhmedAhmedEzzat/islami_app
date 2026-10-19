@@ -162,6 +162,14 @@ void main() {
       expect(PrayerTracker.daysDone(PrayerName.isha, today, 30), 0);
     });
 
+    test('bestStreak is never less than the current streak, however long', () async {
+      for (var n = 0; n < 380; n++) {
+        await complete(ago(n));
+      }
+      expect(PrayerTracker.bestStreak(today), PrayerTracker.streak(today));
+      expect(PrayerTracker.streak(today), 380);
+    });
+
     test('bestStreak finds the longest run, not just the current one', () async {
       for (final n in [20, 19, 18, 17, 2, 1]) {
         await complete(ago(n));

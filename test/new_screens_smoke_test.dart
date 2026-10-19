@@ -15,6 +15,7 @@ import 'package:sakina/modules/home/home_view.dart';
 import 'package:sakina/modules/layout/time/tracker_view.dart';
 import 'package:sakina/modules/more/date_converter_view.dart';
 import 'package:sakina/modules/more/hifz_view.dart';
+import 'package:sakina/modules/more/names_learn_view.dart';
 import 'package:sakina/modules/more/listen_view.dart';
 import 'package:sakina/modules/more/more_view.dart';
 import 'package:sakina/modules/more/zakat_view.dart';
@@ -78,6 +79,7 @@ void main() {
     'Memorisation': () => const HifzView(),
     'Date converter': () => const DateConverterView(),
     'Prayer tracker': () => const TrackerView(),
+    'Learn the Names': () => const NamesLearnView(),
   };
 
   for (final locale in const [Locale('en'), Locale('ar')]) {
