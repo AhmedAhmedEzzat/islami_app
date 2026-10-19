@@ -34,8 +34,8 @@ class _TrackerViewState extends State<TrackerView> {
     final scheme = context.colors;
     final today = DateUtils.dateOnly(DateTime.now());
     final locale = Localizations.localeOf(context).toLanguageTag();
-    // The last seven days, oldest first.
-    final week = [for (var i = 6; i >= 0; i--) today.subtract(Duration(days: i))];
+    // The last seven days, oldest first, by calendar date.
+    final week = PrayerTracker.lastDays(today, 7);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.prayerTracker)),
@@ -124,6 +124,8 @@ class _TrackerViewState extends State<TrackerView> {
               ],
             ),
           ),
+          const SizedBox(height: AppSpacing.xl),
+          _Last30Days(today: today),
           const SizedBox(height: AppSpacing.xl),
           _QadaSection(
             onChanged: () {
@@ -259,6 +261,83 @@ class _QadaSection extends StatelessWidget {
                   },
                   icon: const Icon(Icons.add_circle_outline),
                 ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The last 30 days, one row of squares per prayer, with how often each was
+/// logged and the best run of complete days.
+class _Last30Days extends StatelessWidget {
+  const _Last30Days({required this.today});
+
+  final DateTime today;
+  static const int days = 30;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final scheme = context.colors;
+    final span = PrayerTracker.lastDays(today, days);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(l10n.trackerLast30, style: context.texts.titleMedium),
+        Text(
+          l10n.trackerBestStreak(PrayerTracker.bestStreak(today)),
+          style: context.texts.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Card(
+          color: scheme.surfaceContainerLow,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Column(
+              children: [
+                for (final p in PrayerTracker.prayers)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 3),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 56,
+                          child: Text(prayerLabel(context, p), style: context.texts.labelMedium, maxLines: 1),
+                        ),
+                        Expanded(
+                          // Oldest at the start, today at the end, in reading direction.
+                          child: Row(
+                            children: [
+                              for (final day in span)
+                                Expanded(
+                                  child: AspectRatio(
+                                    aspectRatio: 1,
+                                    child: Container(
+                                      margin: const EdgeInsets.all(1),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(2),
+                                        color: PrayerTracker.isDone(day, p) ? scheme.primary : scheme.outlineVariant.withValues(alpha: 0.5),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(
+                          width: 44,
+                          child: Text(
+                            l10n.percentValue((PrayerTracker.daysDone(p, today, days) * 100 / days).round()),
+                            textAlign: TextAlign.end,
+                            style: context.texts.labelMedium?.copyWith(color: scheme.onSurfaceVariant),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),

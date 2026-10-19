@@ -89,6 +89,8 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
     if (_advancing) return;
     if (SleepTimer.takeEndOfSura()) return;
     final sura = int.tryParse(state.suraId ?? '');
+    // A looped passage ends where it ends; it does not run on.
+    if (state.range != null) return;
     if (sura == null || sura >= 114 || !continuous() || state.repeat != RecitationRepeat.off) return;
     _advancing = true;
     try {
@@ -108,14 +110,24 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
   /// Builds the playlist for [sura] starting at [fromAyah]. Pure, so the
   /// basmala rules can be tested without audio.
   @visibleForTesting
-  static List<int> playlistAyahs(int sura, int fromAyah, int totalAyahs, {int repeatEach = 1}) {
+  static List<int> playlistAyahs(
+    int sura,
+    int fromAyah,
+    int totalAyahs, {
+    int repeatEach = 1,
+    int? toAyah,
+    int passes = 1,
+  }) {
     final start = fromAyah.clamp(1, totalAyahs);
+    final end = (toAyah ?? totalAyahs).clamp(start, totalAyahs);
     final needsBasmala = start == 1 && sura != 1 && sura != 9;
     return [
       if (needsBasmala) 0,
-      // For memorising: each verse several times before the next.
-      for (var a = start; a <= totalAyahs; a++)
-        for (var r = 0; r < repeatEach.clamp(1, 20); r++) a,
+      // For memorising: the passage several times over, and each verse
+      // several times before the next.
+      for (var p = 0; p < passes.clamp(1, 50); p++)
+        for (var a = start; a <= end; a++)
+          for (var r = 0; r < repeatEach.clamp(1, 20); r++) a,
     ];
   }
 
@@ -131,6 +143,19 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
     final ayah = state.ayah;
     if (sura == null || ayah == null) return;
     final verse = ayah == 0 ? 1 : ayah;
+    final range = state.range;
+    if (range != null) {
+      // The passage is rebuilt from its start, playing on from this verse.
+      return playFrom(
+        suraId: sura,
+        fromAyah: range.from,
+        startAtAyah: verse,
+        totalAyahs: state.totalAyahs,
+        reciterId: _reciterId,
+        autoplay: state.isPlaying,
+        range: range,
+      );
+    }
     final wholeSura = state.repeat == RecitationRepeat.sura;
     await playFrom(
       suraId: sura,
@@ -142,6 +167,14 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
     );
   }
 
+  /// Stops looping the passage and carries on through the sura from the
+  /// verse playing.
+  Future<void> clearRange() async {
+    if (state.range == null) return;
+    emit(state.copyWith(clearRange: true));
+    await restartFromCurrentVerse();
+  }
+
   /// Starts [suraId] at [fromAyah] (1-based).
   Future<void> playFrom({
     required String suraId,
@@ -151,6 +184,7 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
     bool quiet = false,
     int? startAtAyah,
     bool autoplay = true,
+    VerseRange? range,
   }) async {
     final sura = int.tryParse(suraId);
     if (sura == null || totalAyahs <= 0) return;
@@ -161,7 +195,14 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
 
     final reciter = Reciters.byId(reciterId);
     _reciterId = reciter.id;
-    _ayahAt = playlistAyahs(sura, fromAyah, totalAyahs, repeatEach: repeatEach());
+    _ayahAt = playlistAyahs(
+      sura,
+      range?.from ?? fromAyah,
+      totalAyahs,
+      repeatEach: repeatEach(),
+      toAyah: range?.to,
+      passes: range?.passes ?? 1,
+    );
     _lastIndex = null;
 
     emit(
@@ -171,6 +212,8 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
         totalAyahs: totalAyahs,
         isBuffering: true,
         position: Duration.zero,
+        range: range,
+        clearRange: range == null,
       ),
     );
 

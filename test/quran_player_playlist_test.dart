@@ -3,6 +3,23 @@ import 'package:sakina/core/state/quran_player_cubit.dart';
 
 void main() {
   group('playlistAyahs', () {
+    test('a passage plays the given verses the given number of times', () {
+      expect(QuranPlayerCubit.playlistAyahs(2, 5, 286, toAyah: 7, passes: 3), [5, 6, 7, 5, 6, 7, 5, 6, 7]);
+    });
+
+    test('a passage from verse 1 has the basmala once, before the first pass', () {
+      expect(QuranPlayerCubit.playlistAyahs(112, 1, 4, toAyah: 2, passes: 2), [0, 1, 2, 1, 2]);
+    });
+
+    test('a passage combines with repeating each verse', () {
+      expect(QuranPlayerCubit.playlistAyahs(1, 6, 7, toAyah: 7, passes: 2, repeatEach: 2), [6, 6, 7, 7, 6, 6, 7, 7]);
+    });
+
+    test('a passage is kept inside the sura', () {
+      expect(QuranPlayerCubit.playlistAyahs(1, 6, 7, toAyah: 40), [6, 7]);
+      expect(QuranPlayerCubit.playlistAyahs(1, 6, 7, toAyah: 2), [6]);
+    });
+
     test('a sura started from the top is preceded by the basmala', () {
       expect(QuranPlayerCubit.playlistAyahs(2, 1, 5), [0, 1, 2, 3, 4, 5]);
     });

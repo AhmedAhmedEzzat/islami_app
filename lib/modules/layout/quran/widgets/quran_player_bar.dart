@@ -48,6 +48,8 @@ class QuranPlayerBar extends StatelessWidget {
           status = context.isArabic ? reciter.nameAr : reciter.nameEn;
         } else if (state.ayah == 0) {
           status = context.l10n.basmalaPlaying;
+        } else if (state.range case final r?) {
+          status = context.l10n.rangeStatus(state.ayah ?? r.from, r.from, r.to, r.passes);
         } else {
           status = context.l10n.verseOfTotal(state.ayah ?? 1, _total);
         }
@@ -132,7 +134,7 @@ class QuranPlayerBar extends StatelessWidget {
                       onPressed: isThis ? cubit.nextVerse : null,
                       icon: const Icon(Icons.skip_next),
                     ),
-                    _MoreMenu(reciter: reciter, sura: int.parse(sura.suraID)),
+                    _MoreMenu(reciter: reciter, model: sura),
                   ],
                 ),
               ),
@@ -152,20 +154,24 @@ class QuranPlayerBar extends StatelessWidget {
   }
 }
 
-enum _MenuAction { sleep, continuous, verseRepeat, download }
+enum _MenuAction { sleep, continuous, verseRepeat, range, download }
 
 /// Sleep timer, continuous play and this sura's download, which do not need
 /// a button each on the bar.
 class _MoreMenu extends StatelessWidget {
-  const _MoreMenu({required this.reciter, required this.sura});
+  const _MoreMenu({required this.reciter, required this.model});
 
   final Reciter reciter;
-  final int sura;
+  final SuraDataModel model;
+
+  int get sura => int.parse(model.suraID);
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final settings = context.read<SettingsCubit>();
+    final player = context.read<QuranPlayerCubit>();
+    final looping = player.state.isLoaded(model.suraID) && player.state.range != null;
     return ValueListenableBuilder<int>(
       valueListenable: RecitationDownloads.changes,
       builder: (context, _, _) {
@@ -189,6 +195,8 @@ class _MoreMenu extends StatelessWidget {
                 settings.setContinuousRecitation(!settings.state.continuousRecitation);
               case _MenuAction.verseRepeat:
                 _pickVerseRepeat(context);
+              case _MenuAction.range:
+                looping ? player.clearRange() : _pickRange(context);
               case _MenuAction.download:
                 if (downloaded) {
                   RecitationDownloads.delete(reciter, sura);
@@ -224,6 +232,13 @@ class _MoreMenu extends StatelessWidget {
                 subtitle: Text(l10n.verseRepeatTimes(settings.state.verseRepeat)),
               ),
             ),
+            PopupMenuItem(
+              value: _MenuAction.range,
+              child: ListTile(
+                leading: Icon(looping ? Icons.stop_circle_outlined : Icons.loop),
+                title: Text(looping ? l10n.stopRange : l10n.repeatRange),
+              ),
+            ),
             if (RecitationDownloads.supported)
               PopupMenuItem(
                 value: _MenuAction.download,
@@ -243,6 +258,25 @@ class _MoreMenu extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+
+  /// A passage of this sura, several times over, for memorising it.
+  Future<void> _pickRange(BuildContext context) async {
+    final player = context.read<QuranPlayerCubit>();
+    final total = int.parse(model.suraVersesNumber);
+    final current = player.state.isLoaded(model.suraID) ? (player.state.ayah ?? 1).clamp(1, total) : 1;
+    final range = await showDialog<VerseRange>(
+      context: context,
+      builder: (_) => _RangeDialog(total: total, initialFrom: current),
+    );
+    if (range == null || !context.mounted) return;
+    await player.playFrom(
+      suraId: model.suraID,
+      fromAyah: range.from,
+      totalAyahs: total,
+      reciterId: reciter.id,
+      range: range,
     );
   }
 
@@ -269,5 +303,94 @@ class _MoreMenu extends StatelessWidget {
     await settings.setVerseRepeat(picked);
     // Applies at once whether playing or paused.
     if (player.state.suraId != null) await player.restartFromCurrentVerse();
+  }
+}
+
+/// Chooses the passage and how many times to recite it.
+class _RangeDialog extends StatefulWidget {
+  const _RangeDialog({required this.total, required this.initialFrom});
+
+  final int total;
+  final int initialFrom;
+
+  static const List<int> passChoices = [2, 3, 5, 7, 10, 20];
+
+  @override
+  State<_RangeDialog> createState() => _RangeDialogState();
+}
+
+class _RangeDialogState extends State<_RangeDialog> {
+  late int _from = widget.initialFrom;
+  late int _to = (widget.initialFrom + 4).clamp(1, widget.total);
+  int _passes = 3;
+
+  Widget _verses(String label, int value, int min, ValueChanged<int> onChanged) => DropdownButtonFormField<int>(
+    initialValue: value,
+    isExpanded: true,
+    menuMaxHeight: 320,
+    decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
+    items: [
+      for (var a = min; a <= widget.total; a++) DropdownMenuItem(value: a, child: Text('$a')),
+    ],
+    onChanged: (v) {
+      if (v != null) onChanged(v);
+    },
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return AlertDialog(
+      title: Text(l10n.repeatRangeTitle),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _verses(l10n.fromVerse, _from, 1, (v) => setState(() {
+                  _from = v;
+                  if (_to < v) _to = v;
+                })),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                // Keyed on the start, so its list always begins there.
+                child: KeyedSubtree(
+                  key: ValueKey(_from),
+                  child: _verses(l10n.toVerse, _to, _from, (v) => setState(() => _to = v)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Text(l10n.rangePasses, style: context.texts.labelLarge),
+          const SizedBox(height: AppSpacing.sm),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              for (final n in _RangeDialog.passChoices)
+                ChoiceChip(
+                  label: Text(l10n.rangeTimes(n)),
+                  selected: _passes == n,
+                  onSelected: (_) => setState(() => _passes = n),
+                ),
+            ],
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, VerseRange(_from, _to, _passes)),
+          child: Text(l10n.startRange),
+        ),
+      ],
+    );
   }
 }
