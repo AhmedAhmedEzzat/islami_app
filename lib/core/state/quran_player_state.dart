@@ -15,6 +15,7 @@ class QuranPlayerState {
     this.duration,
     this.repeat = RecitationRepeat.off,
     this.errorKey,
+    this.range,
   });
 
   final String? suraId;
@@ -32,6 +33,9 @@ class QuranPlayerState {
   final Duration? duration;
   final RecitationRepeat repeat;
   final String? errorKey;
+
+  /// Verses being looped for memorising, or null for the sura as usual.
+  final VerseRange? range;
 
   bool isLoaded(String id) => suraId == id;
 
@@ -54,6 +58,8 @@ class QuranPlayerState {
     RecitationRepeat? repeat,
     String? errorKey,
     bool clearError = false,
+    VerseRange? range,
+    bool clearRange = false,
   }) {
     if (clearSura) {
       return QuranPlayerState(repeat: repeat ?? this.repeat, errorKey: errorKey);
@@ -68,6 +74,7 @@ class QuranPlayerState {
       duration: duration ?? this.duration,
       repeat: repeat ?? this.repeat,
       errorKey: clearError ? null : (errorKey ?? this.errorKey),
+      range: clearRange ? null : (range ?? this.range),
     );
   }
 
@@ -82,7 +89,8 @@ class QuranPlayerState {
       other.position == position &&
       other.duration == duration &&
       other.repeat == repeat &&
-      other.errorKey == errorKey;
+      other.errorKey == errorKey &&
+      other.range == range;
 
   @override
   int get hashCode => Object.hash(
@@ -95,5 +103,24 @@ class QuranPlayerState {
     duration,
     repeat,
     errorKey,
+    range,
   );
+}
+
+/// Verses [from] to [to] of the sura, recited [passes] times over, for
+/// memorising a passage.
+@immutable
+class VerseRange {
+  const VerseRange(this.from, this.to, this.passes);
+
+  final int from;
+  final int to;
+  final int passes;
+
+  @override
+  bool operator ==(Object other) =>
+      other is VerseRange && other.from == from && other.to == to && other.passes == passes;
+
+  @override
+  int get hashCode => Object.hash(from, to, passes);
 }
