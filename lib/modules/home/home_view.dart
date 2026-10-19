@@ -41,6 +41,7 @@ import '../more/calendar_view.dart';
 import '../more/duas_view.dart';
 import '../more/names_view.dart';
 import '../settings/settings_view.dart';
+import 'daily_deeds_card.dart';
 import 'khatma_card.dart';
 
 /// The first tab: today at a glance and one tap to everything daily.
@@ -212,6 +213,8 @@ class _HomeViewState extends State<HomeView> {
               ),
               const SizedBox(height: AppSpacing.sm),
               KhatmaCard(now: _now, onOpenPage: _openPage),
+              const SizedBox(height: AppSpacing.sm),
+              DailyDeedsCard(now: _now),
               const SizedBox(height: AppSpacing.lg),
               _SectionTitle(l10n.quickAccess),
               _QuickGrid(
