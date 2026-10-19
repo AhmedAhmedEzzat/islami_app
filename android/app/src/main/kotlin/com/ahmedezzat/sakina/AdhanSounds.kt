@@ -6,10 +6,14 @@ import android.content.Intent
 import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.provider.MediaStore
 import android.provider.OpenableColumns
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import java.io.FileNotFoundException
+import java.util.concurrent.Executors
 
 /**
  * Lets the user choose their own adhan recording ("sakina/sounds").
@@ -21,6 +25,9 @@ import io.flutter.plugin.common.MethodChannel
  */
 class AdhanSounds(private val activity: Activity) : MethodChannel.MethodCallHandler {
     private var pending: MethodChannel.Result? = null
+    private var pendingRequest = 0
+    private val io = Executors.newSingleThreadExecutor()
+    private val main = Handler(Looper.getMainLooper())
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
@@ -49,14 +56,23 @@ class AdhanSounds(private val activity: Activity) : MethodChannel.MethodCallHand
             }
             "canPickFile" -> result.success(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
             "exists" -> result.success(exists(Uri.parse(call.argument<String>("uri")!!)))
+            "release" -> {
+                release(Uri.parse(call.argument<String>("uri")!!))
+                result.success(null)
+            }
             else -> result.notImplemented()
         }
     }
 
     private fun start(result: MethodChannel.Result, request: Int, intent: () -> Intent) {
-        // A second tap while a picker is open replaces the first request.
-        pending?.success(null)
+        // One picker at a time: a second tap before the first opens is ignored,
+        // so no answer can reach the wrong request.
+        if (pending != null) {
+            result.success(null)
+            return
+        }
         pending = result
+        pendingRequest = request
         try {
             activity.startActivityForResult(intent(), request)
         } catch (e: Exception) {
@@ -68,25 +84,43 @@ class AdhanSounds(private val activity: Activity) : MethodChannel.MethodCallHand
     /** Called from MainActivity.onActivityResult; true when it was ours. */
     fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
         if (requestCode != REQUEST_SYSTEM && requestCode != REQUEST_FILE) return false
-        val result = pending ?: return true
+        val result = pending
+        if (result == null || requestCode != pendingRequest) return true
         pending = null
         if (resultCode != Activity.RESULT_OK || data == null) {
             result.success(null)
             return true
         }
-        try {
-            val picked = if (requestCode == REQUEST_SYSTEM) {
-                @Suppress("DEPRECATION")
-                data.getParcelableExtra<Uri>(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
-                    ?.let { it to RingtoneManager.getRingtone(activity, it)?.getTitle(activity) }
-            } else {
-                data.data?.let { copyToNotifications(it) }
+        if (requestCode == REQUEST_SYSTEM) {
+            @Suppress("DEPRECATION")
+            val uri = data.getParcelableExtra<Uri>(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+            result.success(uri?.let { mapOf("uri" to it.toString(), "title" to titleOf(it)) })
+            return true
+        }
+        val source = data.data
+        if (source == null) {
+            result.success(null)
+            return true
+        }
+        // The copy can be slow (a file still in the cloud), so off the main thread.
+        io.execute {
+            try {
+                val (uri, title) = copyToNotifications(source)
+                main.post { result.success(mapOf("uri" to uri.toString(), "title" to title)) }
+            } catch (e: Exception) {
+                main.post { result.error("copy_failed", e.message, null) }
             }
-            result.success(picked?.let { (uri, title) -> mapOf("uri" to uri.toString(), "title" to (title ?: "")) })
-        } catch (e: Exception) {
-            result.error("copy_failed", e.message, null)
         }
         return true
+    }
+
+    /** The sound's name, read from MediaStore rather than by loading it. */
+    private fun titleOf(uri: Uri): String = try {
+        activity.contentResolver.query(uri, arrayOf(MediaStore.MediaColumns.TITLE), null, null, null)?.use {
+            if (it.moveToFirst()) it.getString(0) else null
+        } ?: ""
+    } catch (e: Exception) {
+        ""
     }
 
     /** Copies [source] into Notifications/Sakina and returns its MediaStore URI and name. */
@@ -99,7 +133,7 @@ class AdhanSounds(private val activity: Activity) : MethodChannel.MethodCallHand
         val values = ContentValues().apply {
             put(MediaStore.Audio.Media.DISPLAY_NAME, name)
             put(MediaStore.Audio.Media.MIME_TYPE, resolver.getType(source) ?: "audio/mpeg")
-            put(MediaStore.Audio.Media.RELATIVE_PATH, "Notifications/Sakina")
+            put(MediaStore.Audio.Media.RELATIVE_PATH, FOLDER)
             put(MediaStore.Audio.Media.IS_NOTIFICATION, 1)
             put(MediaStore.Audio.Media.IS_PENDING, 1)
         }
@@ -119,14 +153,37 @@ class AdhanSounds(private val activity: Activity) : MethodChannel.MethodCallHand
         return target to name.substringBeforeLast('.')
     }
 
+    /**
+     * Whether [uri] is still there. Only a file that is gone counts as
+     * missing: one this app may not read (a sound added in Settings, or its
+     * own copy after a reinstall) can still be played by the system.
+     */
     private fun exists(uri: Uri): Boolean = try {
         activity.contentResolver.openAssetFileDescriptor(uri, "r")?.use { true } ?: false
-    } catch (e: Exception) {
+    } catch (e: FileNotFoundException) {
         false
+    } catch (e: IllegalArgumentException) {
+        false
+    } catch (e: Exception) {
+        true
+    }
+
+    /** Deletes [uri] if it is one of this app's own copies; anything else is left alone. */
+    private fun release(uri: Uri) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
+        try {
+            val ours = activity.contentResolver.query(
+                uri, arrayOf(MediaStore.MediaColumns.RELATIVE_PATH), null, null, null,
+            )?.use { it.moveToFirst() && it.getString(0)?.trimEnd('/') == FOLDER } ?: false
+            if (ours) activity.contentResolver.delete(uri, null, null)
+        } catch (e: Exception) {
+            // Not ours to delete, or already gone.
+        }
     }
 
     companion object {
         private const val REQUEST_SYSTEM = 7101
         private const val REQUEST_FILE = 7102
+        private const val FOLDER = "Notifications/Sakina"
     }
 }

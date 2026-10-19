@@ -40,6 +40,19 @@ abstract final class AdhanSounds {
     }
   }
 
+  /// Deletes [uri] if it is one of the app's own copies in the Notifications
+  /// folder, once nothing uses it; other sounds are never touched.
+  static Future<void> release(String uri) async {
+    if (!supported) return;
+    try {
+      await _channel.invokeMethod<void>('release', {'uri': uri});
+    } on MissingPluginException {
+      // Background isolate: the copy stays, which is harmless.
+    } on PlatformException catch (e) {
+      debugPrint('Old adhan copy kept: $e');
+    }
+  }
+
   static Future<CustomSound?> _pick(String method, Map<String, Object> args) async {
     if (!supported) return null;
     final picked = await _channel.invokeMapMethod<String, Object?>(method, args);

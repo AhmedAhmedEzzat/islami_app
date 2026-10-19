@@ -89,6 +89,21 @@ void main() {
       expect((SettingsCubit()..load()).state.muezzin, Muezzins.standard);
     });
 
+    test('a replaced or removed recording is released, one still in use is not', () async {
+      final cubit = SettingsCubit()..load();
+      await cubit.setCustomAdhan(_makkah);
+      await cubit.setCustomAdhan(_makkah, fajr: true);
+      calls.clear();
+      await cubit.setCustomAdhan(_fajr);
+      // Still the Fajr recording, so kept.
+      expect(calls.where((c) => c.method == 'release'), isEmpty);
+      await cubit.setCustomAdhan(null);
+      expect(
+        calls.where((c) => c.method == 'release').map((c) => (c.arguments as Map)['uri']).toSet(),
+        {_makkah.uri, _fajr.uri},
+      );
+    });
+
     test('a deleted recording is not scheduled', () async {
       final cubit = SettingsCubit()..load();
       await cubit.setCustomAdhan(_makkah);

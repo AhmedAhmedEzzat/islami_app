@@ -8,7 +8,10 @@ abstract final class DhikrReminders {
     ('لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ', 'There is no might nor power except with Allah.'),
     ('سُبْحَانَ اللَّهِ، وَالْحَمْدُ لِلَّهِ، وَلَا إِلَهَ إِلَّا اللَّهُ، وَاللَّهُ أَكْبَرُ', 'Glory be to Allah, praise be to Allah, there is no god but Allah, and Allah is the Greatest.'),
     ('لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ', 'There is no god but Allah alone, with no partner; His is the dominion and His the praise, and He has power over all things.'),
-    ('حَسْبِيَ اللَّهُ لَا إِلَهَ إِلَّا هُوَ، عَلَيْهِ تَوَكَّلْتُ', 'Allah is enough for me; there is no god but Him. In Him I put my trust.'),
+    (
+      'حَسْبِيَ اللَّهُ لَا إِلَهَ إِلَّا هُوَ، عَلَيْهِ تَوَكَّلْتُ، وَهُوَ رَبُّ الْعَرْشِ الْعَظِيمِ',
+      'Allah is enough for me; there is no god but Him. In Him I put my trust, and He is the Lord of the Mighty Throne.',
+    ),
   ];
 
   /// The choices of how often, in hours; 0 is off.

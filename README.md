@@ -106,7 +106,8 @@ separate one for Fajr if wanted. A picked file is copied into the shared
 `Notifications/Sakina` folder through MediaStore (`AdhanSounds.kt`), because a
 notification sound has to be a URI the system itself can read; picking a file
 needs Android 10 or later, installed sounds work on any version. Each recording
-gets its own notification channel, old ones are deleted, and if the file later
+gets its own notification channel; old channels, and the app's own copies of
+recordings no longer used, are deleted; and if the file later
 disappears the alert falls back to the default adhan.
 
 More can be bundled. Each muezzin is a pair of files (`.ogg` or `.mp3`,

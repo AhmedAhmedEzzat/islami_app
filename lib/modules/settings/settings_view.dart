@@ -515,7 +515,7 @@ class SettingsView extends StatelessWidget {
   static String _muezzinName(BuildContext context, Muezzin m) => m == Muezzins.standard
       ? context.l10n.muezzinDefault
       : m.isCustom
-      ? '${context.l10n.customAdhanTitle} · ${m.nameEn}'
+      ? [context.l10n.customAdhanTitle, if (m.nameEn.isNotEmpty) m.nameEn].join(' · ')
       : (context.isArabic ? m.nameAr : m.nameEn);
 
   static String _prayerSoundLabel(BuildContext context, PrayerSound sound) =>

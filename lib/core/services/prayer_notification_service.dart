@@ -681,7 +681,7 @@ abstract final class PrayerNotificationService {
     if (muezzin != null && muezzin.isCustom) ...{
       muezzin.channel: _details(
         muezzin.channel,
-        '${l10n.adhanChannelName} · ${muezzin.nameEn}',
+        [l10n.adhanChannelName, muezzin.nameEn.isEmpty ? l10n.customAdhanTitle : muezzin.nameEn].join(' · '),
         l10n.adhanChannelDescription,
         sound: UriAndroidNotificationSound(muezzin.uri!),
         stopLabel: l10n.stopAdhan,

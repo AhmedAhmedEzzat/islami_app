@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../constants/muezzins.dart';
 import '../constants/prefs_keys.dart';
+import '../services/adhan_sounds.dart';
 import '../services/prayer_config.dart';
 import '../services/prayer_notification_service.dart';
 import '../services/prayer_times_service.dart';
@@ -194,6 +195,7 @@ class SettingsCubit extends Cubit<SettingsState> {
   /// removing it goes back to the default adhan.
   Future<void> setCustomAdhan(CustomSound? sound, {bool fajr = false}) async {
     final key = fajr ? PrefsKeys.customFajrAdhan : PrefsKeys.customAdhan;
+    final before = [state.customAdhan?.uri, state.customFajrAdhan?.uri];
     if (fajr) {
       emit(state.copyWith(customFajrAdhan: sound, clearCustomFajrAdhan: sound == null));
     } else if (sound == null) {
@@ -209,6 +211,12 @@ class SettingsCubit extends Cubit<SettingsState> {
       await LocalStorageServices.setString(PrefsKeys.muezzin, Muezzins.customId);
     }
     await LocalStorageServices.setString(key, sound == null ? '' : jsonEncode(sound.toJson()));
+    // The app's own copies of recordings no longer used are deleted, so
+    // re-picking does not fill the Notifications folder.
+    final now = {state.customAdhan?.uri, state.customFajrAdhan?.uri};
+    for (final uri in before.nonNulls.toSet()) {
+      if (!now.contains(uri)) await AdhanSounds.release(uri);
+    }
   }
 
   static CustomSound? _decodeSound(String? raw) {
