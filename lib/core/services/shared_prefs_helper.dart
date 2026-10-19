@@ -63,6 +63,25 @@ abstract class LocalStorageServices {
     return _preferences.getStringList(key);
   }
 
+  /// Every stored key, for backups.
+  static Set<String> keys() => isReady ? _preferences.getKeys() : <String>{};
+
+  /// The value stored under [key], whatever its type.
+  static Object? getRaw(String key) => isReady ? _preferences.get(key) : null;
+
+  /// Stores [value] (an int, double, bool, String or `List<String>`) under [key].
+  static Future<bool> setRaw(String key, Object value) async {
+    if (!isReady) return false;
+    return switch (value) {
+      final int v => _preferences.setInt(key, v),
+      final double v => _preferences.setDouble(key, v),
+      final bool v => _preferences.setBool(key, v),
+      final String v => _preferences.setString(key, v),
+      final List<String> v => _preferences.setStringList(key, v),
+      _ => false,
+    };
+  }
+
   static Future<void> remove(List<String> keys) async {
     if (!isReady) return;
     for (final key in keys) {

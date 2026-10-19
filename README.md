@@ -49,6 +49,12 @@ calculation method, madhab, high-latitude rule, prayer adjustments,
 Hijri date adjustment (±2 days), and notifications (adhan sound and muezzin,
 reminders, fasting, adhkar, khatma and sunnah alerts).
 
+**Backup** (Android): Settings > Backup saves bookmarks, notes and highlights,
+memorisation, the prayer log, missed prayers and fasts, good deeds, khatma,
+tasbeeh and settings to one JSON file to share to Drive, email or WhatsApp,
+and restores it on a new phone. Downloaded recitations and chosen adhan
+recordings belong to the old phone and are left out.
+
 **Arabic and English.** The app follows the phone's language, and you can
 override it in Settings. In Arabic the whole UI mirrors to right-to-left, with
 Arabic month names, dates and digits.

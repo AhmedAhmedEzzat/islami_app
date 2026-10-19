@@ -13,6 +13,7 @@ import '../../core/services/notification_refresh.dart';
 import '../../core/services/prayer_notification_service.dart';
 import '../../core/services/recitation_downloads.dart';
 import '../more/listen_view.dart';
+import 'backup_tiles.dart';
 import 'muezzin_view.dart';
 import 'prayer_notifications_prompt.dart';
 import 'tafsir_download_tile.dart';
@@ -455,6 +456,11 @@ class SettingsView extends StatelessWidget {
                       ? (_) => cubit.toggleFastingAlert(alert)
                       : null,
                 ),
+
+              if (BackupTiles.supported) ...[
+                _SectionHeader(context.l10n.backupSection),
+                const BackupTiles(),
+              ],
 
               _SectionHeader(context.l10n.languageSection),
               Padding(

@@ -7,6 +7,7 @@ import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
     private val sounds = AdhanSounds(this)
+    private val files = TextFiles(this)
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -23,11 +24,16 @@ class MainActivity : FlutterActivity() {
         // Choosing the user's own adhan recording.
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "sakina/sounds")
             .setMethodCallHandler(sounds)
+        // Restoring a backup.
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "sakina/files")
+            .setMethodCallHandler(files)
     }
 
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (!sounds.onActivityResult(requestCode, resultCode, data)) {
+        if (!sounds.onActivityResult(requestCode, resultCode, data) &&
+            !files.onActivityResult(requestCode, resultCode, data)
+        ) {
             super.onActivityResult(requestCode, resultCode, data)
         }
     }

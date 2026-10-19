@@ -25,8 +25,7 @@ abstract final class RecentSuras {
         .toList();
   }
 
-  /// Re-reads storage, for tests that swap the preferences underneath.
-  @visibleForTesting
+  /// Re-reads storage, after a backup is restored or in tests.
   static void reload() => notifier.value = _read();
 
   static Future<void> remember(SuraDataModel sura) async {
