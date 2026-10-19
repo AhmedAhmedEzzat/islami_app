@@ -9,6 +9,7 @@ import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../l10n/gen/app_localizations.dart';
+import '../constants/dhikr_reminders.dart';
 import '../constants/muezzins.dart';
 import 'islamic_calendar.dart';
 import 'prayer_config.dart';
@@ -54,6 +55,9 @@ enum AlertKind {
 
   /// Friday, [jumuahBeforeDhuhr] before Dhuhr.
   jumuah,
+
+  /// A short dhikr, every few hours between sunrise and Isha.
+  dhikr,
 }
 
 /// Optional reminders of sunnah acts, each with its own switch.
@@ -107,6 +111,7 @@ abstract final class PrayerNotificationService {
   static final String adhanChannel = Muezzins.standard.channel;
   static final String fajrAdhanChannel = Muezzins.standard.fajrChannel;
   static const String silentChannel = 'prayer_silent';
+  static const String dhikrChannel = 'dhikr';
 
   /// The id of the Stop button on an adhan notification.
   static const String stopAction = 'stop_adhan';
@@ -216,12 +221,25 @@ abstract final class PrayerNotificationService {
   ///   khatma    6000 + day
   ///   sunnah    7000 + day * 10 + slot (0 duha, 1 qiyam, 2 jumuah,
   ///             3 the qiyam of the night already under way, on day 0)
+  ///   dhikr     8000 + day * 20 + slot
   static const int _reminderBase = 2000;
   static const int _kahfBase = 3000;
   static const int _fastingBase = 4000;
   static const int _adhkarBase = 5000;
   static const int _khatmaBase = 6000;
   static const int _sunnahBase = 7000;
+  static const int _dhikrBase = 8000;
+  static const int _dhikrSlots = 20;
+
+  /// Dhikr reminders start this long after sunrise, and none comes this close
+  /// to a prayer, so they never talk over the adhan.
+  static const Duration dhikrAfterSunrise = Duration(hours: 1);
+  static const Duration dhikrClearOfPrayer = Duration(minutes: 15);
+
+  /// Which dhikr a reminder shows, from its id, so the text varies through
+  /// the day and from one day to the next.
+  static (String, String) dhikrFor(int id) =>
+      DhikrReminders.all[(id - _dhikrBase) % DhikrReminders.all.length];
 
   /// The Friday reminder comes this long before Dhuhr, in time to prepare
   /// and go early.
@@ -263,6 +281,9 @@ abstract final class PrayerNotificationService {
       for (var slot = 0; slot < 4; slot++) {
         await _plugin.cancel(id: _sunnahBase + day * 10 + slot);
       }
+      for (var slot = 0; slot < _dhikrSlots; slot++) {
+        await _plugin.cancel(id: _dhikrBase + day * _dhikrSlots + slot);
+      }
     }
   }
 
@@ -287,6 +308,7 @@ abstract final class PrayerNotificationService {
     bool adhkar = false,
     bool khatma = false,
     Set<SunnahAlert> sunnah = const {},
+    int dhikrHours = 0,
   }) {
     final result = <ScheduledAlert>[];
     final today = DateTime(now.year, now.month, now.day);
@@ -371,6 +393,19 @@ abstract final class PrayerNotificationService {
         addSunnah(2, AlertKind.jumuah, times.entry(PrayerName.dhuhr).time.subtract(jumuahBeforeDhuhr));
       }
 
+      if (dhikrHours > 0) {
+        final isha = times.entry(PrayerName.isha).time;
+        final prayerTimes = [for (final e in times.prayers) e.time];
+        var time = times.entry(PrayerName.sunrise).time.add(dhikrAfterSunrise);
+        for (var slot = 0; slot < _dhikrSlots && time.isBefore(isha); slot++) {
+          final clear = prayerTimes.every((p) => p.difference(time).abs() >= dhikrClearOfPrayer);
+          if (clear && time.isAfter(now)) {
+            result.add(ScheduledAlert(_dhikrBase + day * _dhikrSlots + slot, AlertKind.dhikr, null, time));
+          }
+          time = time.add(Duration(hours: dhikrHours));
+        }
+      }
+
       if (khatma) {
         final time = times.entry(PrayerName.isha).time.add(khatmaAfterIsha);
         if (time.isAfter(now)) {
@@ -423,6 +458,7 @@ abstract final class PrayerNotificationService {
     PrayerSound sound, [
     Muezzin muezzin = Muezzins.standard,
   ]) {
+    if (kind == AlertKind.dhikr) return [dhikrChannel];
     if (kind != AlertKind.prayer) return [standardChannel];
     return switch (sound) {
       PrayerSound.adhan => [
@@ -482,6 +518,7 @@ abstract final class PrayerNotificationService {
     bool adhkar = false,
     bool khatma = false,
     Set<SunnahAlert> sunnah = const {},
+    int dhikrHours = 0,
   }) async {
     if (kIsWeb) return;
     await init();
@@ -492,7 +529,8 @@ abstract final class PrayerNotificationService {
     final l10n = _l10n(locale);
 
     final exact = await _android?.canScheduleExactNotifications() ?? true;
-    final details = _channels(l10n);
+    final details = _channels(l10n, muezzin);
+    await _dropOldCustomChannels(muezzin);
 
     final alerts = plan(
       coordinates: coordinates,
@@ -506,6 +544,7 @@ abstract final class PrayerNotificationService {
       adhkar: adhkar,
       khatma: khatma,
       sunnah: sunnah,
+      dhikrHours: dhikrHours,
     );
 
     final missingSounds = <String>{};
@@ -538,11 +577,18 @@ abstract final class PrayerNotificationService {
         AlertKind.duha => (l10n.duhaTitle, l10n.duhaBody),
         AlertKind.qiyam => (l10n.qiyamTitle, l10n.qiyamBody),
         AlertKind.jumuah => (l10n.jumuahTitle, l10n.jumuahBody),
+        AlertKind.dhikr => (
+          l10n.dhikrTitle,
+          l10n.localeName == 'ar' ? dhikrFor(alert.id).$1 : '${dhikrFor(alert.id).$1}\n${dhikrFor(alert.id).$2}',
+        ),
       };
       Future<void> schedule(String channel) => _plugin.zonedSchedule(
         id: alert.id,
         scheduledDate: tz.TZDateTime.from(alert.time, tz.local),
-        notificationDetails: details[channel]!,
+        // A dhikr runs to several lines, so it unfolds to show them all.
+        notificationDetails: alert.kind == AlertKind.dhikr
+            ? _dhikrDetails(l10n, body)
+            : details[channel]!,
         // Exact when the user has allowed it; otherwise Android batches the
         // alarm and it can arrive several minutes late.
         androidScheduleMode: exact
@@ -591,7 +637,7 @@ abstract final class PrayerNotificationService {
     if (kIsWeb) return;
     await init();
     final l10n = _l10n(locale);
-    final details = _channels(l10n);
+    final details = _channels(l10n, muezzin);
     final name = _label(l10n, PrayerName.dhuhr);
     Future<void> show(String channel) => _plugin.show(
       id: _testId,
@@ -615,21 +661,53 @@ abstract final class PrayerNotificationService {
         : const Locale('en'),
   );
 
-  static Map<String, NotificationDetails> _channels(AppLocalizations l10n) => {
+  /// Deletes the channels of recordings the user has since replaced or
+  /// removed, so Settings > Notifications does not fill up with them.
+  static Future<void> _dropOldCustomChannels(Muezzin current) async {
+    try {
+      for (final c in await _android?.getNotificationChannels() ?? const <AndroidNotificationChannel>[]) {
+        if (c.id.startsWith(Muezzin.customChannelPrefix) &&
+            !(current.isCustom && (c.id == current.channel || c.id == current.fajrChannel))) {
+          await _android?.deleteNotificationChannel(channelId: c.id);
+        }
+      }
+    } on PlatformException catch (e) {
+      debugPrint('Old adhan channels not cleared: $e');
+    }
+  }
+
+  static Map<String, NotificationDetails> _channels(AppLocalizations l10n, [Muezzin? muezzin]) => {
     standardChannel: _details(standardChannel, l10n.prayerChannelName, l10n.prayerChannelDescription),
+    if (muezzin != null && muezzin.isCustom) ...{
+      muezzin.channel: _details(
+        muezzin.channel,
+        [l10n.adhanChannelName, muezzin.nameEn.isEmpty ? l10n.customAdhanTitle : muezzin.nameEn].join(' · '),
+        l10n.adhanChannelDescription,
+        sound: UriAndroidNotificationSound(muezzin.uri!),
+        stopLabel: l10n.stopAdhan,
+      ),
+      if (muezzin.fajrUri != null)
+        muezzin.fajrChannel: _details(
+          muezzin.fajrChannel,
+          '${l10n.fajrAdhanChannelName} · ${l10n.customAdhanTitle}',
+          l10n.adhanChannelDescription,
+          sound: UriAndroidNotificationSound(muezzin.fajrUri!),
+          stopLabel: l10n.stopAdhan,
+        ),
+    },
     for (final m in Muezzins.all) ...{
       m.channel: _details(
         m.channel,
         m == Muezzins.standard ? l10n.adhanChannelName : '${l10n.adhanChannelName} · ${l10n.localeName == 'ar' ? m.nameAr : m.nameEn}',
         l10n.adhanChannelDescription,
-        sound: m.sound,
+        sound: RawResourceAndroidNotificationSound(m.sound),
         stopLabel: l10n.stopAdhan,
       ),
       m.fajrChannel: _details(
         m.fajrChannel,
         m == Muezzins.standard ? l10n.fajrAdhanChannelName : '${l10n.fajrAdhanChannelName} · ${l10n.localeName == 'ar' ? m.nameAr : m.nameEn}',
         l10n.adhanChannelDescription,
-        sound: m.fajrSound,
+        sound: RawResourceAndroidNotificationSound(m.fajrSound),
         stopLabel: l10n.stopAdhan,
       ),
     },
@@ -641,24 +719,35 @@ abstract final class PrayerNotificationService {
     ),
   };
 
+  static NotificationDetails _dhikrDetails(AppLocalizations l10n, String body) => _details(
+    dhikrChannel,
+    l10n.dhikrChannelName,
+    l10n.dhikrChannelDescription,
+    importance: Importance.defaultImportance,
+    bigText: body,
+  );
+
   static NotificationDetails _details(
     String channel,
     String name,
     String description, {
-    String? sound,
+    AndroidNotificationSound? sound,
     bool playSound = true,
     String? stopLabel,
+    Importance importance = Importance.high,
+    String? bigText,
   }) {
     return NotificationDetails(
       android: AndroidNotificationDetails(
         channel,
         name,
         channelDescription: description,
-        importance: Importance.high,
-        priority: Priority.high,
+        importance: importance,
+        priority: importance == Importance.high ? Priority.high : Priority.defaultPriority,
+        styleInformation: bigText == null ? null : BigTextStyleInformation(bigText),
         category: AndroidNotificationCategory.reminder,
         playSound: playSound,
-        sound: sound == null ? null : RawResourceAndroidNotificationSound(sound),
+        sound: sound,
         // Dismissing the notification is what stops its sound, so Stop just
         // cancels it, without opening the app.
         actions: [

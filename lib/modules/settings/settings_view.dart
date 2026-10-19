@@ -7,10 +7,13 @@ import '../../core/constants/reciters.dart';
 import '../../core/services/prayer_config.dart';
 import '../../core/services/prayer_times_service.dart';
 import '../../core/utils/prayer_labels.dart';
+import '../../core/constants/dhikr_reminders.dart';
 import '../../core/constants/muezzins.dart';
+import '../../core/services/notification_refresh.dart';
 import '../../core/services/prayer_notification_service.dart';
 import '../../core/services/recitation_downloads.dart';
 import '../more/listen_view.dart';
+import 'muezzin_view.dart';
 import 'prayer_notifications_prompt.dart';
 import 'tafsir_download_tile.dart';
 import '../../core/state/settings_cubit.dart';
@@ -310,27 +313,26 @@ class SettingsView extends StatelessWidget {
                   enabled: state.prayerNotifications,
                   leading: const Icon(Icons.mosque_outlined),
                   title: Text(context.l10n.muezzinSetting),
-                  subtitle: Text(_muezzinName(context, Muezzins.byId(state.muezzinId))),
-                  onTap: () async {
-                    final picked = await _pick<String>(
-                      context,
-                      context.l10n.muezzinSetting,
-                      {for (final m in Muezzins.all) m.id: _muezzinName(context, m)},
-                      Muezzins.byId(state.muezzinId).id,
-                    );
-                    if (picked != null) cubit.setMuezzin(picked);
-                  },
+                  subtitle: Text(_muezzinName(context, state.muezzin)),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute<void>(builder: (_) => const MuezzinView()),
+                  ),
                 ),
               ListTile(
                 enabled: state.prayerNotifications,
                 leading: const Icon(Icons.play_circle_outline),
                 title: Text(context.l10n.testAdhan),
                 subtitle: Text(context.l10n.testAdhanSubtitle),
-                onTap: () => PrayerNotificationService.showTest(
-                  locale: Localizations.localeOf(context),
-                  sound: state.prayerSound,
-                  muezzin: Muezzins.byId(state.muezzinId),
-                ),
+                onTap: () async {
+                  final locale = Localizations.localeOf(context);
+                  await PrayerNotificationService.showTest(
+                    locale: locale,
+                    sound: state.prayerSound,
+                    muezzin: await NotificationRefresh.playableMuezzin(state),
+                  );
+                },
               ),
               ListTile(
                 leading: const Icon(Icons.help_outline),
@@ -369,6 +371,26 @@ class SettingsView extends StatelessWidget {
                 onChanged: state.prayerNotifications
                     ? cubit.setAdhkarReminders
                     : null,
+              ),
+              ListTile(
+                enabled: state.prayerNotifications,
+                leading: const Icon(Icons.favorite_border),
+                title: Text(context.l10n.dhikrRemindersSetting),
+                subtitle: Text(
+                  state.dhikrHours == 0 ? context.l10n.dhikrOff : context.l10n.dhikrEvery(state.dhikrHours),
+                ),
+                onTap: () async {
+                  final picked = await _pick<int>(
+                    context,
+                    context.l10n.dhikrRemindersSetting,
+                    {
+                      for (final h in DhikrReminders.intervals)
+                        h: h == 0 ? context.l10n.dhikrOff : context.l10n.dhikrEvery(h),
+                    },
+                    state.dhikrHours,
+                  );
+                  if (picked != null) cubit.setDhikrHours(picked);
+                },
               ),
               SwitchListTile(
                 value: state.khatmaReminders,
@@ -492,6 +514,8 @@ class SettingsView extends StatelessWidget {
 
   static String _muezzinName(BuildContext context, Muezzin m) => m == Muezzins.standard
       ? context.l10n.muezzinDefault
+      : m.isCustom
+      ? [context.l10n.customAdhanTitle, if (m.nameEn.isNotEmpty) m.nameEn].join(' · ')
       : (context.isArabic ? m.nameAr : m.nameEn);
 
   static String _prayerSoundLabel(BuildContext context, PrayerSound sound) =>

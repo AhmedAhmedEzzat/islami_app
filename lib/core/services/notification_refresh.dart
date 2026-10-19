@@ -6,9 +6,9 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:workmanager/workmanager.dart';
 
 import '../constants/muezzins.dart';
-
 import '../state/settings_cubit.dart';
 import '../state/settings_state.dart';
+import 'adhan_sounds.dart';
 import 'khatma.dart';
 import 'prayer_notification_service.dart';
 import 'prayer_widget.dart';
@@ -39,12 +39,26 @@ abstract final class NotificationRefresh {
       fasting: state.fastingAlerts,
       hijriOffset: state.hijriOffset,
       sound: state.prayerSound,
-      muezzin: Muezzins.byId(state.muezzinId),
+      muezzin: await playableMuezzin(state),
       adhkar: state.adhkarReminders,
       // Only while a khatma is under way.
       khatma: state.khatmaReminders && Khatma.isActive,
       sunnah: state.sunnahAlerts,
+      dhikrHours: state.dhikrHours,
     );
+  }
+
+  /// The muezzin to schedule with: the user's own recording only while the
+  /// file is still on the phone, since a deleted one would sound like any
+  /// other notification. A missing Fajr recording falls back to their main
+  /// one, and a missing main one to the default adhan.
+  static Future<Muezzin> playableMuezzin(SettingsState state) async {
+    final muezzin = state.muezzin;
+    if (!muezzin.isCustom) return muezzin;
+    if (!await AdhanSounds.exists(muezzin.uri!)) return Muezzins.standard;
+    final fajr = muezzin.fajrUri;
+    if (fajr != null && !await AdhanSounds.exists(fajr)) return Muezzins.custom(state.customAdhan!);
+    return muezzin;
   }
 
   /// Registers the background task. Call once from `main()`; registering again

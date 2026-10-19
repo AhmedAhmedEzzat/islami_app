@@ -195,6 +195,52 @@ void main() {
     expect(ids.toSet().length, ids.length);
   });
 
+  group('dhikr reminders', () {
+    List<ScheduledAlert> dhikr(int hours) => PrayerNotificationService.plan(
+      coordinates: place,
+      now: monday,
+      prayers: const {},
+      dhikrHours: hours,
+    ).where((a) => a.kind == AlertKind.dhikr).toList();
+
+    test('none unless asked for', () => expect(dhikr(0), isEmpty));
+
+    test('every few hours from after sunrise until Isha, clear of every prayer', () {
+      for (final hours in [2, 3, 4]) {
+        final alerts = dhikr(hours);
+        expect(alerts, isNotEmpty);
+        expect(alerts.map((a) => a.id).toSet(), hasLength(alerts.length));
+        for (final a in alerts) {
+          final times = PrayerTimesService.computeFor(
+            coordinates: place,
+            date: DateTime(a.time.year, a.time.month, a.time.day),
+            config: const PrayerConfig(),
+          );
+          expect(a.time.isAfter(times.entry(PrayerName.sunrise).time), isTrue, reason: '${a.time}');
+          expect(a.time.isBefore(times.entry(PrayerName.isha).time), isTrue, reason: '${a.time}');
+          for (final p in times.prayers) {
+            expect(p.time.difference(a.time).abs() >= PrayerNotificationService.dhikrClearOfPrayer, isTrue,
+                reason: '${a.time} too close to ${p.prayer.name}');
+          }
+        }
+        // Fewer, further apart, the longer the interval.
+        if (hours > 2) expect(alerts.length, lessThan(dhikr(2).length));
+      }
+    });
+
+    test('the dhikr shown changes from one reminder to the next', () {
+      final texts = dhikr(2).take(5).map((a) => PrayerNotificationService.dhikrFor(a.id).$1).toList();
+      expect(texts.toSet().length, greaterThan(1));
+    });
+
+    test('they post on their own gentler channel', () {
+      expect(
+        PrayerNotificationService.channelsFor(AlertKind.dhikr, null, PrayerSound.adhan),
+        [PrayerNotificationService.dhikrChannel],
+      );
+    });
+  });
+
   test('every calendar day is planned once, across a clock change', () {
     // Egypt and Europe put their clocks back in late October; run this file
     // with TZ=Africa/Cairo or TZ=Europe/Berlin to exercise it.
@@ -291,7 +337,10 @@ void main() {
       // mistaken for the prayer itself.
       for (final kind in AlertKind.values.where((k) => k != AlertKind.prayer)) {
         for (final sound in PrayerSound.values) {
-          expect(channel(kind, PrayerName.fajr, sound), PrayerNotificationService.standardChannel);
+          expect(
+            channel(kind, PrayerName.fajr, sound),
+            kind == AlertKind.dhikr ? PrayerNotificationService.dhikrChannel : PrayerNotificationService.standardChannel,
+          );
         }
       }
     });

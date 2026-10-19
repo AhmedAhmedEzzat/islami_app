@@ -30,6 +30,9 @@ abstract final class PrefsKeys {
   static const String adhkarReminders = 'settings.adhkarReminders';
   static const String khatmaReminders = 'settings.khatmaReminders';
   static const String muezzin = 'settings.muezzin';
+  static const String customAdhan = 'settings.customAdhan';
+  static const String customFajrAdhan = 'settings.customFajrAdhan';
+  static const String dhikrHours = 'settings.dhikrHours';
   static const String continuousRecitation = 'settings.continuousRecitation';
   static const String sunnahAlerts = 'settings.sunnahAlerts';
   static const String verseRepeat = 'settings.verseRepeat';
@@ -62,6 +65,7 @@ abstract final class PrefsKeys {
   static const String tasbehCount = 'tasbeh.count';
 
   /// Missed prayers still to make up, per prayer name.
+  static const String qadaFasts = 'qada.fasts';
   static String qada(String prayer) => 'qada.$prayer';
   static const String tasbehZikrIndex = 'tasbeh.zikrIndex';
   static const String tasbehRounds = 'tasbeh.rounds';
