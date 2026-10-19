@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart' hide TextDirection;
+import 'package:share_plus/share_plus.dart';
 
 import '../../../core/services/islamic_calendar.dart';
 import '../../../core/services/prayer_times_service.dart';
@@ -9,6 +10,22 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/l10n_ext.dart';
 import '../../../core/utils/prayer_labels.dart';
+
+/// The month as plain text to send in a chat: a title line, then one line a
+/// day with each prayer's time. Pure, for tests.
+String timetableText({
+  required String title,
+  required List<(DateTime, List<PrayerEntry>)> rows,
+  required String Function(DateTime) dayLabel,
+  required String Function(DateTime) time,
+  required String Function(PrayerName) prayerName,
+}) => [
+  title,
+  // The names once, so each day's line stays short.
+  [for (final e in rows.first.$2) prayerName(e.prayer)].join(' · '),
+  '',
+  for (final (day, prayers) in rows) '${dayLabel(day)}:  ${[for (final e in prayers) time(e.time)].join('  ')}',
+].join('\n');
 
 /// Every prayer for every day of a month, as printed mosque timetables are.
 class TimetableView extends StatefulWidget {
@@ -43,7 +60,29 @@ class _TimetableViewState extends State<TimetableView> {
     );
 
     return Scaffold(
-      appBar: AppBar(title: Text(context.l10n.monthlyTimetable)),
+      appBar: AppBar(
+        title: Text(context.l10n.monthlyTimetable),
+        actions: [
+          IconButton(
+            tooltip: context.l10n.shareTimetable,
+            icon: const Icon(Icons.share_outlined),
+            onPressed: () => SharePlus.instance.share(
+              ShareParams(
+                text: timetableText(
+                  title: context.l10n.timetableShareTitle(
+                    widget.location.isFallback ? context.l10n.defaultLocation : (widget.location.name ?? ''),
+                    DateFormat.yMMMM(locale).format(_month),
+                  ),
+                  rows: rows,
+                  dayLabel: DateFormat('EEE d', locale).format,
+                  time: time.format,
+                  prayerName: (p) => prayerLabel(context, p),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Row(

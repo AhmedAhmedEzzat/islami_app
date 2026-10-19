@@ -494,6 +494,8 @@
   "namesQuizWhatNext": "أي اسم يأتي بعده؟",
   "namesQuizNext": "التالي",
   "namesQuizFinish": "عرض النتيجة",
+  "shareTimetable": "مشاركة هذا الشهر",
+  "timetableShareTitle": "مواقيت الصلاة · {place} · {month}",
   "offlineRecitations": "التلاوات المحفوظة",
   "offlineRecitationsSubtitle": "شغّل أي سورة بأي قارئ أو احفظها للاستماع دون إنترنت",
   "surasDownloaded": "{n} سورة محفوظة",
