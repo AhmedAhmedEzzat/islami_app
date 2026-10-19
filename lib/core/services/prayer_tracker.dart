@@ -67,6 +67,27 @@ abstract final class PrayerTracker {
     return n;
   }
 
+  /// The [days] calendar days ending with [today], oldest first.
+  static List<DateTime> lastDays(DateTime today, int days) => [
+    for (var i = days - 1; i >= 0; i--) DateTime(today.year, today.month, today.day - i),
+  ];
+
+  /// On how many of the [days] days ending with [today] [prayer] was logged.
+  static int daysDone(PrayerName prayer, DateTime today, int days) =>
+      lastDays(today, days).where((d) => isDone(d, prayer)).length;
+
+  /// The longest run of days with all five prayers in the [lookback] days
+  /// ending with [today].
+  static int bestStreak(DateTime today, {int lookback = 365}) {
+    var best = 0;
+    var run = 0;
+    for (final day in lastDays(today, lookback)) {
+      run = maskFor(day) == _all ? run + 1 : 0;
+      if (run > best) best = run;
+    }
+    return best;
+  }
+
   /// Share of prayers logged this month up to and including [today], 0..100.
   static int monthPercent(DateTime today) {
     var logged = 0;

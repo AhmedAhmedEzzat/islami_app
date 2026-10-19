@@ -133,4 +133,41 @@ void main() {
       expect(bearing, inInclusiveRange(130, 140));
     });
   });
+
+  group('PrayerTracker statistics', () {
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({});
+      await LocalStorageServices.init();
+    });
+
+    final today = DateTime(2026, 10, 19);
+    DateTime ago(int n) => DateTime(2026, 10, 19 - n);
+    Future<void> complete(DateTime day) async {
+      for (final p in PrayerTracker.prayers) {
+        await PrayerTracker.toggle(day, p);
+      }
+    }
+
+    test('lastDays steps by calendar date, oldest first, across a clock change', () {
+      final days = PrayerTracker.lastDays(DateTime(2026, 11, 3), 5);
+      expect(days.map((d) => d.day), [30, 31, 1, 2, 3]);
+      expect(days.toSet(), hasLength(5));
+    });
+
+    test('daysDone counts one prayer over the window', () async {
+      await PrayerTracker.toggle(ago(0), PrayerName.fajr);
+      await PrayerTracker.toggle(ago(3), PrayerName.fajr);
+      await PrayerTracker.toggle(ago(40), PrayerName.fajr);
+      expect(PrayerTracker.daysDone(PrayerName.fajr, today, 30), 2);
+      expect(PrayerTracker.daysDone(PrayerName.isha, today, 30), 0);
+    });
+
+    test('bestStreak finds the longest run, not just the current one', () async {
+      for (final n in [20, 19, 18, 17, 2, 1]) {
+        await complete(ago(n));
+      }
+      expect(PrayerTracker.bestStreak(today), 4);
+      expect(PrayerTracker.streak(today), 2);
+    });
+  });
 }
