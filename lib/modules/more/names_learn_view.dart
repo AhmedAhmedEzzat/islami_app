@@ -206,12 +206,22 @@ class _Quiz extends StatefulWidget {
 
 class _QuizState extends State<_Quiz> {
   List<NameQuestion>? _questions;
+
+  /// The kind the questions were made for, kept with them in case the
+  /// language changes mid-quiz.
+  NameQuizKind _kind = NameQuizKind.meaning;
   int _at = 0;
   int _score = 0;
   int? _picked;
 
   void _start(NameQuizKind kind) => setState(() {
-    _questions = NamesLearning.quiz(widget.names.length, kind, widget.random);
+    _kind = kind;
+    _questions = NamesLearning.quiz(
+      widget.names.length,
+      kind,
+      widget.random,
+      labels: [for (final n in widget.names) kind == NameQuizKind.next ? n.arabic : n.meaning],
+    );
     _at = 0;
     _score = 0;
     _picked = null;
@@ -232,8 +242,8 @@ class _QuizState extends State<_Quiz> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final scheme = context.colors;
-    final kind = _byOrder(context) ? NameQuizKind.next : NameQuizKind.meaning;
     final questions = _questions;
+    final kind = questions == null ? (_byOrder(context) ? NameQuizKind.next : NameQuizKind.meaning) : _kind;
 
     if (questions == null || _at >= questions.length) {
       return Center(

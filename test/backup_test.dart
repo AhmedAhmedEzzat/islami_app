@@ -8,6 +8,7 @@ import 'package:sakina/core/state/bookmarks_cubit.dart';
 import 'package:sakina/core/state/settings_cubit.dart';
 import 'package:sakina/core/state/verse_notes_cubit.dart';
 import 'package:sakina/l10n/gen/app_localizations.dart';
+import 'package:sakina/core/widgets/app_restart.dart';
 import 'package:sakina/modules/settings/backup_tiles.dart';
 import 'package:sakina/core/services/backup.dart';
 import 'package:sakina/core/services/shared_prefs_helper.dart';
@@ -55,6 +56,31 @@ void main() {
     expect(LocalStorageServices.getString('recitation.downloads.minshawi'), '[3]');
   });
 
+  test('the old phone\'s GPS fix stays behind; a city chosen by hand comes across', () async {
+    await start({'location.latitude': 21.4, 'location.manual.name': 'Makkah'});
+    final text = Backup.encode();
+    await start({'location.latitude': 30.0});
+    await Backup.restore(Backup.decode(text)!);
+    expect(LocalStorageServices.getDouble('location.latitude'), 30.0);
+    expect(LocalStorageServices.getString('location.manual.name'), 'Makkah');
+  });
+
+  test('a byte-order mark is allowed, a malformed date is not fatal', () async {
+    await start({});
+    expect(Backup.decode('\uFEFF{"app":"sakina","version":1,"data":{"x":{"s":"y"}}}')!.entries, {'x': 'y'});
+    expect(Backup.decode('{"app":"sakina","version":1,"created":5,"data":{}}')!.created, isNull);
+    expect(Backup.decode('{"app":"sakina","version":1,"data":{"x":5}}')!.entries, isEmpty);
+  });
+
+  test('a value of the wrong type for a key is left out, and could not crash a read', () async {
+    await start({'settings.locale': 'ar'});
+    final file = Backup.decode('{"app":"sakina","version":1,"data":{"settings.locale":{"i":5}}}')!;
+    expect(file.entries, isEmpty);
+    // Even stored wrongly, reading it gives null instead of throwing.
+    await start({'settings.locale': 5});
+    expect(LocalStorageServices.getString('settings.locale'), isNull);
+  });
+
   test('anything but a Sakina backup is refused', () {
     expect(Backup.decode('not json'), isNull);
     expect(Backup.decode('{"app":"other","version":1,"data":{}}'), isNull);
@@ -83,15 +109,21 @@ void main() {
           BlocProvider.value(value: bookmarks),
           BlocProvider(create: (_) => VerseNotesCubit()..load()),
         ],
-        child: const MaterialApp(
-          locale: Locale('en'),
-          localizationsDelegates: [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-          ],
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: Scaffold(body: BackupTiles()),
+        // Rebuilt by AppRestart, as the real app is.
+        child: ValueListenableBuilder<int>(
+          valueListenable: AppRestart.generation,
+          builder: (context, generation, _) => MaterialApp(
+            key: ValueKey(generation),
+            navigatorKey: AppRestart.navigatorKey,
+            locale: const Locale('en'),
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const Scaffold(body: BackupTiles()),
+          ),
         ),
       ),
     );

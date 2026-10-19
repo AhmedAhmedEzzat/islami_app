@@ -69,10 +69,10 @@ class _TimetableViewState extends State<TimetableView> {
             onPressed: () => SharePlus.instance.share(
               ShareParams(
                 text: timetableText(
-                  title: context.l10n.timetableShareTitle(
-                    widget.location.isFallback ? context.l10n.defaultLocation : (widget.location.name ?? ''),
-                    DateFormat.yMMMM(locale).format(_month),
-                  ),
+                  title: switch (widget.location.isFallback ? context.l10n.defaultLocation : widget.location.name) {
+                    final place? when place.isNotEmpty => context.l10n.timetableShareTitle(place, DateFormat.yMMMM(locale).format(_month)),
+                    _ => context.l10n.timetableShareTitleNoPlace(DateFormat.yMMMM(locale).format(_month)),
+                  },
                   rows: rows,
                   dayLabel: DateFormat('EEE d', locale).format,
                   time: time.format,

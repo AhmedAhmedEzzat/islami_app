@@ -11,6 +11,7 @@ import 'l10n/gen/app_localizations.dart';
 import 'core/constants/prefs_keys.dart';
 import 'core/state/bookmarks_cubit.dart';
 import 'core/state/verse_notes_cubit.dart';
+import 'core/widgets/app_restart.dart';
 import 'core/state/quran_player_cubit.dart';
 import 'core/state/radio_cubit.dart';
 import 'core/services/khatma.dart';
@@ -149,28 +150,33 @@ class SakinaApp extends StatelessWidget {
                   : 'en',
             );
 
-            return MaterialApp(
-              title: 'Sakina',
-              locale: state.locale,
-              localizationsDelegates: const [
-                AppLocalizations.delegate,
-                GlobalMaterialLocalizations.delegate,
-                GlobalWidgetsLocalizations.delegate,
-                GlobalCupertinoLocalizations.delegate,
-              ],
-              supportedLocales: AppLocalizations.supportedLocales,
-              debugShowCheckedModeBanner: false,
-              theme: AppTheme.light,
-              darkTheme: AppTheme.dark,
-              themeMode: state.themeMode,
-              initialRoute: isFirstTime
-                  ? OnBoardingScreen.routeName
-                  : SplashView.routeName,
-              routes: {
-                SplashView.routeName: (_) => const SplashView(),
-                OnBoardingScreen.routeName: (_) => const OnBoardingScreen(),
-                LayoutView.routeName: (_) => const LayoutView(),
-              },
+            return ValueListenableBuilder<int>(
+              valueListenable: AppRestart.generation,
+              builder: (context, generation, _) => MaterialApp(
+                key: ValueKey(generation),
+                navigatorKey: AppRestart.navigatorKey,
+                title: 'Sakina',
+                locale: state.locale,
+                localizationsDelegates: const [
+                  AppLocalizations.delegate,
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
+                ],
+                supportedLocales: AppLocalizations.supportedLocales,
+                debugShowCheckedModeBanner: false,
+                theme: AppTheme.light,
+                darkTheme: AppTheme.dark,
+                themeMode: state.themeMode,
+                initialRoute: isFirstTime
+                    ? OnBoardingScreen.routeName
+                    : SplashView.routeName,
+                routes: {
+                  SplashView.routeName: (_) => const SplashView(),
+                  OnBoardingScreen.routeName: (_) => const OnBoardingScreen(),
+                  LayoutView.routeName: (_) => const LayoutView(),
+                },
+              ),
             );
           },
         ),

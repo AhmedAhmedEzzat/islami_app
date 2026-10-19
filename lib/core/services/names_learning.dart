@@ -58,20 +58,31 @@ abstract final class NamesLearning {
 
   /// [length] questions over [count] names, none asked twice. For [NameQuizKind.next]
   /// the last name has nothing after it, so it is never asked.
-  static List<NameQuestion> quiz(int count, NameQuizKind kind, Random random, {int length = 10}) {
+  ///
+  /// [labels] is what each choice shows: no two choices of a question show
+  /// the same text (two pairs of the Names share a meaning in the data).
+  static List<NameQuestion> quiz(
+    int count,
+    NameQuizKind kind,
+    Random random, {
+    int length = 10,
+    List<String>? labels,
+  }) {
     final askable = [for (var i = 0; i < (kind == NameQuizKind.next ? count - 1 : count); i++) i]..shuffle(random);
+    String label(int i) => labels?[i] ?? '$i';
     return [
       for (final prompt in askable.take(length))
         () {
           final answer = kind == NameQuizKind.next ? prompt + 1 : prompt;
-          final others = {answer};
-          while (others.length < min(4, count)) {
-            final c = random.nextInt(count);
-            // In "what comes next", the name itself would be a giveaway wrong answer.
-            if (kind == NameQuizKind.next && c == prompt) continue;
-            others.add(c);
+          final picked = [answer];
+          final shown = {label(answer)};
+          // In "what comes next" the name itself would be a giveaway wrong answer.
+          final pool = [for (var c = 0; c < count; c++) if (!(kind == NameQuizKind.next && c == prompt)) c]..shuffle(random);
+          for (final c in pool) {
+            if (picked.length == 4) break;
+            if (shown.add(label(c))) picked.add(c);
           }
-          return NameQuestion(prompt, others.toList()..shuffle(random), answer);
+          return NameQuestion(prompt, picked..shuffle(random), answer);
         }(),
     ];
   }

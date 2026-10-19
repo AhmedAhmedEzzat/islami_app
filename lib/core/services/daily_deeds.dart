@@ -98,7 +98,8 @@ abstract final class DailyDeeds {
   static Future<void> _record(DateTime day) =>
       LocalStorageServices.setBool(_fullKey(day), allDoneOn(day, visible()));
 
-  static bool _wasFull(DateTime day) => LocalStorageServices.getBool(_fullKey(day)) ?? false;
+  /// Days from before outcomes were recorded are judged against today's list.
+  static bool _wasFull(DateTime day) => LocalStorageServices.getBool(_fullKey(day)) ?? allDoneOn(day, visible());
 
   static Future<void> addCustom(String title, {DateTime? now}) async {
     final text = title.trim();

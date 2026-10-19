@@ -496,6 +496,7 @@
   "namesQuizFinish": "عرض النتيجة",
   "shareTimetable": "مشاركة هذا الشهر",
   "timetableShareTitle": "مواقيت الصلاة · {place} · {month}",
+  "timetableShareTitleNoPlace": "مواقيت الصلاة · {month}",
   "offlineRecitations": "التلاوات المحفوظة",
   "offlineRecitationsSubtitle": "شغّل أي سورة بأي قارئ أو احفظها للاستماع دون إنترنت",
   "surasDownloaded": "{n} سورة محفوظة",

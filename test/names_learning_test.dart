@@ -39,6 +39,16 @@ void main() {
     expect(order.skip(96).toSet(), {0, 1, 2});
   });
 
+  test('no two choices show the same text, and a tiny list cannot hang', () {
+    final labels = [for (var i = 0; i < 99; i++) i == 36 ? 'The Greatest' : (i == 9 ? 'The Greatest' : 'm$i')];
+    for (var seed = 0; seed < 200; seed++) {
+      for (final q in NamesLearning.quiz(99, NameQuizKind.meaning, Random(seed), labels: labels)) {
+        expect(q.choices.map((c) => labels[c]).toSet(), hasLength(q.choices.length));
+      }
+    }
+    expect(NamesLearning.quiz(3, NameQuizKind.next, Random(1)), hasLength(2));
+  });
+
   for (final kind in NameQuizKind.values) {
     test('a $kind quiz has ten distinct questions, each with four choices and its answer', () {
       for (var seed = 0; seed < 50; seed++) {

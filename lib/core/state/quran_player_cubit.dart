@@ -154,6 +154,11 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
   /// The each-verse repeats the playlist was built with.
   int _builtRepeatEach = 1;
 
+  /// The passage as the reader asked for it, before [fitRange] cut its
+  /// passes; a rebuild starts from this, so lowering the repeats gives the
+  /// passes back.
+  VerseRange? _askedRange;
+
   /// How many times each verse is recited, for memorising. Set from `main()`
   /// to read the user's setting.
   int Function() repeatEach = () => 1;
@@ -215,7 +220,12 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
     final sura = int.tryParse(suraId);
     if (sura == null || totalAyahs <= 0) return;
     final each = repeatEach();
-    if (range != null) range = fitRange(range, each);
+    // A rebuild of the same passage keeps the passes first asked for.
+    final asked = range == null
+        ? null
+        : (range.from == _askedRange?.from && range.to == _askedRange?.to && state.range == range ? _askedRange! : range);
+    _askedRange = asked;
+    if (asked != null) range = fitRange(asked, each);
     final generation = ++_generation;
 
     emit(state.copyWith(clearError: true));

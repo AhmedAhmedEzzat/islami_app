@@ -13,6 +13,8 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     await LocalStorageServices.init();
+    // Storage swapped underneath, as a restore does: the caches must re-read.
+    DailyDeeds.changes.value++;
   });
 
   final today = DateTime(2026, 10, 19, 15);

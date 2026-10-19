@@ -20,8 +20,9 @@ class BackupFile {
 ///
 /// It is everything in storage except what belongs to this phone alone:
 /// downloaded recitations (the files are not in the backup), chosen adhan
-/// recordings (their URIs point into this phone), the home screen widget's
-/// cache and the rate-the-app counters.
+/// recordings (their URIs point into this phone), the last GPS fix (a city
+/// chosen by hand does come across), the home screen widget's cache and the
+/// rate-the-app counters.
 abstract final class Backup {
   static const String app = 'sakina';
   static const int version = 1;
@@ -30,6 +31,9 @@ abstract final class Backup {
       key != PrefsKeys.widgetPrayers &&
       key != PrefsKeys.customAdhan &&
       key != PrefsKeys.customFajrAdhan &&
+      key != PrefsKeys.lastLatitude &&
+      key != PrefsKeys.lastLongitude &&
+      key != PrefsKeys.lastPlaceName &&
       !key.startsWith('recitation.downloads.') &&
       !key.startsWith('review.');
 
@@ -59,7 +63,8 @@ abstract final class Backup {
   /// Reads a backup file, or null if [text] is not one this app can restore.
   static BackupFile? decode(String text) {
     try {
-      final json = jsonDecode(text);
+      // Some editors save a byte-order mark, which JSON does not allow.
+      final json = jsonDecode(text.startsWith('\uFEFF') ? text.substring(1) : text);
       if (json is! Map || json['app'] != app || json['version'] is! int || (json['version'] as int) > version) {
         return null;
       }
@@ -76,23 +81,38 @@ abstract final class Backup {
           MapEntry(key: 'l', value: final List<Object?> v) => [for (final e in v) '$e'],
           _ => null,
         };
-        if (parsed != null) entries[key] = parsed;
+        // A value must keep the type this app stores under its key.
+        final current = LocalStorageServices.getRaw(key);
+        if (parsed != null && (current == null || _sameType(current, parsed))) entries[key] = parsed;
       }
-      return BackupFile(DateTime.tryParse(json['created'] as String? ?? ''), entries);
-    } on FormatException {
+      final created = json['created'];
+      return BackupFile(created is String ? DateTime.tryParse(created) : null, entries);
+    } catch (_) {
+      // Anything malformed, of whatever kind, is simply not a backup.
       return null;
     }
   }
 
+  static bool _sameType(Object a, Object b) =>
+      (a is int && b is int) ||
+      (a is double && b is double) ||
+      (a is bool && b is bool) ||
+      (a is String && b is String) ||
+      (a is List && b is List);
+
   /// Replaces the reader's data with [file]'s. What belongs to this phone
   /// alone is left as it is.
+  ///
+  /// Everything in the file is written first and only then is what it lacks
+  /// removed, so if the app is stopped half way the reader's data is a mix,
+  /// never gone.
   static Future<void> restore(BackupFile file) async {
-    await LocalStorageServices.remove([
-      for (final key in LocalStorageServices.keys())
-        if (_kept(key)) key,
-    ]);
     for (final MapEntry(:key, :value) in file.entries.entries) {
       await LocalStorageServices.setRaw(key, value);
     }
+    await LocalStorageServices.remove([
+      for (final key in LocalStorageServices.keys())
+        if (_kept(key) && !file.entries.containsKey(key)) key,
+    ]);
   }
 }

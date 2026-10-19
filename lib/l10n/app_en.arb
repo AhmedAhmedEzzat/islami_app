@@ -866,6 +866,8 @@
   "shareTimetable": "Share this month",
   "timetableShareTitle": "Prayer times · {place} · {month}",
   "@timetableShareTitle": {"placeholders": {"place": {"type": "String"}, "month": {"type": "String"}}},
+  "timetableShareTitleNoPlace": "Prayer times · {month}",
+  "@timetableShareTitleNoPlace": {"placeholders": {"month": {"type": "String"}}},
   "offlineRecitations": "Offline recitations",
   "offlineRecitationsSubtitle": "Play any sura with any reciter, or save it for offline listening",
   "surasDownloaded": "{n} suras downloaded",

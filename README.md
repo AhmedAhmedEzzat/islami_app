@@ -53,7 +53,10 @@ reminders, fasting, adhkar, khatma and sunnah alerts).
 memorisation, the prayer log, missed prayers and fasts, good deeds, khatma,
 tasbeeh and settings to one JSON file to share to Drive, email or WhatsApp,
 and restores it on a new phone. Downloaded recitations and chosen adhan
-recordings belong to the old phone and are left out.
+recordings belong to the old phone and are left out, as is its last GPS fix (a
+city chosen by hand comes across). Notifications that were on are turned on
+again by asking this phone's permission. Values of the wrong type are refused,
+and every read of storage tolerates one, so no file can stop the app opening.
 
 **Arabic and English.** The app follows the phone's language, and you can
 override it in Settings. In Arabic the whole UI mirrors to right-to-left, with
