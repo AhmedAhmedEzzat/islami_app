@@ -131,6 +131,29 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
     ];
   }
 
+  /// The most verses a passage loop queues: a whole long sura twenty times
+  /// over would be tens of thousands of sources, enough to stall the player.
+  static const int maxQueued = 2000;
+
+  /// [range] with its passes cut so the playlist stays within [maxQueued].
+  @visibleForTesting
+  static VerseRange fitRange(VerseRange range, int repeatEach) {
+    final perPass = (range.to - range.from + 1) * repeatEach.clamp(1, 20);
+    final passes = range.passes.clamp(1, (maxQueued ~/ perPass).clamp(1, range.passes));
+    return passes == range.passes ? range : VerseRange(range.from, range.to, passes);
+  }
+
+  /// The pass of [range] that playlist index [index] falls in, 0-based.
+  @visibleForTesting
+  static int passAt(List<int> playlist, int index, VerseRange range, int repeatEach) {
+    final offset = playlist.isNotEmpty && playlist.first == 0 ? 1 : 0;
+    final perPass = (range.to - range.from + 1) * repeatEach.clamp(1, 20);
+    return ((index - offset).clamp(0, playlist.length) ~/ perPass).clamp(0, range.passes - 1);
+  }
+
+  /// The each-verse repeats the playlist was built with.
+  int _builtRepeatEach = 1;
+
   /// How many times each verse is recited, for memorising. Set from `main()`
   /// to read the user's setting.
   int Function() repeatEach = () => 1;
@@ -145,11 +168,13 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
     final verse = ayah == 0 ? 1 : ayah;
     final range = state.range;
     if (range != null) {
-      // The passage is rebuilt from its start, playing on from this verse.
+      // The passage is rebuilt, playing on from this verse in the same pass.
+      final index = _player.currentIndex ?? 0;
       return playFrom(
         suraId: sura,
         fromAyah: range.from,
         startAtAyah: verse,
+        startInPass: passAt(_ayahAt, index, range, _builtRepeatEach),
         totalAyahs: state.totalAyahs,
         reciterId: _reciterId,
         autoplay: state.isPlaying,
@@ -185,9 +210,12 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
     int? startAtAyah,
     bool autoplay = true,
     VerseRange? range,
+    int startInPass = 0,
   }) async {
     final sura = int.tryParse(suraId);
     if (sura == null || totalAyahs <= 0) return;
+    final each = repeatEach();
+    if (range != null) range = fitRange(range, each);
     final generation = ++_generation;
 
     emit(state.copyWith(clearError: true));
@@ -199,10 +227,11 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
       sura,
       range?.from ?? fromAyah,
       totalAyahs,
-      repeatEach: repeatEach(),
+      repeatEach: each,
       toAyah: range?.to,
       passes: range?.passes ?? 1,
     );
+    _builtRepeatEach = each;
     _lastIndex = null;
 
     emit(
@@ -225,7 +254,11 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
       await _applyRepeat(state.repeat);
       // Paused (the sleep timer) or stopped (the radio) while loading.
       if (isClosed || generation != _generation) return;
-      final at = startAtAyah == null ? -1 : _ayahAt.indexOf(startAtAyah);
+      // In a passage, look from the start of the pass that was playing.
+      // The fitted passage may have fewer passes than before.
+      final pass = range == null ? 0 : startInPass.clamp(0, range.passes - 1);
+      final passStart = pass == 0 ? 0 : (_ayahAt.first == 0 ? 1 : 0) + pass * (range!.to - range.from + 1) * each.clamp(1, 20);
+      final at = startAtAyah == null ? -1 : _ayahAt.indexOf(startAtAyah, passStart.clamp(0, _ayahAt.length));
       if (at > 0) await _player.seek(Duration.zero, index: at);
       if (isClosed || generation != _generation || !autoplay) return;
       unawaited(_player.play());
@@ -310,11 +343,16 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
     emit(state.copyWith(repeat: next));
   }
 
-  Future<void> _applyRepeat(RecitationRepeat mode) => _player.setLoopMode(switch (mode) {
-    RecitationRepeat.off => LoopMode.off,
-    RecitationRepeat.verse => LoopMode.one,
-    RecitationRepeat.sura => LoopMode.all,
-  });
+  // A passage counts its own passes; looping on top would never end it.
+  Future<void> _applyRepeat(RecitationRepeat mode) => _player.setLoopMode(
+    state.range != null
+        ? LoopMode.off
+        : switch (mode) {
+            RecitationRepeat.off => LoopMode.off,
+            RecitationRepeat.verse => LoopMode.one,
+            RecitationRepeat.sura => LoopMode.all,
+          },
+  );
 
   /// Pauses, for the sleep timer.
   Future<void> pause() {

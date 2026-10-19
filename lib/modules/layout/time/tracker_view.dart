@@ -168,9 +168,12 @@ class _QadaSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        // Wraps rather than overflows with large text on a narrow phone.
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            Expanded(child: Text(l10n.qadaTitle, style: context.texts.titleMedium)),
+            Text(l10n.qadaTitle, style: context.texts.titleMedium),
             TextButton.icon(
               onPressed: () => _addDays(context),
               icon: const Icon(Icons.add),
@@ -304,8 +307,8 @@ class _Last30Days extends StatelessWidget {
                     child: Row(
                       children: [
                         SizedBox(
-                          width: 56,
-                          child: Text(prayerLabel(context, p), style: context.texts.labelMedium, maxLines: 1),
+                          width: 48,
+                          child: Text(prayerLabel(context, p), style: context.texts.labelSmall, maxLines: 1),
                         ),
                         Expanded(
                           // Oldest at the start, today at the end, in reading direction.
@@ -316,7 +319,7 @@ class _Last30Days extends StatelessWidget {
                                   child: AspectRatio(
                                     aspectRatio: 1,
                                     child: Container(
-                                      margin: const EdgeInsets.all(1),
+                                      margin: const EdgeInsets.all(0.5),
                                       decoration: BoxDecoration(
                                         borderRadius: BorderRadius.circular(2),
                                         color: PrayerTracker.isDone(day, p) ? scheme.primary : scheme.outlineVariant.withValues(alpha: 0.5),
@@ -328,7 +331,7 @@ class _Last30Days extends StatelessWidget {
                           ),
                         ),
                         SizedBox(
-                          width: 44,
+                          width: 38,
                           child: Text(
                             l10n.percentValue((PrayerTracker.daysDone(p, today, days) * 100 / days).round()),
                             textAlign: TextAlign.end,

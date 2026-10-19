@@ -462,6 +462,7 @@
   "deedSunnah": "السنن الرواتب",
   "deedWitr": "الوتر",
   "deedSadaqa": "الصدقة",
+  "deedsDeleteConfirm": "حذف «{name}» من أعمالك؟",
   "offlineRecitations": "التلاوات المحفوظة",
   "offlineRecitationsSubtitle": "شغّل أي سورة بأي قارئ أو احفظها للاستماع دون إنترنت",
   "surasDownloaded": "{n} سورة محفوظة",

@@ -825,6 +825,8 @@
   "deedSadaqa": "Charity",
   "@deedsProgress": {"placeholders": {"done": {"type": "int"}, "total": {"type": "int"}}},
   "@deedsStreak": {"placeholders": {"days": {"type": "int"}}},
+  "deedsDeleteConfirm": "Delete \"{name}\" from your deeds?",
+  "@deedsDeleteConfirm": {"placeholders": {"name": {"type": "String"}}},
   "offlineRecitations": "Offline recitations",
   "offlineRecitationsSubtitle": "Play any sura with any reciter, or save it for offline listening",
   "surasDownloaded": "{n} suras downloaded",

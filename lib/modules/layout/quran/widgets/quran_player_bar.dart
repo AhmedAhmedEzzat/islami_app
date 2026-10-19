@@ -341,6 +341,8 @@ class _RangeDialogState extends State<_RangeDialog> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return AlertDialog(
+      // Scrolls on a phone held sideways.
+      scrollable: true,
       title: Text(l10n.repeatRangeTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,
