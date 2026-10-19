@@ -7,6 +7,7 @@ import '../../core/constants/reciters.dart';
 import '../../core/services/prayer_config.dart';
 import '../../core/services/prayer_times_service.dart';
 import '../../core/utils/prayer_labels.dart';
+import '../../core/constants/dhikr_reminders.dart';
 import '../../core/constants/muezzins.dart';
 import '../../core/services/notification_refresh.dart';
 import '../../core/services/prayer_notification_service.dart';
@@ -370,6 +371,26 @@ class SettingsView extends StatelessWidget {
                 onChanged: state.prayerNotifications
                     ? cubit.setAdhkarReminders
                     : null,
+              ),
+              ListTile(
+                enabled: state.prayerNotifications,
+                leading: const Icon(Icons.favorite_border),
+                title: Text(context.l10n.dhikrRemindersSetting),
+                subtitle: Text(
+                  state.dhikrHours == 0 ? context.l10n.dhikrOff : context.l10n.dhikrEvery(state.dhikrHours),
+                ),
+                onTap: () async {
+                  final picked = await _pick<int>(
+                    context,
+                    context.l10n.dhikrRemindersSetting,
+                    {
+                      for (final h in DhikrReminders.intervals)
+                        h: h == 0 ? context.l10n.dhikrOff : context.l10n.dhikrEvery(h),
+                    },
+                    state.dhikrHours,
+                  );
+                  if (picked != null) cubit.setDhikrHours(picked);
+                },
               ),
               SwitchListTile(
                 value: state.khatmaReminders,

@@ -44,6 +44,7 @@ abstract final class NotificationRefresh {
       // Only while a khatma is under way.
       khatma: state.khatmaReminders && Khatma.isActive,
       sunnah: state.sunnahAlerts,
+      dhikrHours: state.dhikrHours,
     );
   }
 

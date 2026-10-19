@@ -32,6 +32,7 @@ abstract final class PrefsKeys {
   static const String muezzin = 'settings.muezzin';
   static const String customAdhan = 'settings.customAdhan';
   static const String customFajrAdhan = 'settings.customFajrAdhan';
+  static const String dhikrHours = 'settings.dhikrHours';
   static const String continuousRecitation = 'settings.continuousRecitation';
   static const String sunnahAlerts = 'settings.sunnahAlerts';
   static const String verseRepeat = 'settings.verseRepeat';

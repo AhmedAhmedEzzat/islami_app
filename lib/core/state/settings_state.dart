@@ -38,6 +38,7 @@ class SettingsState {
     this.mushafPaper = MushafPaper.auto,
     this.customAdhan,
     this.customFajrAdhan,
+    this.dhikrHours = 0,
   });
 
   final ThemeMode themeMode;
@@ -112,6 +113,9 @@ class SettingsState {
   final CustomSound? customAdhan;
   final CustomSound? customFajrAdhan;
 
+  /// A short dhikr every this many hours through the day; 0 is off.
+  final int dhikrHours;
+
   /// The muezzin the prayer alert plays: the user's own recording when that
   /// is chosen and still set, otherwise a bundled one.
   Muezzin get muezzin => muezzinId == Muezzins.customId && customAdhan != null
@@ -175,6 +179,7 @@ class SettingsState {
     MushafPaper? mushafPaper,
     CustomSound? customAdhan,
     CustomSound? customFajrAdhan,
+    int? dhikrHours,
     // Distinguishes "leave unchanged" from "back to the system language".
     bool clearLocale = false,
     bool clearCustomAdhan = false,
@@ -206,6 +211,7 @@ class SettingsState {
       mushafPaper: mushafPaper ?? this.mushafPaper,
       customAdhan: clearCustomAdhan ? null : (customAdhan ?? this.customAdhan),
       customFajrAdhan: clearCustomFajrAdhan ? null : (customFajrAdhan ?? this.customFajrAdhan),
+      dhikrHours: dhikrHours ?? this.dhikrHours,
     );
   }
 
@@ -236,7 +242,8 @@ class SettingsState {
         other.verseRepeat == verseRepeat &&
         other.mushafPaper == mushafPaper &&
         other.customAdhan == customAdhan &&
-        other.customFajrAdhan == customFajrAdhan;
+        other.customFajrAdhan == customFajrAdhan &&
+        other.dhikrHours == dhikrHours;
   }
 
   @override
@@ -266,5 +273,6 @@ class SettingsState {
     mushafPaper,
     customAdhan,
     customFajrAdhan,
+    dhikrHours,
   ]);
 }

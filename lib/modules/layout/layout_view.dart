@@ -101,8 +101,20 @@ class _LayoutViewState extends State<LayoutView> {
         });
       case AlertKind.kahf:
         _openSura(Constants.suraDataLists[17]);
-      case AlertKind.prayer || AlertKind.reminder:
+      case AlertKind.prayer:
+        // The adhan's own adhkar, with the dua after it, over the prayer times.
         _selectTab(AppTab.prayer);
+        _withNavigator(AppTab.prayer, (navigator) {
+          navigator
+            ..popUntil((route) => route.isFirst)
+            ..push(
+              MaterialPageRoute<void>(builder: (_) => const AzkarView(chapterId: FeaturedAzkar.adhan)),
+            );
+        });
+      case AlertKind.reminder:
+        _selectTab(AppTab.prayer);
+      case AlertKind.dhikr:
+        _selectTab(AppTab.azkar);
       case AlertKind.khatma:
         // Home holds the khatma card, with today's pages and a Read button.
         _selectTab(AppTab.home);

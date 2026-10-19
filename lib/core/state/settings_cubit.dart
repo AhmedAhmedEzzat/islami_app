@@ -69,6 +69,7 @@ class SettingsCubit extends Cubit<SettingsState> {
         ),
         customAdhan: _decodeSound(LocalStorageServices.getString(PrefsKeys.customAdhan)),
         customFajrAdhan: _decodeSound(LocalStorageServices.getString(PrefsKeys.customFajrAdhan)),
+        dhikrHours: LocalStorageServices.getInt(PrefsKeys.dhikrHours) ?? 0,
       ),
     );
   }
@@ -217,6 +218,11 @@ class SettingsCubit extends Cubit<SettingsState> {
     } catch (_) {
       return null;
     }
+  }
+
+  Future<void> setDhikrHours(int hours) async {
+    emit(state.copyWith(dhikrHours: hours));
+    await LocalStorageServices.setInt(PrefsKeys.dhikrHours, hours);
   }
 
   Future<void> setContinuousRecitation(bool on) async {
