@@ -56,7 +56,8 @@ class _HomeViewState extends State<HomeView> {
   late PrayerLocation _location;
   DateTime _now = DateTime.now();
   Timer? _ticker;
-  late final Future<HadethDataModel?> _hadeth = _hadethOfTheDay();
+  late Future<HadethDataModel?> _hadeth = _hadethOfTheDay();
+  int _hadethDay = dayNumber(DateTime.now());
 
   @override
   void initState() {
@@ -65,8 +66,19 @@ class _HomeViewState extends State<HomeView> {
     if (!_location.isManual) _refreshLocation();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       // Home stays mounted behind the other tabs; only tick while visible.
-      if (mounted && _visible) setState(() => _now = DateTime.now());
+      if (mounted && _visible) setState(_tick);
     });
+  }
+
+  /// Moves the clock on, and with it the hadith of the day when the app has
+  /// stayed open past midnight.
+  void _tick() {
+    _now = DateTime.now();
+    final day = dayNumber(_now);
+    if (day != _hadethDay) {
+      _hadethDay = day;
+      _hadeth = _hadethOfTheDay();
+    }
   }
 
   bool _visible = true;
@@ -76,7 +88,16 @@ class _HomeViewState extends State<HomeView> {
     super.didChangeDependencies();
     // IndexedStack turns TickerMode off for hidden tabs, which lands here.
     final visible = TickerMode.valuesOf(context).enabled;
-    if (visible && !_visible) _now = DateTime.now();
+    if (visible && !_visible) {
+      _tick();
+      // A city chosen on the Prayer tab while this one was hidden.
+      final saved = PrayerTimesService.currentLocation();
+      if (saved.isManual != _location.isManual ||
+          saved.isFallback != _location.isFallback ||
+          !_same(saved.coordinates, _location.coordinates)) {
+        _location = saved;
+      }
+    }
     _visible = visible;
   }
 
