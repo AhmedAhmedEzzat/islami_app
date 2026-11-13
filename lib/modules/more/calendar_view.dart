@@ -98,6 +98,7 @@ class _CalendarViewState extends State<CalendarView> {
           Row(
             children: [
               IconButton(
+                tooltip: MaterialLocalizations.of(context).previousMonthTooltip,
                 icon: const Icon(Icons.chevron_left),
                 onPressed: () => _shift(-1),
               ),
@@ -116,6 +117,7 @@ class _CalendarViewState extends State<CalendarView> {
                 ),
               ),
               IconButton(
+                tooltip: MaterialLocalizations.of(context).nextMonthTooltip,
                 icon: const Icon(Icons.chevron_right),
                 onPressed: () => _shift(1),
               ),

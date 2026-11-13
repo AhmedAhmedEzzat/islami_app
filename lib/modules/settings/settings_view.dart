@@ -213,6 +213,7 @@ class SettingsView extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
+                            tooltip: context.l10n.minuteEarlier,
                             icon: const Icon(Icons.remove_circle_outline),
                             onPressed: () => cubit.setAdjustment(
                               p,
@@ -229,6 +230,7 @@ class SettingsView extends StatelessWidget {
                             ),
                           ),
                           IconButton(
+                            tooltip: context.l10n.minuteLater,
                             icon: const Icon(Icons.add_circle_outline),
                             onPressed: () => cubit.setAdjustment(
                               p,
@@ -258,6 +260,7 @@ class SettingsView extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
+                      tooltip: context.l10n.dayEarlier,
                       icon: const Icon(Icons.remove_circle_outline),
                       onPressed: state.hijriOffset <= -2
                           ? null
@@ -274,6 +277,7 @@ class SettingsView extends StatelessWidget {
                       ),
                     ),
                     IconButton(
+                      tooltip: context.l10n.dayLater,
                       icon: const Icon(Icons.add_circle_outline),
                       onPressed: state.hijriOffset >= 2
                           ? null

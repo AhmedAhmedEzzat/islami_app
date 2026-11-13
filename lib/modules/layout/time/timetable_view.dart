@@ -88,6 +88,7 @@ class _TimetableViewState extends State<TimetableView> {
           Row(
             children: [
               IconButton(
+                tooltip: MaterialLocalizations.of(context).previousMonthTooltip,
                 icon: const Icon(Icons.chevron_left),
                 onPressed: () => setState(() => _month = DateTime(_month.year, _month.month - 1)),
               ),
@@ -99,6 +100,7 @@ class _TimetableViewState extends State<TimetableView> {
                 ),
               ),
               IconButton(
+                tooltip: MaterialLocalizations.of(context).nextMonthTooltip,
                 icon: const Icon(Icons.chevron_right),
                 onPressed: () => setState(() => _month = DateTime(_month.year, _month.month + 1)),
               ),
