@@ -58,7 +58,32 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
         if (isClosed || d == null) return;
         emit(state.copyWith(duration: d));
       }),
+      _player.errorStream.listen((e) => unawaited(_onInterrupted(e))),
     ]);
+  }
+
+  /// True while a playlist is being loaded: a failure then is reported by
+  /// [playFrom] itself.
+  bool _loading = false;
+
+  /// True once a verse has failed mid-recitation, until play is pressed.
+  bool _interrupted = false;
+
+  /// A verse that cannot be fetched part-way through (the connection dropped)
+  /// leaves the player silent but still "playing". Pause where it stopped and
+  /// say so; pressing play picks up from that verse.
+  Future<void> _onInterrupted(PlayerException error) async {
+    if (isClosed || _loading || state.suraId == null) return;
+    debugPrint('Recitation interrupted in sura ${state.suraId}: $error');
+    _interrupted = true;
+    _generation++;
+    try {
+      await _player.pause();
+    } catch (_) {
+      // Already stopped.
+    }
+    if (isClosed) return;
+    emit(state.copyWith(isPlaying: false, isBuffering: false, errorKey: 'recitation_unavailable'));
   }
 
   final RadioCubit _radio;
@@ -165,7 +190,7 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
   /// Rebuilds the playlist with a new [repeatEach] at the verse playing,
   /// keeping it paused if it was. When the sura repeats, the whole sura is
   /// rebuilt so the loop still covers it, and play resumes at the same verse.
-  Future<void> restartFromCurrentVerse() async {
+  Future<void> restartFromCurrentVerse({bool? autoplay}) async {
     final sura = state.suraId;
     final ayah = state.ayah;
     if (sura == null || ayah == null) return;
@@ -181,7 +206,7 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
         startInPass: passAt(_ayahAt, index, range, _builtRepeatEach),
         totalAyahs: state.totalAyahs,
         reciterId: _reciterId,
-        autoplay: state.isPlaying,
+        autoplay: autoplay ?? state.isPlaying,
         range: range,
       );
     }
@@ -192,7 +217,7 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
       startAtAyah: wholeSura ? verse : null,
       totalAyahs: state.totalAyahs,
       reciterId: _reciterId,
-      autoplay: state.isPlaying,
+      autoplay: autoplay ?? state.isPlaying,
     );
   }
 
@@ -226,6 +251,7 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
     _askedRange = asked;
     if (asked != null) range = fitRange(asked, each);
     final generation = ++_generation;
+    _interrupted = false;
 
     emit(state.copyWith(clearError: true));
     await _radio.stop();
@@ -257,9 +283,14 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
 
     try {
       await RecitationDownloads.ready();
-      await _player.setAudioSources([
-        for (final a in _ayahAt) _sourceFor(reciter, a == 0 ? 1 : sura, a == 0 ? 1 : a),
-      ], preload: true);
+      _loading = true;
+      try {
+        await _player.setAudioSources([
+          for (final a in _ayahAt) _sourceFor(reciter, a == 0 ? 1 : sura, a == 0 ? 1 : a),
+        ], preload: true);
+      } finally {
+        _loading = false;
+      }
       await _applyRepeat(state.repeat);
       // Paused (the sleep timer) or stopped (the radio) while loading.
       if (isClosed || generation != _generation) return;
@@ -306,6 +337,8 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
 
   Future<void> togglePlayPause() async {
     if (state.suraId == null) return;
+    // The verse that failed is loaded afresh, and play carries on from it.
+    if (_interrupted) return restartFromCurrentVerse(autoplay: true);
     if (_player.processingState == ProcessingState.completed) {
       await _player.seek(Duration.zero, index: 0);
       unawaited(_player.play());
@@ -372,6 +405,7 @@ class QuranPlayerCubit extends Cubit<QuranPlayerState> {
   /// Stops recitation entirely. Called when the radio takes over.
   Future<void> stop() async {
     _generation++;
+    _interrupted = false;
     // "End of sura" belonged to this recitation; it must not linger and stop
     // a later one.
     SleepTimer.takeEndOfSura();
