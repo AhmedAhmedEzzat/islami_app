@@ -203,11 +203,23 @@ abstract final class RecitationDownloads {
         done += batch.length;
         report(DownloadStatus.downloading);
       }
+      // Files removed while this ran (deleting the sura or the reciter)
+      // must not leave the sura marked as saved with verses missing.
+      if (files.any((f) => localPath(reciter, f.$1, f.$2) == null)) {
+        throw const FileSystemException('Files removed during download');
+      }
       await _mark(reciter.id, sura, true);
       _jobs.remove(key);
       _changed();
     } catch (e) {
       debugPrint('Download of ${reciter.id} sura $sura failed: $e');
+      // Stopped on purpose (cancel, or deleting everything under it): not a
+      // failure to offer a retry for.
+      if (_cancelled.contains(reciter.id)) {
+        _jobs.remove(key);
+        _changed();
+        return;
+      }
       report(DownloadStatus.failed);
     }
   }

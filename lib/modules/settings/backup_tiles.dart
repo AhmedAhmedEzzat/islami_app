@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../core/constants/prefs_keys.dart';
+import '../../core/services/azkar_progress.dart';
 import '../../core/services/backup.dart';
 import '../../core/services/daily_deeds.dart';
 import '../../core/services/hadeth_favourites.dart';
@@ -111,6 +112,7 @@ class BackupTiles extends StatelessWidget {
       DailyDeeds.changes.value++;
       ReadingStats.changes.value++;
       NamesLearning.changes.value++;
+      AzkarProgress.changes.value++;
     });
     if (!done) return;
     final context2 = AppRestart.navigatorKey.currentContext;

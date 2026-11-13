@@ -227,12 +227,24 @@ class _VerseSheetState extends State<VerseSheet> {
             }
             final list = snap.data;
             if (list == null || widget.ayah > list.length) {
-              return Text(
-                // Saving it all for later is a phone feature.
-                TafsirService.supported ? l10n.tafsirUnavailable : l10n.tafsirUnavailableWeb,
-                style: context.texts.bodyMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    // Saving it all for later is a phone feature.
+                    TafsirService.supported ? l10n.tafsirUnavailable : l10n.tafsirUnavailableWeb,
+                    style: context.texts.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                  // Back online, the reader should not have to close the
+                  // sheet and find the verse again.
+                  TextButton.icon(
+                    onPressed: () => _selectTafsir(_tafsir),
+                    icon: const Icon(Icons.refresh),
+                    label: Text(l10n.tryAgain),
+                  ),
+                ],
               );
             }
             return Text(

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -101,5 +102,37 @@ void main() {
     RecitationDownloads.cancel(reciter.id);
     await settle();
     expect(RecitationDownloads.isDownloaded(reciter.id, 114), isFalse);
+  });
+
+  test('deleting everything mid-download leaves no failure and nothing marked saved', () async {
+    var started = 0;
+    final gate = Completer<void>();
+    RecitationDownloads.configure(
+      root: root,
+      client: MockClient((request) async {
+        // The last batch hangs, past the point where a cancel is checked.
+        if (++started > 4) await gate.future;
+        return http.Response.bytes(List.filled(16, 7), 200);
+      }),
+    );
+    RecitationDownloads.download(reciter, 1);
+    while (started <= 4) {
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+    }
+    await RecitationDownloads.deleteAll(reciter);
+    // The writes into the removed folder fail after their retries; wait for
+    // the download to report how it ended.
+    final ended = Completer<void>();
+    void onChange() {
+      if (!ended.isCompleted) ended.complete();
+    }
+
+    RecitationDownloads.changes.addListener(onChange);
+    gate.complete();
+    await ended.future.timeout(const Duration(seconds: 15));
+    RecitationDownloads.changes.removeListener(onChange);
+
+    expect(RecitationDownloads.jobFor(reciter.id, 1), isNull);
+    expect(RecitationDownloads.isDownloaded(reciter.id, 1), isFalse);
   });
 }

@@ -109,4 +109,18 @@ void main() {
     expect(dir.listSync(), isEmpty);
     expect(await TafsirService.savedSuras(), 0);
   });
+
+  test('a failed fetch is not remembered, so trying again can succeed', () async {
+    var online = false;
+    TafsirService.configure(
+      dir: dir,
+      client: MockClient((r) async {
+        if (!online) throw const SocketException('offline');
+        return _ok(r);
+      }),
+    );
+    expect(await TafsirService.forSura(Tafsir.muyassar, 1), isNull);
+    online = true;
+    expect(await TafsirService.forSura(Tafsir.muyassar, 1), ['/v1/surah/1/ar.muyassar']);
+  });
 }
