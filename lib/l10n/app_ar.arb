@@ -586,5 +586,15 @@
   "minuteEarlier": "تقديم دقيقة",
   "minuteLater": "تأخير دقيقة",
   "dayEarlier": "تقديم يوم",
-  "dayLater": "تأخير يوم"
+  "dayLater": "تأخير يوم",
+  "azkarResetConfirm": "البدء من جديد في هذا الباب؟ ستُمسح العدّات التي سجّلتها.",
+  "azkarUndoOne": "التراجع عن عدّة واحدة",
+  "azkarShare": "مشاركة",
+  "azkarTextSize": "حجم الخط",
+  "azkarCardHint": "اضغط للعدّ، واضغط مطوّلاً للنسخ أو المشاركة أو التراجع عن عدّة.",
+  "azkarChapterProgress": "تم {done} من {total}",
+  "azkarCardActions": "خيارات أخرى",
+  "azkarMorningNow": "العدّ لأذكار هذا الصباح",
+  "azkarEveningNow": "العدّ لأذكار هذا المساء",
+  "azkarSessionDone": "أُنجزت اليوم"
 }
