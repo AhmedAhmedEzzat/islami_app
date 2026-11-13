@@ -75,6 +75,14 @@ void main() {
       expect(AzkarProgress.doneCount(_chapter, morning), 1);
     });
 
+    test('a chapter counts as finished only when every dhikr is, this session', () async {
+      await AzkarProgress.save(999, morning, {1: 0, 2: 1});
+      expect(AzkarProgress.isFinished(999, morning), isFalse);
+      await AzkarProgress.save(999, morning, {1: 0, 2: 0});
+      expect(AzkarProgress.isFinished(999, morning), isTrue);
+      expect(AzkarProgress.isFinished(999, DateTime(2026, 11, 14, 7)), isFalse);
+    });
+
     test('a chapter is due afresh the next day', () async {
       await AzkarProgress.save(999, morning, {1: 0, 2: 0});
       expect(AzkarProgress.remaining(_chapter, DateTime(2026, 11, 14, 7)), {1: 3, 2: 1});

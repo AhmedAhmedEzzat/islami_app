@@ -63,6 +63,8 @@ abstract final class AzkarProgress {
       _key(chapterId),
       jsonEncode({
         'session': session(chapterId, now),
+        // [left] holds every dhikr of the chapter, so this is the whole of it.
+        'finished': left.isNotEmpty && left.values.every((v) => v == 0),
         'left': {for (final e in left.entries) '${e.key}': e.value},
       }),
     );
@@ -72,6 +74,19 @@ abstract final class AzkarProgress {
   static Future<void> clear(int chapterId) async {
     await LocalStorageServices.remove([_key(chapterId)]);
     changes.value++;
+  }
+
+  /// Whether the whole chapter was read in the current session, for
+  /// shortcuts that do not load the chapter itself.
+  static bool isFinished(int chapterId, DateTime now) {
+    final raw = LocalStorageServices.getString(_key(chapterId));
+    if (raw == null || raw.isEmpty) return false;
+    try {
+      final json = jsonDecode(raw);
+      return json is Map && json['session'] == session(chapterId, now) && json['finished'] == true;
+    } catch (_) {
+      return false;
+    }
   }
 
   /// How many of the chapter's adhkar are finished in the current session.
