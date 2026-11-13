@@ -20,9 +20,8 @@ import 'radio_cubit.dart';
 /// Uses its own [AudioPlayer], separate from the radio's, and stops the radio
 /// before starting so the two never play over each other.
 class QuranPlayerCubit extends Cubit<QuranPlayerState> {
-  QuranPlayerCubit({required RadioCubit radio, AudioPlayer? player})
-    : _radio = radio,
-      _player = player ?? AudioPlayer(),
+  QuranPlayerCubit({required this._radio, AudioPlayer? player})
+    : _player = player ?? AudioPlayer(),
       super(const QuranPlayerState()) {
     _subs.addAll([
       _player.playerStateStream.listen((s) {

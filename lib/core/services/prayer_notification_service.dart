@@ -503,7 +503,9 @@ abstract final class PrayerNotificationService {
     return null;
   }
 
-  /// Rebuilds the full schedule. Safe to call often.
+  /// Rebuilds the full schedule. Safe to call often, but not twice at once:
+  /// go through [NotificationRefresh.reschedule], which takes turns.
+  /// [superseded] turns true when a newer rebuild is waiting.
   static Future<void> reschedule({
     required bool enabled,
     required Locale locale,
@@ -519,11 +521,15 @@ abstract final class PrayerNotificationService {
     bool khatma = false,
     Set<SunnahAlert> sunnah = const {},
     int dhikrHours = 0,
+    bool Function()? superseded,
   }) async {
     if (kIsWeb) return;
+    // A newer rebuild is waiting and starts by clearing everything, so
+    // whatever this one went on to schedule would only be thrown away.
+    bool overtaken() => superseded?.call() ?? false;
     await init();
     await cancelAll();
-    if (!enabled) return;
+    if (!enabled || overtaken()) return;
 
     final coordinates = PrayerTimesService.currentLocation().coordinates;
     final l10n = _l10n(locale);
@@ -549,6 +555,7 @@ abstract final class PrayerNotificationService {
 
     final missingSounds = <String>{};
     for (final alert in alerts) {
+      if (overtaken()) return;
       final name = alert.prayer == null ? '' : _label(l10n, alert.prayer!);
       final (title, body) = switch (alert.kind) {
         AlertKind.prayer => (
