@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../../../core/services/azkar_progress.dart';
 import '../../../core/services/azkar_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
@@ -25,10 +26,8 @@ class _AzkarIndexViewState extends State<AzkarIndexView> {
   late final Future<List<AzkarChapter>> _chapters = AzkarService.loadAll();
   String _query = '';
 
-  void _open(AzkarChapter c) => Navigator.push(
-    context,
-    MaterialPageRoute<void>(builder: (_) => AzkarView(chapterId: c.id)),
-  );
+  void _open(AzkarChapter c) =>
+      Navigator.push(context, MaterialPageRoute<void>(builder: (_) => AzkarView(chapterId: c.id)));
 
   @override
   Widget build(BuildContext context) {
@@ -37,11 +36,18 @@ class _AzkarIndexViewState extends State<AzkarIndexView> {
       builder: (context, snap) {
         final all = snap.data;
         if (all == null) return const Center(child: CircularProgressIndicator());
-        return _content(all);
+        // Counts saved in a chapter show here when the reader comes back.
+        return ValueListenableBuilder<int>(
+          valueListenable: AzkarProgress.changes,
+          builder: (context, _, _) => _content(all),
+        );
       },
     );
     if (widget.embedded) return body;
-    return Scaffold(appBar: AppBar(title: Text(context.l10n.hisnTitle)), body: body);
+    return Scaffold(
+      appBar: AppBar(title: Text(context.l10n.hisnTitle)),
+      body: body,
+    );
   }
 
   Widget _content(List<AzkarChapter> all) {
@@ -49,6 +55,11 @@ class _AzkarIndexViewState extends State<AzkarIndexView> {
     final scheme = context.colors;
     final byId = {for (final c in all) c.id: c};
     final featured = [for (final id in FeaturedAzkar.all) ?byId[id]];
+    final now = DateTime.now();
+    // Two lines of label plus padding, at whatever size the reader set, so
+    // the cards grow with a large font instead of clipping it.
+    final labelLine = MediaQuery.textScalerOf(context).scale(14) * 1.45;
+    final featuredExtent = (labelLine * 2 + AppSpacing.lg * 2).clamp(64.0, double.infinity);
 
     final q = ArabicText.normalizeForSearch(_query);
     final filtered = q.isEmpty
@@ -74,18 +85,18 @@ class _AzkarIndexViewState extends State<AzkarIndexView> {
         if (q.isEmpty) ...[
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            sliver: SliverToBoxAdapter(
-              child: Text(l10n.featuredAzkar, style: context.texts.titleMedium),
-            ),
+            sliver: SliverToBoxAdapter(child: Text(l10n.featuredAzkar, style: context.texts.titleMedium)),
           ),
           SliverPadding(
             padding: const EdgeInsets.all(AppSpacing.lg),
-            sliver: SliverGrid.count(
-              crossAxisCount: 2,
-              mainAxisSpacing: AppSpacing.sm,
-              crossAxisSpacing: AppSpacing.sm,
-              childAspectRatio: 2.4,
-              children: [
+            sliver: SliverGrid(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: AppSpacing.sm,
+                crossAxisSpacing: AppSpacing.sm,
+                mainAxisExtent: featuredExtent,
+              ),
+              delegate: SliverChildListDelegate([
                 for (final c in featured)
                   Card(
                     color: scheme.secondaryContainer,
@@ -103,24 +114,27 @@ class _AzkarIndexViewState extends State<AzkarIndexView> {
                                 azkarTitle(context, c),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
-                                style: context.texts.labelLarge?.copyWith(
-                                  color: scheme.onSecondaryContainer,
-                                ),
+                                style: context.texts.labelLarge?.copyWith(color: scheme.onSecondaryContainer),
                               ),
                             ),
+                            if (AzkarProgress.doneCount(c, now) == c.items.length)
+                              Icon(
+                                Icons.check_circle,
+                                size: 18,
+                                color: scheme.primary,
+                                semanticLabel: l10n.azkarSessionDone,
+                              ),
                           ],
                         ),
                       ),
                     ),
                   ),
-              ],
+              ]),
             ),
           ),
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            sliver: SliverToBoxAdapter(
-              child: Text(l10n.allChapters, style: context.texts.titleMedium),
-            ),
+            sliver: SliverToBoxAdapter(child: Text(l10n.allChapters, style: context.texts.titleMedium)),
           ),
         ],
         SliverList.separated(
@@ -128,12 +142,17 @@ class _AzkarIndexViewState extends State<AzkarIndexView> {
           separatorBuilder: (_, _) => const Divider(height: 1, indent: 16, endIndent: 16),
           itemBuilder: (context, i) {
             final c = filtered[i];
+            final done = AzkarProgress.doneCount(c, now);
+            final total = c.items.length;
             return ListTile(
               title: Text(c.title, textDirection: TextDirection.rtl),
-              trailing: Text(
-                '${c.items.length}',
-                style: context.texts.labelMedium?.copyWith(color: scheme.primary),
-              ),
+              trailing: done == total
+                  ? Icon(Icons.check_circle, color: scheme.primary, semanticLabel: l10n.azkarSessionDone)
+                  : Text(
+                      done == 0 ? '$total' : '$done/$total',
+                      semanticsLabel: done == 0 ? null : l10n.azkarChapterProgress(done, total),
+                      style: context.texts.labelMedium?.copyWith(color: scheme.primary),
+                    ),
               onTap: () => _open(c),
             );
           },

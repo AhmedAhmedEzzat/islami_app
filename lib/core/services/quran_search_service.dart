@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import '../../models/sura_data_model.dart';
+import '../constants/constants.dart';
 import '../utils/arabic_text.dart';
 import 'quran_meta.dart';
 import 'quran_service.dart';
@@ -103,3 +105,30 @@ class _Entry {
   final String normalised;
   final String englishLower;
 }
+
+/// The suras whose name or number [query] names.
+///
+/// Names are matched as they are typed rather than as they are stored: with
+/// or without the hamza, ة or ه, the article's hyphen or a space ("al kahf",
+/// "alkahf", "kahf"), and the number in either kind of digits.
+List<SuraDataModel> suraMatches(String query) {
+  final q = query.trim();
+  if (q.isEmpty) return const [];
+  final latin = _latinKey(q);
+  final arabic = ArabicText.normalizeForSearch(q).replaceAll(' ', '');
+  final number = int.tryParse(
+    String.fromCharCodes([
+      // Arabic-Indic digits to ASCII.
+      for (final c in q.runes) c >= 0x0660 && c <= 0x0669 ? c - 0x0660 + 0x30 : c,
+    ]),
+  );
+  return Constants.suraDataLists.where((s) {
+    if (number != null) return s.suraID == '$number';
+    return (latin.isNotEmpty && _latinKey(s.suraNameEN).contains(latin)) ||
+        (arabic.isNotEmpty && ArabicText.normalizeForSearch(s.suraNameAR).replaceAll(' ', '').contains(arabic));
+  }).toList();
+}
+
+/// Lower-case letters and digits only, so hyphens, spaces and apostrophes in
+/// a transliterated name make no difference.
+String _latinKey(String s) => s.toLowerCase().replaceAll(RegExp('[^a-z0-9]'), '');

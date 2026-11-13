@@ -4,7 +4,7 @@ abstract class Constants {
   static List<SuraDataModel> suraDataLists = [
     SuraDataModel(
       suraID: '1',
-      suraNameAR: 'الفاتحه',
+      suraNameAR: 'الفاتحة',
       suraNameEN: 'Al-Fatiha',
       suraVersesNumber: '7',
     ),
@@ -142,7 +142,7 @@ abstract class Constants {
     ),
     SuraDataModel(
       suraID: '24',
-      suraNameAR: 'النّور',
+      suraNameAR: 'النور',
       suraNameEN: 'An-Nur',
       suraVersesNumber: '64',
     ),
@@ -160,7 +160,7 @@ abstract class Constants {
     ),
     SuraDataModel(
       suraID: '27',
-      suraNameAR: 'النّمل',
+      suraNameAR: 'النمل',
       suraNameEN: 'An-Naml',
       suraVersesNumber: '93',
     ),
@@ -178,7 +178,7 @@ abstract class Constants {
     ),
     SuraDataModel(
       suraID: '30',
-      suraNameAR: 'الرّوم',
+      suraNameAR: 'الروم',
       suraNameEN: 'Ar-Rum',
       suraVersesNumber: '60',
     ),
@@ -244,7 +244,7 @@ abstract class Constants {
     ),
     SuraDataModel(
       suraID: '41',
-      suraNameAR: 'فصّلت',
+      suraNameAR: 'فصلت',
       suraNameEN: 'Fussilat',
       suraVersesNumber: '54',
     ),
@@ -262,7 +262,7 @@ abstract class Constants {
     ),
     SuraDataModel(
       suraID: '44',
-      suraNameAR: 'الدّخان',
+      suraNameAR: 'الدخان',
       suraNameEN: 'Ad-Dukhan',
       suraVersesNumber: '59',
     ),
@@ -436,13 +436,13 @@ abstract class Constants {
     ),
     SuraDataModel(
       suraID: '73',
-      suraNameAR: 'المزّمّل',
+      suraNameAR: 'المزمل',
       suraNameEN: 'Al-Muzzammil',
       suraVersesNumber: '20',
     ),
     SuraDataModel(
       suraID: '74',
-      suraNameAR: 'المدّثر',
+      suraNameAR: 'المدثر',
       suraNameEN: 'Al-Muddathir',
       suraVersesNumber: '56',
     ),
@@ -490,19 +490,19 @@ abstract class Constants {
     ),
     SuraDataModel(
       suraID: '82',
-      suraNameAR: 'الإنفطار',
+      suraNameAR: 'الانفطار',
       suraNameEN: 'Al-Infitar',
       suraVersesNumber: '19',
     ),
     SuraDataModel(
       suraID: '83',
-      suraNameAR: 'المطفّفين',
+      suraNameAR: 'المطففين',
       suraNameEN: 'Al-Mutaffifin',
       suraVersesNumber: '36',
     ),
     SuraDataModel(
       suraID: '84',
-      suraNameAR: 'الإنشقاق',
+      suraNameAR: 'الانشقاق',
       suraNameEN: 'Al-Inshiqaq',
       suraVersesNumber: '25',
     ),

@@ -16,7 +16,9 @@ class LocationSheet extends StatefulWidget {
     isScrollControlled: true,
     useSafeArea: true,
     showDragHandle: true,
-    builder: (_) => Padding(
+    // The sheet's own context: the opener's would not rebuild the sheet when
+    // the keyboard comes up, leaving the results underneath it.
+    builder: (context) => Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: const LocationSheet(),
     ),

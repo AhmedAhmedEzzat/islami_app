@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../../../core/services/azkar_progress.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/l10n_ext.dart';
@@ -82,7 +83,17 @@ class _Card extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg, horizontal: AppSpacing.sm),
           child: Column(
             children: [
-              Icon(icon, color: scheme.onSecondaryContainer),
+              ValueListenableBuilder<int>(
+                valueListenable: AzkarProgress.changes,
+                builder: (context, _, _) {
+                  final done = AzkarProgress.isFinished(chapterId, DateTime.now());
+                  return Icon(
+                    done ? Icons.check_circle : icon,
+                    color: done ? scheme.primary : scheme.onSecondaryContainer,
+                    semanticLabel: done ? context.l10n.azkarSessionDone : null,
+                  );
+                },
+              ),
               const SizedBox(height: AppSpacing.sm),
               Text(
                 label,

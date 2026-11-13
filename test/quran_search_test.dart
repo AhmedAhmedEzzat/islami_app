@@ -50,4 +50,46 @@ void main() {
       expect(a.sura < b.sura || (a.sura == b.sura && a.ayah < b.ayah), isTrue);
     }
   });
+
+  group('finding a sura by name', () {
+    List<String> ids(String q) => [for (final s in suraMatches(q)) s.suraID];
+
+    test('Arabic names match however they are typed', () {
+      expect(ids('الفاتحة'), ['1']);
+      expect(ids('الفاتحه'), ['1']);
+      expect(ids('النور'), ['24']);
+      expect(ids('الانفطار'), ['82']);
+      expect(ids('الإنشقاق'), ['84']);
+      expect(ids('ال عمران'), ['3']);
+      expect(ids('المزمل'), ['73']);
+    });
+
+    test('English names match with or without the hyphen', () {
+      expect(ids('al-kahf'), ['18']);
+      expect(ids('al kahf'), ['18']);
+      expect(ids('Kahf'), ['18']);
+      expect(ids('yasin'), ['36']);
+      expect(ids('ya sin'), ['36']);
+    });
+
+    test('a number is the sura of that number, in either digits', () {
+      expect(ids('18'), ['18']);
+      expect(ids('١٨'), ['18']);
+      expect(ids('115'), isEmpty);
+    });
+
+    test('nothing matches nothing', () {
+      expect(ids('  '), isEmpty);
+      expect(ids('zzzz'), isEmpty);
+    });
+
+    test('Arabic sura names are spelt the standard way, without marks', () {
+      final names = [for (final s in suraMatches('ا')) s.suraNameAR];
+      expect(names, contains('الفاتحة'));
+      expect(names, contains('الانفطار'));
+      expect(names, contains('الانشقاق'));
+      // No shadda or other marks: some names had them and most did not.
+      expect(names.where((n) => n.contains(RegExp('[\u064B-\u0652]'))), isEmpty);
+    });
+  });
 }

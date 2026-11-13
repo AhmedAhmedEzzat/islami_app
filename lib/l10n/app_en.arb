@@ -1037,5 +1037,21 @@
   "minuteEarlier": "One minute earlier",
   "minuteLater": "One minute later",
   "dayEarlier": "One day earlier",
-  "dayLater": "One day later"
+  "dayLater": "One day later",
+  "azkarResetConfirm": "Start this chapter over? Your counts so far will be cleared.",
+  "azkarUndoOne": "Take back one count",
+  "azkarShare": "Share",
+  "azkarTextSize": "Text size",
+  "azkarCardHint": "Tap to count. Long-press to copy, share or take back a count.",
+  "azkarChapterProgress": "{done} of {total} done",
+  "@azkarChapterProgress": {
+    "placeholders": {
+      "done": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "azkarCardActions": "More options",
+  "azkarMorningNow": "Counting for this morning",
+  "azkarEveningNow": "Counting for this evening",
+  "azkarSessionDone": "Done for today"
 }

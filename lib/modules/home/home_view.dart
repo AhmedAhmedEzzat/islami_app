@@ -10,6 +10,7 @@ import '../../core/constants/assets.dart';
 import '../../core/constants/constants.dart';
 import '../../core/constants/daily_verses.dart';
 import '../../core/constants/quran_duas.dart';
+import '../../core/services/azkar_progress.dart';
 import '../../core/services/hadeth_service.dart';
 import '../../core/services/islamic_calendar.dart';
 import '../../core/services/mushaf_layout.dart';
@@ -251,10 +252,10 @@ class _HomeViewState extends State<HomeView> {
                     () => _push(const TasbehView()),
                   ),
                   _Tile(
-                    _now.hour < 12
+                    AzkarProgress.isMorning(_now)
                         ? Icons.wb_sunny_outlined
                         : Icons.nights_stay_outlined,
-                    _now.hour < 12
+                    AzkarProgress.isMorning(_now)
                         ? l10n.morningAzkarNow
                         : l10n.eveningAzkarNow,
                     () => _push(
