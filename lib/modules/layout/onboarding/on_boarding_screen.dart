@@ -88,8 +88,7 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
                 itemCount: pages.length + 1,
                 // Driven from onPageChanged rather than a scroll listener that
                 // called setState on every pixel of the drag.
-                onPageChanged: (index) =>
-                    setState(() => _currentIndex = index),
+                onPageChanged: (index) => setState(() => _currentIndex = index),
                 itemBuilder: (context, index) {
                   if (index == pages.length) return const _SetupPage();
                   final page = pages[index];
@@ -98,26 +97,39 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
                     padding: const EdgeInsets.all(AppSpacing.xl),
                     child: Column(
                       children: [
+                        // The picture gives way to the words: on a small
+                        // phone or with a large font it shrinks, and the
+                        // text scrolls if even that is not enough.
                         Expanded(
+                          flex: 2,
                           child: Image.asset(
                             page.imagePath,
                             excludeFromSemantics: true,
                           ),
                         ),
                         const SizedBox(height: AppSpacing.xl),
-                        Text(
-                          title,
-                          textAlign: TextAlign.center,
-                          style: context.texts.headlineSmall?.copyWith(
-                            color: scheme.primary,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        Text(
-                          body,
-                          textAlign: TextAlign.center,
-                          style: context.texts.bodyLarge?.copyWith(
-                            color: scheme.onSurfaceVariant,
+                        Flexible(
+                          flex: 3,
+                          child: SingleChildScrollView(
+                            child: Column(
+                              children: [
+                                Text(
+                                  title,
+                                  textAlign: TextAlign.center,
+                                  style: context.texts.headlineSmall?.copyWith(
+                                    color: scheme.primary,
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpacing.md),
+                                Text(
+                                  body,
+                                  textAlign: TextAlign.center,
+                                  style: context.texts.bodyLarge?.copyWith(
+                                    color: scheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -202,9 +214,9 @@ class _SetupPageState extends State<_SetupPage> {
     final settings = context.read<SettingsCubit>().state;
     NotificationRefresh.reschedule(settings, Localizations.localeOf(context));
     if (fresh.isFallback && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.setupLocationFailed)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.setupLocationFailed)));
     }
   }
 
@@ -212,7 +224,9 @@ class _SetupPageState extends State<_SetupPage> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final scheme = context.colors;
-    final notificationsOn = context.select<SettingsCubit, bool>((c) => c.state.prayerNotifications);
+    final notificationsOn = context.select<SettingsCubit, bool>(
+      (c) => c.state.prayerNotifications,
+    );
     final located = !_location.isFallback;
 
     return SingleChildScrollView(
@@ -222,7 +236,11 @@ class _SetupPageState extends State<_SetupPage> {
           CircleAvatar(
             radius: 44,
             backgroundColor: scheme.primaryContainer,
-            child: Icon(Icons.mosque_outlined, size: 44, color: scheme.onPrimaryContainer),
+            child: Icon(
+              Icons.mosque_outlined,
+              size: 44,
+              color: scheme.onPrimaryContainer,
+            ),
           ),
           const SizedBox(height: AppSpacing.lg),
           Text(
@@ -234,13 +252,17 @@ class _SetupPageState extends State<_SetupPage> {
           Text(
             l10n.setupBody,
             textAlign: TextAlign.center,
-            style: context.texts.bodyLarge?.copyWith(color: scheme.onSurfaceVariant),
+            style: context.texts.bodyLarge?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: AppSpacing.xl),
           _SetupStep(
             icon: Icons.my_location,
             title: l10n.setupLocationTitle,
-            body: located ? (_location.name ?? l10n.setupLocationDone) : l10n.setupLocationBody,
+            body: located
+                ? (_location.name ?? l10n.setupLocationDone)
+                : l10n.setupLocationBody,
             done: located,
             busy: _locating,
             action: l10n.setupLocationAction,
@@ -259,7 +281,9 @@ class _SetupPageState extends State<_SetupPage> {
           Text(
             l10n.setupLater,
             textAlign: TextAlign.center,
-            style: context.texts.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            style: context.texts.bodySmall?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -295,7 +319,11 @@ class _SetupStep extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Row(
           children: [
-            Icon(done ? Icons.check_circle : icon, color: scheme.primary, size: 28),
+            Icon(
+              done ? Icons.check_circle : icon,
+              color: scheme.primary,
+              size: 28,
+            ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
@@ -303,15 +331,26 @@ class _SetupStep extends StatelessWidget {
                 children: [
                   Text(title, style: context.texts.titleMedium),
                   const SizedBox(height: 2),
-                  Text(body, style: context.texts.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
+                  Text(
+                    body,
+                    style: context.texts.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
                 ],
               ),
             ),
             if (!done) ...[
               const SizedBox(width: AppSpacing.sm),
               busy
-                  ? const SizedBox.square(dimension: 24, child: CircularProgressIndicator(strokeWidth: 2.5))
-                  : FilledButton.tonal(onPressed: onPressed, child: Text(action)),
+                  ? const SizedBox.square(
+                      dimension: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2.5),
+                    )
+                  : FilledButton.tonal(
+                      onPressed: onPressed,
+                      child: Text(action),
+                    ),
             ],
           ],
         ),

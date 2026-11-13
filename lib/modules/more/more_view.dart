@@ -102,13 +102,17 @@ class MoreView extends StatelessWidget {
           AppSpacing.xl,
         ),
         children: [
-          GridView.count(
-            crossAxisCount: 2,
+          GridView(
+            // An icon and up to two lines of label: as tall as the phone's
+            // font size needs, not a fixed share of the width.
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: AppSpacing.sm,
+              crossAxisSpacing: AppSpacing.sm,
+              mainAxisExtent: 60 + MediaQuery.textScalerOf(context).scale(44),
+            ),
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: AppSpacing.sm,
-            crossAxisSpacing: AppSpacing.sm,
-            childAspectRatio: 1.6,
             children: [
               for (final (icon, label, onTap) in tiles)
                 Card(
@@ -125,6 +129,7 @@ class MoreView extends StatelessWidget {
                           label,
                           textAlign: TextAlign.center,
                           maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: context.texts.labelLarge,
                         ),
                       ],

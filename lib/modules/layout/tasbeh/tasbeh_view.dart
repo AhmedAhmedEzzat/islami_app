@@ -305,8 +305,10 @@ class _TasbehViewState extends State<TasbehView> {
             style: context.texts.labelMedium?.copyWith(color: scheme.primary),
           ),
           const SizedBox(height: AppSpacing.md),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          // Wraps onto a second line on a narrow phone or with a large font.
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: AppSpacing.md,
             children: [
               TextButton.icon(
                 key: TasbehView.undoKey,
@@ -314,13 +316,11 @@ class _TasbehViewState extends State<TasbehView> {
                 icon: const Icon(Icons.undo),
                 label: Text(context.l10n.undo),
               ),
-              const SizedBox(width: AppSpacing.md),
               TextButton.icon(
                 onPressed: _pickTarget,
                 icon: const Icon(Icons.flag_outlined),
                 label: Text(context.l10n.tasbehTargetValue(target)),
               ),
-              const SizedBox(width: AppSpacing.md),
               TextButton.icon(
                 key: TasbehView.resetKey,
                 onPressed: _confirmReset,

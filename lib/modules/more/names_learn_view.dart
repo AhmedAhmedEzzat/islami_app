@@ -114,8 +114,9 @@ class _CardsState extends State<_Cards> {
                 onTap: () => setState(() => _flipped = !_flipped),
                 child: Card(
                   color: _flipped ? scheme.primaryContainer : scheme.surfaceContainer,
-                  child: SizedBox(
-                    height: 260,
+                  // At least this tall, and taller when a large font needs it.
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 260, minWidth: double.infinity),
                     child: Padding(
                       padding: const EdgeInsets.all(AppSpacing.lg),
                       child: AnimatedSwitcher(

@@ -85,7 +85,9 @@ class _CalendarViewState extends State<CalendarView> {
             icon: const Icon(Icons.swap_horiz),
             onPressed: () => Navigator.push(
               context,
-              MaterialPageRoute<void>(builder: (_) => const DateConverterView()),
+              MaterialPageRoute<void>(
+                builder: (_) => const DateConverterView(),
+              ),
             ),
           ),
         ],
@@ -145,7 +147,11 @@ class _CalendarViewState extends State<CalendarView> {
               for (var d = 1; d <= days; d++)
                 Builder(
                   builder: (context) {
-                    final g = DateTime(first.year, first.month, first.day + d - 1);
+                    final g = DateTime(
+                      first.year,
+                      first.month,
+                      first.day + d - 1,
+                    );
                     final isToday = g == today;
                     final events = IslamicCalendar.eventsOn(month, d);
                     final white = IslamicCalendar.isWhiteDay(d);
@@ -161,25 +167,31 @@ class _CalendarViewState extends State<CalendarView> {
                             : null,
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            '$d',
-                            style: context.texts.titleSmall?.copyWith(
-                              color: isToday ? scheme.onPrimary : null,
-                              fontWeight: FontWeight.w700,
+                      // Seven cells share the width, so a cell cannot grow
+                      // with the phone's font size; the two numbers shrink
+                      // to fit it instead of spilling out.
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '$d',
+                              style: context.texts.titleSmall?.copyWith(
+                                color: isToday ? scheme.onPrimary : null,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                          ),
-                          Text(
-                            '${g.day}',
-                            style: context.texts.labelSmall?.copyWith(
-                              color: isToday
-                                  ? scheme.onPrimary
-                                  : scheme.onSurfaceVariant,
+                            Text(
+                              '${g.day}',
+                              style: context.texts.labelSmall?.copyWith(
+                                color: isToday
+                                    ? scheme.onPrimary
+                                    : scheme.onSurfaceVariant,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     );
                   },

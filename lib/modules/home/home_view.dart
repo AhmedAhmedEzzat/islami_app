@@ -602,11 +602,18 @@ class _QuickGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = context.colors;
-    return GridView.count(
-      crossAxisCount: 4,
+    // An icon and up to two lines of label. The height follows the phone's
+    // font size rather than the tile's width, so a large font is not cut off.
+    final labelStyle = context.texts.labelSmall;
+    final lineHeight = (labelStyle?.fontSize ?? 11) * (labelStyle?.height ?? 1.45);
+    final labelHeight = MediaQuery.textScalerOf(context).scale(lineHeight * 2);
+    return GridView(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 4,
+        mainAxisExtent: 48 + AppSpacing.xs * 3 + labelHeight.ceilToDouble() + 2,
+      ),
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 0.82,
       children: [
         for (final t in tiles)
           InkWell(
@@ -627,7 +634,7 @@ class _QuickGrid extends StatelessWidget {
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: context.texts.labelSmall,
+                    style: labelStyle,
                   ),
                 ],
               ),
