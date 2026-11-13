@@ -37,6 +37,6 @@ jobs:
         run: |
           for tz in Pacific/Fiji Pacific/Apia America/New_York Europe/Berlin; do
             echo "::group::$tz"
-            TZ=$tz flutter test test/prayer_times_service_test.dart test/prayer_notification_plan_test.dart test/fasting_notification_plan_test.dart test/prayer_widget_test.dart
+            TZ=$tz flutter test test/prayer_times_service_test.dart test/prayer_notification_plan_test.dart test/fasting_notification_plan_test.dart test/prayer_widget_test.dart test/islamic_calendar_test.dart
             echo "::endgroup::"
           done

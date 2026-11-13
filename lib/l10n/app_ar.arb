@@ -582,5 +582,9 @@
   "paperSepia": "بني فاتح (مريح للعين)",
   "paperNight": "ليلي",
   "qudsiSection": "الأربعون القدسية",
-  "hadethSourceQudsi": "المصدر: الأربعون القدسية، مجموعة hadith-api"
+  "hadethSourceQudsi": "المصدر: الأربعون القدسية، مجموعة hadith-api",
+  "minuteEarlier": "تقديم دقيقة",
+  "minuteLater": "تأخير دقيقة",
+  "dayEarlier": "تقديم يوم",
+  "dayLater": "تأخير يوم"
 }

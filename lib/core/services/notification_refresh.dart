@@ -10,6 +10,7 @@ import '../state/settings_cubit.dart';
 import '../state/settings_state.dart';
 import 'adhan_sounds.dart';
 import 'khatma.dart';
+import 'latest_only.dart';
 import 'prayer_notification_service.dart';
 import 'prayer_widget.dart';
 import 'shared_prefs_helper.dart';
@@ -26,10 +27,24 @@ abstract final class NotificationRefresh {
   /// Rebuilds the schedule from [state]. The one place that turns settings
   /// into a [PrayerNotificationService.reschedule] call, so the app and the
   /// background task can never disagree about what to schedule.
-  static Future<void> reschedule(SettingsState state, Locale locale) async {
+  ///
+  /// A rebuild is hundreds of calls to the platform and takes a second or
+  /// more, and several can be asked for in that time: the launch top-up, then
+  /// each switch flipped in Settings. They take turns, newest only. Run
+  /// together, one that began while notifications were on would carry on
+  /// scheduling after the next had cleared them, so alerts kept coming after
+  /// being turned off, or at times since changed.
+  static Future<void> reschedule(SettingsState state, Locale locale) =>
+      _queue.run((superseded) => _reschedule(state, locale, superseded));
+
+  static final LatestOnly _queue = LatestOnly();
+
+  static Future<void> _reschedule(SettingsState state, Locale locale, bool Function() superseded) async {
     // The widget shows the times whether or not notifications are on.
     await PrayerWidget.update(config: state.prayerConfig, locale: locale);
+    if (superseded()) return;
     return PrayerNotificationService.reschedule(
+      superseded: superseded,
       enabled: state.prayerNotifications,
       locale: locale,
       config: state.prayerConfig,

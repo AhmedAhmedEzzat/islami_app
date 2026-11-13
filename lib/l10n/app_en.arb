@@ -1033,5 +1033,9 @@
   "paperSepia": "Sepia (easy on the eyes)",
   "paperNight": "Night",
   "qudsiSection": "Forty Hadith Qudsi",
-  "hadethSourceQudsi": "Source: Forty Hadith Qudsi, fawazahmed0/hadith-api"
+  "hadethSourceQudsi": "Source: Forty Hadith Qudsi, fawazahmed0/hadith-api",
+  "minuteEarlier": "One minute earlier",
+  "minuteLater": "One minute later",
+  "dayEarlier": "One day earlier",
+  "dayLater": "One day later"
 }

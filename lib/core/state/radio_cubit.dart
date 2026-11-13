@@ -27,10 +27,54 @@ class RadioCubit extends Cubit<RadioState> {
         ),
       );
     });
+    _errors = _player.errorStream.listen((e) => unawaited(_onDropped(e)));
   }
 
   final AudioPlayer _player;
   StreamSubscription<PlayerState>? _sub;
+  StreamSubscription<PlayerException>? _errors;
+
+  /// Bumped by every start and stop, so a reconnect still in flight can tell
+  /// the listener has moved on.
+  int _generation = 0;
+
+  /// Whether the station playing has already been reconnected once since it
+  /// last played cleanly.
+  bool _reconnected = false;
+
+  /// A live stream that fails mid-way (the connection dropped, the station
+  /// hiccupped) leaves the player silent but still "playing". Reconnect once;
+  /// if that fails too, say so and clear the station rather than show a
+  /// pause button over silence.
+  Future<void> _onDropped(PlayerException error) async {
+    final index = state.currentIndex;
+    if (isClosed || index == null) return;
+    debugPrint('Radio stream dropped at index $index: $error');
+    final generation = _generation;
+    if (!_reconnected) {
+      _reconnected = true;
+      emit(state.copyWith(isBuffering: true));
+      await Future<void>.delayed(reconnectDelay);
+      if (isClosed || generation != _generation) return;
+      try {
+        await _player.setUrl(RadioChannel.channels[index].streamUrl);
+        if (isClosed || generation != _generation) return;
+        unawaited(_player.play());
+        return;
+      } catch (e) {
+        debugPrint('Radio reconnect failed for index $index: $e');
+        if (isClosed || generation != _generation) return;
+      }
+    }
+    _generation++;
+    await _player.stop();
+    if (isClosed) return;
+    emit(const RadioState(errorKey: 'stream_unreachable'));
+  }
+
+  /// How long to wait before reconnecting a dropped stream.
+  @visibleForTesting
+  static Duration reconnectDelay = const Duration(seconds: 2);
 
   /// Called before a station starts, so Quran recitation can be stopped first.
   /// Set from `main()` once both cubits exist — injecting the cubits into each
@@ -49,6 +93,8 @@ class RadioCubit extends Cubit<RadioState> {
     await onBeforePlay?.call();
     if (isClosed) return;
 
+    _generation++;
+    _reconnected = false;
     emit(state.copyWith(currentIndex: index, isBuffering: true));
 
     try {
@@ -82,7 +128,10 @@ class RadioCubit extends Cubit<RadioState> {
 
   /// Called when Quran recitation starts, so the two never talk over each other.
   Future<void> stop() async {
+    _generation++;
     await _player.stop();
+    // Again, for a drop reported while the player was stopping.
+    _generation++;
     if (isClosed) return;
     emit(const RadioState());
   }
@@ -92,6 +141,7 @@ class RadioCubit extends Cubit<RadioState> {
   @override
   Future<void> close() async {
     await _sub?.cancel();
+    await _errors?.cancel();
     await _player.dispose();
     return super.close();
   }

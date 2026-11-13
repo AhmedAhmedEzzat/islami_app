@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../../models/sura_data_model.dart';
 import 'sura_list_item.dart';

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 // intl also exports TextDirection, which shadows the Flutter one.
 import 'package:intl/intl.dart' hide TextDirection;
 

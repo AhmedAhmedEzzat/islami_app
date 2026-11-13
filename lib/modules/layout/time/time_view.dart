@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 // intl also exports TextDirection, which shadows the Flutter one.
 import 'package:intl/intl.dart' hide TextDirection;
@@ -46,9 +46,44 @@ class _TimeViewState extends State<TimeView> {
     _location = PrayerTimesService.currentLocation();
     _refreshLocation();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() => _now = DateTime.now());
+      // The tab stays mounted behind the others; only tick while visible.
+      if (mounted && _visible) setState(_tick);
     });
   }
+
+  bool _visible = true;
+
+  /// Moves the clock on. While today is showing, the day follows it past
+  /// midnight; otherwise the tab was left on yesterday, with no next prayer,
+  /// whenever the app stayed open overnight.
+  void _tick() {
+    final now = DateTime.now();
+    if (_isToday) _day = now;
+    _now = now;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // IndexedStack turns TickerMode off for hidden tabs, which lands here.
+    final visible = TickerMode.valuesOf(context).enabled;
+    if (visible && !_visible) {
+      _tick();
+      // The city may have been changed from another screen meanwhile.
+      _location = _sameSpot(PrayerTimesService.currentLocation(), _location);
+    }
+    _visible = visible;
+  }
+
+  /// [fresh] unless it is the place already showing, whose name may be newer
+  /// than the saved one.
+  static PrayerLocation _sameSpot(PrayerLocation fresh, PrayerLocation shown) =>
+      fresh.isManual == shown.isManual &&
+          fresh.isFallback == shown.isFallback &&
+          fresh.coordinates.latitude == shown.coordinates.latitude &&
+          fresh.coordinates.longitude == shown.coordinates.longitude
+      ? shown
+      : fresh;
 
   @override
   void dispose() {

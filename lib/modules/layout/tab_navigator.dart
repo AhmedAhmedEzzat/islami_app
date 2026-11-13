@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../models/quran_open_request.dart';
 import 'quran/quran_details_view.dart';

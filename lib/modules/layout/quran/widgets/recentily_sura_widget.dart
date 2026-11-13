@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
@@ -32,7 +32,9 @@ class RecentlySuraWidget extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.md),
         SizedBox(
-          height: 140,
+          // Three lines of text and the card's padding: taller with the
+          // phone's font size, or the last line is cut off.
+          height: 32 + MediaQuery.textScalerOf(context).scale(108),
           child: ListView.separated(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             scrollDirection: Axis.horizontal,

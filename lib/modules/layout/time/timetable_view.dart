@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:share_plus/share_plus.dart';
@@ -88,6 +88,7 @@ class _TimetableViewState extends State<TimetableView> {
           Row(
             children: [
               IconButton(
+                tooltip: MaterialLocalizations.of(context).previousMonthTooltip,
                 icon: const Icon(Icons.chevron_left),
                 onPressed: () => setState(() => _month = DateTime(_month.year, _month.month - 1)),
               ),
@@ -99,6 +100,7 @@ class _TimetableViewState extends State<TimetableView> {
                 ),
               ),
               IconButton(
+                tooltip: MaterialLocalizations.of(context).nextMonthTooltip,
                 icon: const Icon(Icons.chevron_right),
                 onPressed: () => setState(() => _month = DateTime(_month.year, _month.month + 1)),
               ),

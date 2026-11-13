@@ -73,7 +73,7 @@ flutter pub get
 flutter run
 ```
 
-Requires Flutter 3.44+ / Dart 3.8+. Verified on Android (Samsung SM A528B). The
+Requires Flutter 3.47+ / Dart 3.13+. Verified on Android (Samsung SM A528B). The
 iOS and desktop configuration is written but **has not been built or tested**,
 because the development machine has no Xcode.
 

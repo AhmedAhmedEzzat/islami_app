@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart' hide TextDirection;
@@ -85,7 +85,9 @@ class _CalendarViewState extends State<CalendarView> {
             icon: const Icon(Icons.swap_horiz),
             onPressed: () => Navigator.push(
               context,
-              MaterialPageRoute<void>(builder: (_) => const DateConverterView()),
+              MaterialPageRoute<void>(
+                builder: (_) => const DateConverterView(),
+              ),
             ),
           ),
         ],
@@ -96,6 +98,7 @@ class _CalendarViewState extends State<CalendarView> {
           Row(
             children: [
               IconButton(
+                tooltip: MaterialLocalizations.of(context).previousMonthTooltip,
                 icon: const Icon(Icons.chevron_left),
                 onPressed: () => _shift(-1),
               ),
@@ -114,6 +117,7 @@ class _CalendarViewState extends State<CalendarView> {
                 ),
               ),
               IconButton(
+                tooltip: MaterialLocalizations.of(context).nextMonthTooltip,
                 icon: const Icon(Icons.chevron_right),
                 onPressed: () => _shift(1),
               ),
@@ -145,7 +149,11 @@ class _CalendarViewState extends State<CalendarView> {
               for (var d = 1; d <= days; d++)
                 Builder(
                   builder: (context) {
-                    final g = DateTime(first.year, first.month, first.day + d - 1);
+                    final g = DateTime(
+                      first.year,
+                      first.month,
+                      first.day + d - 1,
+                    );
                     final isToday = g == today;
                     final events = IslamicCalendar.eventsOn(month, d);
                     final white = IslamicCalendar.isWhiteDay(d);
@@ -161,25 +169,31 @@ class _CalendarViewState extends State<CalendarView> {
                             : null,
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            '$d',
-                            style: context.texts.titleSmall?.copyWith(
-                              color: isToday ? scheme.onPrimary : null,
-                              fontWeight: FontWeight.w700,
+                      // Seven cells share the width, so a cell cannot grow
+                      // with the phone's font size; the two numbers shrink
+                      // to fit it instead of spilling out.
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '$d',
+                              style: context.texts.titleSmall?.copyWith(
+                                color: isToday ? scheme.onPrimary : null,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                          ),
-                          Text(
-                            '${g.day}',
-                            style: context.texts.labelSmall?.copyWith(
-                              color: isToday
-                                  ? scheme.onPrimary
-                                  : scheme.onSurfaceVariant,
+                            Text(
+                              '${g.day}',
+                              style: context.texts.labelSmall?.copyWith(
+                                color: isToday
+                                    ? scheme.onPrimary
+                                    : scheme.onSurfaceVariant,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     );
                   },

@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:adhan/adhan.dart' show Coordinates;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 // intl also exports TextDirection, which shadows the Flutter one.
 import 'package:intl/intl.dart' hide TextDirection;
@@ -56,7 +56,8 @@ class _HomeViewState extends State<HomeView> {
   late PrayerLocation _location;
   DateTime _now = DateTime.now();
   Timer? _ticker;
-  late final Future<HadethDataModel?> _hadeth = _hadethOfTheDay();
+  late Future<HadethDataModel?> _hadeth = _hadethOfTheDay();
+  int _hadethDay = dayNumber(DateTime.now());
 
   @override
   void initState() {
@@ -65,8 +66,19 @@ class _HomeViewState extends State<HomeView> {
     if (!_location.isManual) _refreshLocation();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       // Home stays mounted behind the other tabs; only tick while visible.
-      if (mounted && _visible) setState(() => _now = DateTime.now());
+      if (mounted && _visible) setState(_tick);
     });
+  }
+
+  /// Moves the clock on, and with it the hadith of the day when the app has
+  /// stayed open past midnight.
+  void _tick() {
+    _now = DateTime.now();
+    final day = dayNumber(_now);
+    if (day != _hadethDay) {
+      _hadethDay = day;
+      _hadeth = _hadethOfTheDay();
+    }
   }
 
   bool _visible = true;
@@ -76,7 +88,16 @@ class _HomeViewState extends State<HomeView> {
     super.didChangeDependencies();
     // IndexedStack turns TickerMode off for hidden tabs, which lands here.
     final visible = TickerMode.valuesOf(context).enabled;
-    if (visible && !_visible) _now = DateTime.now();
+    if (visible && !_visible) {
+      _tick();
+      // A city chosen on the Prayer tab while this one was hidden.
+      final saved = PrayerTimesService.currentLocation();
+      if (saved.isManual != _location.isManual ||
+          saved.isFallback != _location.isFallback ||
+          !_same(saved.coordinates, _location.coordinates)) {
+        _location = saved;
+      }
+    }
     _visible = visible;
   }
 
@@ -329,7 +350,9 @@ class _HomeViewState extends State<HomeView> {
   List<Widget> _fastingHint(BuildContext context, int offset) {
     final l10n = context.l10n;
     final hijriDay = IslamicCalendar.of(_now, offset: offset).hDay;
-    final tomorrow = _now.add(const Duration(days: 1));
+    // The next calendar day, not 24 hours on, which a clock change can put
+    // on the day after.
+    final tomorrow = DateTime(_now.year, _now.month, _now.day + 1);
     final String? text;
     if (hijriDay >= 12 && hijriDay <= 15) {
       text = l10n.whiteDays;
@@ -602,11 +625,18 @@ class _QuickGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = context.colors;
-    return GridView.count(
-      crossAxisCount: 4,
+    // An icon and up to two lines of label. The height follows the phone's
+    // font size rather than the tile's width, so a large font is not cut off.
+    final labelStyle = context.texts.labelSmall;
+    final lineHeight = (labelStyle?.fontSize ?? 11) * (labelStyle?.height ?? 1.45);
+    final labelHeight = MediaQuery.textScalerOf(context).scale(lineHeight * 2);
+    return GridView(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 4,
+        mainAxisExtent: 48 + AppSpacing.xs * 3 + labelHeight.ceilToDouble() + 2,
+      ),
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 0.82,
       children: [
         for (final t in tiles)
           InkWell(
@@ -627,7 +657,7 @@ class _QuickGrid extends StatelessWidget {
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: context.texts.labelSmall,
+                    style: labelStyle,
                   ),
                 ],
               ),

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
@@ -47,6 +47,8 @@ class RecentlyItemWidget extends StatelessWidget {
             context.isArabic
                 ? suraDataModel.suraNameEN
                 : suraDataModel.suraNameAR,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: context.texts.headlineSmall?.copyWith(
               color: scheme.onPrimaryContainer,
             ),
@@ -60,6 +62,8 @@ class RecentlyItemWidget extends StatelessWidget {
                 : context.l10n.verseCount(
                     int.tryParse(suraDataModel.suraVersesNumber) ?? 0,
                   ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: context.texts.bodySmall?.copyWith(
               color: scheme.onPrimaryContainer.withValues(alpha: 0.8),
             ),
