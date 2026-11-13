@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../core/widgets/fitted_sheet.dart';
 import '../../core/constants/muezzins.dart';
 import '../../core/services/adhan_sounds.dart';
 import '../../core/services/notification_refresh.dart';
@@ -33,9 +34,8 @@ class _MuezzinViewState extends State<MuezzinView> {
     if (!mounted) return;
     final fromFile = !canFile
         ? false
-        : await showModalBottomSheet<bool>(
-            context: context,
-            showDragHandle: true,
+        : await showFittedSheet<bool>(
+            context,
             builder: (context) => SafeArea(
               child: Column(
                 mainAxisSize: MainAxisSize.min,

@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
 
-import '../../../core/constants/constants.dart';
 import '../../../core/services/quran_search_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
@@ -74,14 +73,7 @@ class _QuranSearchViewState extends State<QuranSearchView> {
   List<SuraDataModel> get _suraMatches {
     final q = _query.trim().toLowerCase();
     if (q.isEmpty) return const [];
-    return Constants.suraDataLists
-        .where(
-          (s) =>
-              s.suraNameEN.toLowerCase().contains(q) ||
-              s.suraNameAR.contains(_query.trim()) ||
-              s.suraID == q,
-        )
-        .toList();
+    return suraMatches(q);
   }
 
   @override

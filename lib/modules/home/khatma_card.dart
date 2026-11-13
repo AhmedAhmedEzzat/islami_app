@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/widgets/fitted_sheet.dart';
 import '../../core/services/khatma.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
@@ -30,9 +31,8 @@ class KhatmaCard extends StatelessWidget {
 
   /// Asks how many days to finish in, and starts the plan.
   static Future<void> showStartSheet(BuildContext context) async {
-    final days = await showModalBottomSheet<int>(
-      context: context,
-      showDragHandle: true,
+    final days = await showFittedSheet<int>(
+      context,
       builder: (_) => const _StartSheet(),
     );
     if (days != null) await Khatma.start(days);

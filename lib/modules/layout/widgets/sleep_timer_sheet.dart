@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
 
+import '../../../core/widgets/fitted_sheet.dart';
 import '../../../core/services/sleep_timer.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
@@ -9,9 +10,8 @@ import '../../../core/utils/l10n_ext.dart';
 
 /// Lets the reader pick when audio should stop by itself.
 Future<void> showSleepTimerSheet(BuildContext context, {bool offerEndOfSura = false}) {
-  return showModalBottomSheet<void>(
-    context: context,
-    showDragHandle: true,
+  return showFittedSheet<void>(
+    context,
     builder: (context) {
       final l10n = context.l10n;
       final active = SleepTimer.setting.value != null;

@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/widgets/fitted_sheet.dart';
 import '../../core/constants/constants.dart';
 import '../../core/services/hifz.dart';
 import '../../core/theme/app_colors.dart';
@@ -24,9 +25,8 @@ class _HifzViewState extends State<HifzView> {
   Future<void> _choose(int sura) async {
     final l10n = context.l10n;
     final current = Hifz.of(sura)?.status;
-    final picked = await showModalBottomSheet<(bool, HifzStatus?)>(
-      context: context,
-      showDragHandle: true,
+    final picked = await showFittedSheet<(bool, HifzStatus?)>(
+      context,
       builder: (context) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
