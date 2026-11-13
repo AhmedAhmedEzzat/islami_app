@@ -350,7 +350,9 @@ class _HomeViewState extends State<HomeView> {
   List<Widget> _fastingHint(BuildContext context, int offset) {
     final l10n = context.l10n;
     final hijriDay = IslamicCalendar.of(_now, offset: offset).hDay;
-    final tomorrow = _now.add(const Duration(days: 1));
+    // The next calendar day, not 24 hours on, which a clock change can put
+    // on the day after.
+    final tomorrow = DateTime(_now.year, _now.month, _now.day + 1);
     final String? text;
     if (hijriDay >= 12 && hijriDay <= 15) {
       text = l10n.whiteDays;

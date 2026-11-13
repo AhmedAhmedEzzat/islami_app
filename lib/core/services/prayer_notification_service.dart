@@ -569,7 +569,7 @@ abstract final class PrayerNotificationService {
         AlertKind.kahf => (l10n.kahfTitle, l10n.kahfBody),
         AlertKind.mondayThursday => (
           l10n.fastMondayThursdayTitle,
-          alert.time.add(const Duration(days: 1)).weekday == DateTime.monday
+          DateTime(alert.time.year, alert.time.month, alert.time.day + 1).weekday == DateTime.monday
               ? l10n.fastMondayBody
               : l10n.fastThursdayBody,
         ),

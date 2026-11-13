@@ -26,8 +26,11 @@ class UpcomingEvent {
   final DateTime date;
   final int hijriYear;
 
-  int daysFrom(DateTime today) =>
-      date.difference(DateTime(today.year, today.month, today.day)).inDays;
+  /// Calendar days from [today]. Counted between UTC dates: local midnights
+  /// are 23 hours apart across a clock change, which as a span is a day short.
+  int daysFrom(DateTime today) => DateTime.utc(date.year, date.month, date.day)
+      .difference(DateTime.utc(today.year, today.month, today.day))
+      .inDays;
 }
 
 /// Hijri dates, with the user's day adjustment applied in exactly one place.

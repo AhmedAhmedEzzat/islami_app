@@ -59,4 +59,15 @@ void main() {
     expect(IslamicCalendar.ramadanDay(DateTime(2026, 2, 20)), 3);
     expect(IslamicCalendar.ramadanDay(DateTime(2026, 6, 1)), isNull);
   });
+
+  test('days to an event are calendar days, across a clock change too', () {
+    // Clocks go forward between these dates in Europe and North America
+    // (29 and 8 March 2026), making the span between the two local midnights
+    // an hour short of ten days.
+    final event = UpcomingEvent(IslamicEvent.eidFitr, DateTime(2026, 4, 2), 1447);
+    expect(event.daysFrom(DateTime(2026, 3, 23, 15, 30)), 10);
+    final earlier = UpcomingEvent(IslamicEvent.eidFitr, DateTime(2026, 3, 12), 1447);
+    expect(earlier.daysFrom(DateTime(2026, 3, 2)), 10);
+    expect(earlier.daysFrom(DateTime(2026, 3, 12, 23, 59)), 0);
+  });
 }
