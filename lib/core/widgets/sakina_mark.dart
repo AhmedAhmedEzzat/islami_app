@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// The Sakina mark: a crescent with the Arabic س seated in its opening.
 ///

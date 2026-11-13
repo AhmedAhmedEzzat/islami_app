@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_localizations/flutter_localizations.dart' show GlobalWidgetsLocalizations;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakina/core/services/quran_meta.dart';
 import 'package:sakina/core/services/shared_prefs_helper.dart';
@@ -82,13 +82,13 @@ void main() {
       ),
     );
 
-    await tester.tap(find.byTooltip('Highlight in green'));
+    await tester.tap(_tooltip('Highlight in green'));
     await tester.pump();
     expect(cubit.noteFor(kursi)!.color, HighlightColor.green);
     expect(find.byIcon(Icons.check), findsOneWidget);
 
     // Tapping it again takes it off.
-    await tester.tap(find.byTooltip('Highlight in green'));
+    await tester.tap(_tooltip('Highlight in green'));
     await tester.pump();
     expect(cubit.noteFor(kursi), isNull);
 
@@ -100,9 +100,14 @@ void main() {
     expect(cubit.noteFor(kursi)!.text, 'Read it before sleeping');
     expect(find.text('Read it before sleeping'), findsOneWidget);
 
-    await tester.tap(find.byTooltip('Delete note'));
+    await tester.tap(_tooltip('Delete note'));
     await tester.pump();
     expect(cubit.noteFor(kursi), isNull);
     expect(find.text('Add a note'), findsOneWidget);
   });
 }
+
+/// `find.byTooltip` looks for the framework's own Tooltip class, which is not
+/// the one `material_ui` builds.
+Finder _tooltip(String message) =>
+    find.byWidgetPredicate((w) => w is Tooltip && w.message == message);
