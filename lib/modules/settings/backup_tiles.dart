@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../core/constants/prefs_keys.dart';
+import '../../core/services/azkar_favourites.dart';
 import '../../core/services/azkar_progress.dart';
 import '../../core/services/backup.dart';
 import '../../core/services/daily_deeds.dart';
@@ -107,6 +108,7 @@ class BackupTiles extends StatelessWidget {
       notes.load();
       Khatma.reload();
       HadethFavourites.reload();
+      AzkarFavourites.reload();
       RecentSuras.reload();
       Hifz.changes.value++;
       DailyDeeds.changes.value++;
