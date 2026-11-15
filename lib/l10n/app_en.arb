@@ -718,7 +718,16 @@
   "offlineTafsirDone": "Tafsir saved for reading offline",
   "offlineTafsirFailed": "Download stopped. Check the connection and try again.",
   "deleteTafsirConfirm": "Delete the saved tafsir? Each sura downloads again when you open it.",
-  "@offlineTafsirSaved": {"placeholders": {"saved": {"type": "int"}, "total": {"type": "int"}}},
+  "@offlineTafsirSaved": {
+    "placeholders": {
+      "saved": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "tafsirUnavailableWeb": "Tafsir needs an internet connection.",
   "listenSubtitleWeb": "Play any sura with any reciter",
   "myNotesSection": "Highlight and note",
@@ -737,7 +746,13 @@
   "savedNotes": "Notes and highlights",
   "noNotes": "No notes or highlights yet. Tap any verse while reading to highlight it or write a note.",
   "highlighted": "Highlighted",
-  "@highlightIn": {"placeholders": {"color": {"type": "String"}}},
+  "@highlightIn": {
+    "placeholders": {
+      "color": {
+        "type": "String"
+      }
+    }
+  },
   "hifzTitle": "Memorisation",
   "hifzNotStarted": "Not started",
   "hifzLearning": "Learning",
@@ -753,11 +768,47 @@
   "hifzHard": "Hard",
   "hifzRevised": "Revised",
   "hifzNextRevision": "Memorised · next revision {date}",
-  "@hifzPercent": {"placeholders": {"percent": {"type": "String"}}},
-  "@hifzSummary": {"placeholders": {"memorised": {"type": "int"}, "learning": {"type": "int"}, "verses": {"type": "int"}}},
-  "@hifzDueToday": {"placeholders": {"count": {"type": "int"}}},
-  "@hifzOverdue": {"placeholders": {"days": {"type": "int"}}},
-  "@hifzNextRevision": {"placeholders": {"date": {"type": "String"}}},
+  "@hifzPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "@hifzSummary": {
+    "placeholders": {
+      "memorised": {
+        "type": "int"
+      },
+      "learning": {
+        "type": "int"
+      },
+      "verses": {
+        "type": "int"
+      }
+    }
+  },
+  "@hifzDueToday": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@hifzOverdue": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "@hifzNextRevision": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "dateConverter": "Date converter",
   "gregorianToHijri": "Gregorian → Hijri",
   "hijriToGregorian": "Hijri → Gregorian",
@@ -766,8 +817,20 @@
   "yearLabel": "Year",
   "daysFromToday": "{days, plural, =0{Today} =1{Tomorrow} other{In {days} days}}",
   "daysAgo": "{days, plural, =1{Yesterday} other{{days} days ago}}",
-  "@daysFromToday": {"placeholders": {"days": {"type": "int"}}},
-  "@daysAgo": {"placeholders": {"days": {"type": "int"}}},
+  "@daysFromToday": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "@daysAgo": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "hifzRevisionDue": "Memorised · due for revision",
   "customAdhanTitle": "Your own recording",
   "bundledAdhans": "With the app",
@@ -791,7 +854,13 @@
   "dhikrRemindersSetting": "Dhikr reminders",
   "dhikrOff": "Off",
   "dhikrEvery": "{hours, plural, =1{Every hour} other{Every {hours} hours}}, from sunrise to Isha",
-  "@dhikrEvery": {"placeholders": {"hours": {"type": "int"}}},
+  "@dhikrEvery": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
   "qadaFasts": "Fasts to make up",
   "qadaFastsHint": "Missed days of Ramadan",
   "repeatRange": "Repeat verses…",
@@ -803,13 +872,46 @@
   "rangeTimes": "{n, plural, =2{Twice} other{{n} times}}",
   "startRange": "Start",
   "rangeStatus": "Verse {ayah} · {from}–{to} ×{passes}",
-  "@rangeTimes": {"placeholders": {"n": {"type": "int"}}},
-  "@rangeStatus": {"placeholders": {"ayah": {"type": "int"}, "from": {"type": "int"}, "to": {"type": "int"}, "passes": {"type": "int"}}},
+  "@rangeTimes": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "@rangeStatus": {
+    "placeholders": {
+      "ayah": {
+        "type": "int"
+      },
+      "from": {
+        "type": "int"
+      },
+      "to": {
+        "type": "int"
+      },
+      "passes": {
+        "type": "int"
+      }
+    }
+  },
   "trackerLast30": "The last 30 days",
   "trackerBestStreak": "{days, plural, =0{Best run of complete days: none yet} =1{Best run of complete days: 1 day} other{Best run of complete days: {days} days}}",
   "percentValue": "{n}%",
-  "@trackerBestStreak": {"placeholders": {"days": {"type": "int"}}},
-  "@percentValue": {"placeholders": {"n": {"type": "int"}}},
+  "@trackerBestStreak": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "@percentValue": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "deedsTitle": "Today's good deeds",
   "deedsProgress": "{done} of {total} done",
   "deedsStreak": "{days, plural, =1{1 full day in a row} other{{days} full days in a row}}",
@@ -823,10 +925,31 @@
   "deedSunnah": "Sunnah prayers",
   "deedWitr": "Witr",
   "deedSadaqa": "Charity",
-  "@deedsProgress": {"placeholders": {"done": {"type": "int"}, "total": {"type": "int"}}},
-  "@deedsStreak": {"placeholders": {"days": {"type": "int"}}},
+  "@deedsProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@deedsStreak": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "deedsDeleteConfirm": "Delete \"{name}\" from your deeds?",
-  "@deedsDeleteConfirm": {"placeholders": {"name": {"type": "String"}}},
+  "@deedsDeleteConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "backupSection": "Backup",
   "backupSave": "Save a backup",
   "backupSaveSubtitle": "Bookmarks, notes, memorisation, prayer log, deeds and settings, in one file to keep in Drive, email or WhatsApp",
@@ -839,7 +962,13 @@
   "backupRestoreConfirm": "Your bookmarks, notes, memorisation, prayer log, deeds and settings on this phone will be replaced with those in the backup.",
   "backupRestoreConfirmDated": "Your bookmarks, notes, memorisation, prayer log, deeds and settings on this phone will be replaced with those in the backup from {when}.",
   "backupRestored": "Backup restored.",
-  "@backupRestoreConfirmDated": {"placeholders": {"when": {"type": "String"}}},
+  "@backupRestoreConfirmDated": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
   "namesLearnTitle": "Learn the Names",
   "namesCards": "Cards",
   "namesQuiz": "Quiz",
@@ -859,15 +988,63 @@
   "namesQuizWhatNext": "Which name comes after it?",
   "namesQuizNext": "Next",
   "namesQuizFinish": "See the score",
-  "@namesLearned": {"placeholders": {"learned": {"type": "int"}, "total": {"type": "int"}}},
-  "@namesWhichIs": {"placeholders": {"n": {"type": "String"}}},
-  "@namesQuizScore": {"placeholders": {"score": {"type": "int"}, "total": {"type": "int"}}},
-  "@namesQuizProgress": {"placeholders": {"n": {"type": "int"}, "total": {"type": "int"}}},
+  "@namesLearned": {
+    "placeholders": {
+      "learned": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@namesWhichIs": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "@namesQuizScore": {
+    "placeholders": {
+      "score": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@namesQuizProgress": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "shareTimetable": "Share this month",
   "timetableShareTitle": "Prayer times · {place} · {month}",
-  "@timetableShareTitle": {"placeholders": {"place": {"type": "String"}, "month": {"type": "String"}}},
+  "@timetableShareTitle": {
+    "placeholders": {
+      "place": {
+        "type": "String"
+      },
+      "month": {
+        "type": "String"
+      }
+    }
+  },
   "timetableShareTitleNoPlace": "Prayer times · {month}",
-  "@timetableShareTitleNoPlace": {"placeholders": {"month": {"type": "String"}}},
+  "@timetableShareTitleNoPlace": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
   "offlineRecitations": "Offline recitations",
   "offlineRecitationsSubtitle": "Play any sura with any reciter, or save it for offline listening",
   "surasDownloaded": "{n} suras downloaded",
@@ -1037,5 +1214,28 @@
   "minuteEarlier": "One minute earlier",
   "minuteLater": "One minute later",
   "dayEarlier": "One day earlier",
-  "dayLater": "One day later"
+  "dayLater": "One day later",
+  "azkarNoFavourites": "No favourites yet. Tap the heart on a dhikr to keep it here.",
+  "textLarger": "Larger text",
+  "textSmaller": "Smaller text",
+  "azkarProgressOf": "{done} of {total}",
+  "@azkarProgressOf": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "azkarTimes": "{count, plural, =1{Once} =2{Twice} other{{count} times}}",
+  "@azkarTimes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "azkarContinue": "Continue"
 }

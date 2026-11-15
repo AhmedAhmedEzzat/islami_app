@@ -1,13 +1,17 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../../../core/constants/azkar_titles_en.dart';
+import '../../../core/services/azkar_service.dart';
 import '../../../core/utils/l10n_ext.dart';
 import '../../../models/zikr_model.dart';
 
-/// A localized name for the featured chapters; every other chapter keeps its
-/// Hisn al-Muslim title, which is part of the content.
+/// The name to show for a chapter: the app's own for the favourites and the
+/// featured chapters; otherwise the book's Arabic title, or for readers in
+/// English what the chapter is for.
 String azkarTitle(BuildContext context, AzkarChapter chapter) {
   final l10n = context.l10n;
   return switch (chapter.id) {
+    AzkarService.favouritesId => l10n.favourites,
     FeaturedAzkar.morningEvening => l10n.azkarMorningEvening,
     FeaturedAzkar.sleep => l10n.azkarSleep,
     FeaturedAzkar.waking => l10n.azkarWaking,
@@ -18,7 +22,10 @@ String azkarTitle(BuildContext context, AzkarChapter chapter) {
     FeaturedAzkar.enteringMosque => l10n.azkarEnteringMosque,
     FeaturedAzkar.distress => l10n.azkarDistress,
     FeaturedAzkar.istikhara => l10n.azkarIstikhara,
-    _ => chapter.title,
+    _ =>
+      context.isArabic
+          ? chapter.title
+          : azkarTitlesEn[chapter.id] ?? chapter.title,
   };
 }
 
@@ -33,5 +40,6 @@ IconData azkarIcon(int chapterId) => switch (chapterId) {
   FeaturedAzkar.enteringMosque => Icons.door_front_door_outlined,
   FeaturedAzkar.distress => Icons.favorite_border,
   FeaturedAzkar.istikhara => Icons.alt_route,
+  AzkarService.favouritesId => Icons.favorite,
   _ => Icons.menu_book_outlined,
 };

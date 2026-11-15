@@ -1,3 +1,4 @@
+import 'core/services/azkar_favourites.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
@@ -44,6 +45,7 @@ Future<void> main() async {
   await QuranMeta.load();
   // Its notifier was built before storage was ready.
   HadethFavourites.reload();
+  AzkarFavourites.reload();
   await PrayerNotificationService.init();
   ReviewPrompt.noteLaunch();
   // Recitation and radio are "music" to the OS: they pause for a phone call

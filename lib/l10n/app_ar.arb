@@ -586,5 +586,11 @@
   "minuteEarlier": "تقديم دقيقة",
   "minuteLater": "تأخير دقيقة",
   "dayEarlier": "تقديم يوم",
-  "dayLater": "تأخير يوم"
+  "dayLater": "تأخير يوم",
+  "azkarNoFavourites": "لا مفضلة بعد. اضغط القلب على أي ذكر ليبقى هنا.",
+  "textLarger": "تكبير الخط",
+  "textSmaller": "تصغير الخط",
+  "azkarProgressOf": "{done} من {total}",
+  "azkarTimes": "{count, plural, one{مرة واحدة} two{مرتان} few{{count} مرات} many{{count} مرة} other{{count} مرة}}",
+  "azkarContinue": "متابعة"
 }

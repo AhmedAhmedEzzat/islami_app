@@ -20,7 +20,12 @@ class AzkarTabView extends StatelessWidget {
         length: 2,
         child: Column(
           children: [
-            TabBar(tabs: [Tab(text: l10n.hisnTitle), Tab(text: l10n.tasbehTitle)]),
+            TabBar(
+              tabs: [
+                Tab(text: l10n.hisnTitle),
+                Tab(text: l10n.tasbehTitle),
+              ],
+            ),
             const Expanded(
               child: TabBarView(
                 children: [

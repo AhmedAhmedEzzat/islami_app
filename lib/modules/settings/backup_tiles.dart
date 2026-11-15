@@ -1,3 +1,4 @@
+import '../../core/services/azkar_favourites.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -106,6 +107,7 @@ class BackupTiles extends StatelessWidget {
       notes.load();
       Khatma.reload();
       HadethFavourites.reload();
+      AzkarFavourites.reload();
       RecentSuras.reload();
       Hifz.changes.value++;
       DailyDeeds.changes.value++;

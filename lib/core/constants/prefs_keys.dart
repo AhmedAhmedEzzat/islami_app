@@ -56,6 +56,15 @@ abstract final class PrefsKeys {
   /// The suras of a reciter saved for offline listening, as numbers.
   static String recitationDownloads(String reciterId) => 'recitation.downloads.$reciterId';
   static const String hadethFavourites = 'hadeth.favourites';
+
+  /// Adhkar kept as favourites, by their Hisn al-Muslim id.
+  static const String azkarFavourites = 'azkar.favourites';
+
+  /// How far through each chapter's counts the reader is, for this sitting.
+  static const String azkarProgress = 'azkar.progress';
+
+  /// The adhkar text size, as a multiple of the usual one.
+  static const String azkarTextScale = 'azkar.textScale';
   static const String zakatInputs = 'zakat.inputs';
 
   /// Prayer tracker: a bitmask of the five prayers logged for one day.
