@@ -5,6 +5,7 @@ import 'package:cupertino_ui/cupertino_ui.dart'
 import 'package:flutter_localizations/flutter_localizations.dart'
     show GlobalWidgetsLocalizations;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sakina/core/constants/prefs_keys.dart';
 import 'package:sakina/core/services/recent_suras.dart';
 import 'package:sakina/core/services/shared_prefs_helper.dart';
 import 'package:sakina/core/state/bookmarks_cubit.dart';
@@ -37,7 +38,6 @@ import 'package:sakina/modules/more/hifz_view.dart';
 import 'package:sakina/modules/more/names_learn_view.dart';
 import 'package:sakina/modules/more/listen_view.dart';
 import 'package:sakina/modules/more/more_view.dart';
-import 'package:sakina/modules/more/zakat_view.dart';
 import 'package:sakina/modules/settings/settings_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -95,7 +95,6 @@ void main() {
   final pages = <String, Widget Function()>{
     'Home': () => const HomeView(),
     'More': () => const MoreView(),
-    'Zakat': () => const ZakatView(),
     'Settings': () => const SettingsView(),
     'Listen': () => const ListenView(),
     'Memorisation': () => const HifzView(),
@@ -170,4 +169,40 @@ void main() {
       }
     }
   }
+
+  group('Home', () {
+    testWidgets('invites a reader without reminders to turn them on, until put away', (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.625;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(_host(const HomeView(), const Locale('en'), AppTheme.light, 1));
+      await _pump(tester);
+      expect(find.text('Never miss a prayer'), findsOneWidget);
+
+      await tester.tap(find.text('Not now'));
+      await _pump(tester);
+      expect(find.text('Never miss a prayer'), findsNothing);
+
+      // And it stays away the next time Home opens.
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpWidget(_host(const HomeView(), const Locale('en'), AppTheme.light, 1));
+      await _pump(tester);
+      expect(find.text('Never miss a prayer'), findsNothing);
+    });
+
+    testWidgets('says nothing about reminders once they are on', (tester) async {
+      SharedPreferences.setMockInitialValues({PrefsKeys.prayerNotifications: true});
+      await LocalStorageServices.init();
+      await tester.pumpWidget(_host(const HomeView(), const Locale('en'), AppTheme.light, 1));
+      await _pump(tester);
+      expect(find.text('Never miss a prayer'), findsNothing);
+    });
+
+    test('greets by the time of day', () {
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      expect(greetingFor(l10n, DateTime(2026, 6, 15, 7)), 'Good morning');
+      expect(greetingFor(l10n, DateTime(2026, 6, 15, 13)), 'Good afternoon');
+      expect(greetingFor(l10n, DateTime(2026, 6, 15, 20)), 'Good evening');
+    });
+  });
 }

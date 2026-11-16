@@ -9,6 +9,7 @@ import 'package:intl/intl.dart' hide TextDirection;
 import '../../core/constants/assets.dart';
 import '../../core/constants/constants.dart';
 import '../../core/constants/daily_verses.dart';
+import '../../core/constants/prefs_keys.dart';
 import '../../core/constants/quran_duas.dart';
 import '../../core/services/azkar_progress.dart';
 import '../../core/services/hadeth_service.dart';
@@ -18,6 +19,7 @@ import '../../core/services/notification_refresh.dart';
 import '../../core/services/prayer_times_service.dart';
 import '../../core/services/quran_service.dart';
 import '../../core/services/recent_suras.dart';
+import '../../core/services/shared_prefs_helper.dart';
 import '../../core/state/settings_cubit.dart';
 import '../../core/state/settings_state.dart';
 import '../../core/theme/app_colors.dart';
@@ -26,6 +28,7 @@ import '../../core/utils/arabic_text.dart';
 import '../../core/utils/l10n_ext.dart';
 import '../../core/utils/prayer_labels.dart';
 import '../../core/widgets/app_background.dart';
+import '../../l10n/gen/app_localizations.dart';
 import '../../models/hadeth_data_model.dart';
 import '../../models/sura_data_model.dart';
 import '../../models/zikr_model.dart';
@@ -41,6 +44,7 @@ import '../layout/time/tracker_view.dart';
 import '../more/calendar_view.dart';
 import '../more/duas_view.dart';
 import '../more/names_view.dart';
+import '../settings/prayer_notifications_prompt.dart';
 import '../settings/settings_view.dart';
 import 'daily_deeds_card.dart';
 import 'khatma_card.dart';
@@ -58,6 +62,7 @@ class _HomeViewState extends State<HomeView> {
   DateTime _now = DateTime.now();
   Timer? _ticker;
   late Future<HadethDataModel?> _hadeth = _hadethOfTheDay();
+  bool _remindersDismissed = LocalStorageServices.getBool(PrefsKeys.remindersCardDismissed) ?? false;
   int _hadethDay = dayNumber(DateTime.now());
 
   @override
@@ -127,9 +132,7 @@ class _HomeViewState extends State<HomeView> {
   }
 
   static Future<HadethDataModel?> _hadethOfTheDay() async {
-    final all = await HadethService.loadAll();
-    if (all.isEmpty) return null;
-    return all[dayNumber(DateTime.now()) % all.length];
+    return HadethService.ofDay(await HadethService.loadAll(), DateTime.now());
   }
 
   void _push(Widget page, {String? name}) => Navigator.push(
@@ -210,6 +213,22 @@ class _HomeViewState extends State<HomeView> {
                 _RamadanCard(day: ramadanDay, result: result, now: _now),
               ],
               ..._fastingHint(context, offset),
+              if (!settings.prayerNotifications && !_remindersDismissed)
+                _RemindersCard(
+                  onDismiss: () {
+                    setState(() => _remindersDismissed = true);
+                    LocalStorageServices.setBool(PrefsKeys.remindersCardDismissed, true);
+                  },
+                ),
+              // Something new each day, near the top where it is seen.
+              const SizedBox(height: AppSpacing.lg),
+              _SectionTitle(l10n.verseOfTheDay),
+              _VerseOfTheDay(
+                // Keyed by the verse so a new day loads a new one.
+                key: ValueKey(DailyVerses.forDay(_now).label),
+                dua: DailyVerses.forDay(_now),
+                onOpen: (sura, ayah) => _openSura(sura, ayah: ayah),
+              ),
               const SizedBox(height: AppSpacing.md),
               ValueListenableBuilder<List<SuraDataModel>>(
                 valueListenable: RecentSuras.notifier,
@@ -288,14 +307,6 @@ class _HomeViewState extends State<HomeView> {
                     () => _push(const TrackerView()),
                   ),
                 ],
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              _SectionTitle(l10n.verseOfTheDay),
-              _VerseOfTheDay(
-                // Keyed by the verse so a new day loads a new one.
-                key: ValueKey(DailyVerses.forDay(_now).label),
-                dua: DailyVerses.forDay(_now),
-                onOpen: (sura, ayah) => _openSura(sura, ayah: ayah),
               ),
               const SizedBox(height: AppSpacing.lg),
               _SectionTitle(l10n.hadethOfTheDay),
@@ -421,6 +432,71 @@ class _SectionTitle extends StatelessWidget {
   );
 }
 
+/// Morning until noon, afternoon until five, evening after that.
+String greetingFor(AppLocalizations l10n, DateTime now) => switch (now.hour) {
+  < 12 => l10n.greetingMorning,
+  < 17 => l10n.greetingAfternoon,
+  _ => l10n.greetingEvening,
+};
+
+/// Invites a reader whose reminders are off to turn them on: without them
+/// there is no adhan and no hadith of the day. Put away for good by "Not now";
+/// Settings still has the switch.
+class _RemindersCard extends StatelessWidget {
+  const _RemindersCard({required this.onDismiss});
+
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final scheme = context.colors;
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.md),
+      child: Card(
+        color: scheme.primaryContainer,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.sm),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.notifications_active_outlined, color: scheme.onPrimaryContainer),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      l10n.remindersCardTitle,
+                      style: context.texts.titleMedium?.copyWith(color: scheme.onPrimaryContainer),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                l10n.remindersCardBody,
+                style: context.texts.bodyMedium?.copyWith(color: scheme.onPrimaryContainer),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              OverflowBar(
+                alignment: MainAxisAlignment.end,
+                spacing: AppSpacing.sm,
+                children: [
+                  TextButton(onPressed: onDismiss, child: Text(l10n.remindersCardLater)),
+                  FilledButton(
+                    onPressed: () => turnOnPrayerNotifications(context),
+                    child: Text(l10n.remindersCardAction),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _DateHeader extends StatelessWidget {
   const _DateHeader({required this.now, required this.hijriOffset});
 
@@ -443,7 +519,7 @@ class _DateHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            now.hour < 12 ? l10n.greetingMorning : l10n.greetingEvening,
+            greetingFor(l10n, now),
             style: context.texts.bodyMedium?.copyWith(
               color: scheme.onSurfaceVariant,
             ),

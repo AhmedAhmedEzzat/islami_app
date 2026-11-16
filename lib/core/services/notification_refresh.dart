@@ -60,6 +60,7 @@ abstract final class NotificationRefresh {
       khatma: state.khatmaReminders && Khatma.isActive,
       sunnah: state.sunnahAlerts,
       dhikrHours: state.dhikrHours,
+      dailyHadith: state.dailyHadith,
     );
   }
 

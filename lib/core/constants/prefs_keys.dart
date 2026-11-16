@@ -33,6 +33,10 @@ abstract final class PrefsKeys {
   static const String customAdhan = 'settings.customAdhan';
   static const String customFajrAdhan = 'settings.customFajrAdhan';
   static const String dhikrHours = 'settings.dhikrHours';
+  static const String dailyHadith = 'settings.dailyHadith';
+
+  /// Set once the reader has put away Home's invitation to turn reminders on.
+  static const String remindersCardDismissed = 'home.remindersCardDismissed';
   static const String continuousRecitation = 'settings.continuousRecitation';
   static const String sunnahAlerts = 'settings.sunnahAlerts';
   static const String verseRepeat = 'settings.verseRepeat';
@@ -59,7 +63,6 @@ abstract final class PrefsKeys {
 
   /// Adhkar kept as favourites, by their Hisn al-Muslim id.
   static const String azkarFavourites = 'azkar.favourites';
-  static const String zakatInputs = 'zakat.inputs';
 
   /// Prayer tracker: a bitmask of the five prayers logged for one day.
   static String prayerLog(DateTime day) =>

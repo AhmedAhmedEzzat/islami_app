@@ -11,6 +11,7 @@ import '../../core/state/radio_cubit.dart';
 import '../../core/state/radio_state.dart';
 import '../../models/quran_open_request.dart';
 import '../../models/radio_channel.dart';
+import '../../core/services/hadeth_service.dart';
 import '../../core/services/recent_suras.dart';
 import '../../models/sura_data_model.dart';
 import '../home/home_view.dart';
@@ -19,6 +20,7 @@ import '../../core/services/prayer_notification_service.dart';
 import '../../models/zikr_model.dart';
 import 'azkar/azkar_tab_view.dart';
 import 'azkar/azkar_view.dart';
+import 'hadeth/hadeth_details_view.dart';
 import 'layout_scope.dart';
 import 'quran/quran_details_view.dart';
 import 'quran/quran_view.dart';
@@ -115,6 +117,18 @@ class _LayoutViewState extends State<LayoutView> {
         _selectTab(AppTab.prayer);
       case AlertKind.dhikr:
         _selectTab(AppTab.azkar);
+      case AlertKind.dailyHadith:
+        // Today's hadith, over Home, which shows the same one.
+        _selectTab(AppTab.home);
+        HadethService.loadAll().then((all) {
+          final hadeth = HadethService.ofDay(all, DateTime.now());
+          if (hadeth == null || !mounted) return;
+          _withNavigator(AppTab.home, (navigator) {
+            navigator
+              ..popUntil((route) => route.isFirst)
+              ..push(MaterialPageRoute<void>(builder: (_) => HadethDetailsView(hadeth: hadeth)));
+          });
+        });
       case AlertKind.khatma:
         // Home holds the khatma card, with today's pages and a Read button.
         _selectTab(AppTab.home);
