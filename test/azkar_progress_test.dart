@@ -2,6 +2,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:cupertino_ui/cupertino_ui.dart' show GlobalCupertinoLocalizations;
 import 'package:flutter_localizations/flutter_localizations.dart' show GlobalWidgetsLocalizations;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sakina/core/constants/azkar_titles_en.dart';
+import 'package:sakina/core/services/azkar_favourites.dart';
 import 'package:sakina/core/services/azkar_progress.dart';
 import 'package:sakina/core/services/azkar_service.dart';
 import 'package:sakina/core/services/daily_deeds.dart';
@@ -64,6 +66,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     await LocalStorageServices.init();
     DailyDeeds.changes.value++;
+    AzkarFavourites.reload();
   });
 
   group('AzkarProgress', () {
@@ -124,6 +127,31 @@ void main() {
       await AzkarProgress.setFontScale(5);
       expect(AzkarProgress.fontScale(), AzkarProgress.maxFontScale);
     });
+  });
+
+  group('favourites', () {
+    test('make a chapter of their own, in the order of the book, once each', () {
+      const other = AzkarChapter(id: 10, title: 'x', items: [ZikrModel(id: 2, text: 'ب', count: 1)]);
+      final fav = AzkarService.favourites([other, _chapter], {2, 1});
+      expect(fav.id, AzkarService.favouritesId);
+      // Chapter 10 comes before chapter 999 in the book.
+      expect(fav.items.map((z) => z.id), [2, 1]);
+    });
+
+    test('are toggled and kept', () async {
+      await AzkarFavourites.toggle(5);
+      expect(AzkarFavourites.contains(5), isTrue);
+      AzkarFavourites.reload();
+      expect(AzkarFavourites.contains(5), isTrue);
+      await AzkarFavourites.toggle(5);
+      expect(AzkarFavourites.contains(5), isFalse);
+    });
+  });
+
+  testWidgets('every chapter of the book has an English name', (tester) async {
+    final all = (await tester.runAsync(AzkarService.loadAll))!;
+    expect(all, isNotEmpty);
+    expect([for (final c in all) if (!azkarTitlesEn.containsKey(c.id)) c.id], isEmpty);
   });
 
   group('AzkarView', () {
@@ -209,6 +237,42 @@ void main() {
     }
   });
 
+  group('favourite adhkar', () {
+    testWidgets('the heart on a card puts it in the favourites chapter', (tester) async {
+      final chapter = await _bundled(tester, FeaturedAzkar.sleep);
+      await _pumpReader(tester, const AzkarView(chapterId: AzkarService.favouritesId));
+      expect(find.textContaining('No favourites yet'), findsOneWidget);
+
+      await _pumpReader(tester, AzkarView(key: const ValueKey('sleep'), chapterId: chapter.id));
+      await tester.tap(_tooltip('Add to favourites').first);
+      await tester.pumpAndSettle();
+      expect(AzkarFavourites.contains(chapter.items.first.id), isTrue);
+      expect(_tooltip('Remove from favourites'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+      await _pumpReader(tester, const AzkarView(chapterId: AzkarService.favouritesId));
+      expect(find.byKey(AzkarView.cardKey(chapter.items.first.id)), findsOneWidget);
+      expect(find.textContaining('No favourites yet'), findsNothing);
+    });
+
+    testWidgets('the index offers the favourites once there are any', (tester) async {
+      await _pumpReader(tester, const Scaffold(body: AzkarIndexView(embedded: true)));
+      expect(find.text('Favourites'), findsNothing);
+      final chapter = await _bundled(tester, FeaturedAzkar.sleep);
+      await tester.runAsync(() => AzkarFavourites.toggle(chapter.items.first.id));
+      await tester.pumpAndSettle();
+      expect(find.text('Favourites'), findsOneWidget);
+    });
+
+    testWidgets('chapters are listed by an English name, with the Arabic below', (tester) async {
+      await _pumpReader(tester, const Scaffold(body: AzkarIndexView(embedded: true)));
+      // Chapter 2 is not one of the daily cards, which have names of their own.
+      final chapter = await _bundled(tester, 2);
+      await tester.scrollUntilVisible(find.text(azkarTitlesEn[2]!), 300, scrollable: find.byType(Scrollable).first);
+      expect(find.text(chapter.title), findsOneWidget);
+    });
+  });
+
   group('AzkarIndexView', () {
     testWidgets('shows how far each chapter got today', (tester) async {
       final chapter = await _bundled(tester, FeaturedAzkar.sleep);
@@ -227,3 +291,7 @@ void main() {
     });
   });
 }
+
+/// `find.byTooltip` looks for the framework's own Tooltip class, which is not
+/// the one `material_ui` builds.
+Finder _tooltip(String message) => find.byWidgetPredicate((w) => w is Tooltip && w.message == message);

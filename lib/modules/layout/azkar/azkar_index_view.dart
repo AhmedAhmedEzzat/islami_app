@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../../../core/services/azkar_favourites.dart';
 import '../../../core/services/azkar_progress.dart';
 import '../../../core/services/azkar_service.dart';
 import '../../../core/theme/app_colors.dart';
@@ -26,8 +27,12 @@ class _AzkarIndexViewState extends State<AzkarIndexView> {
   late final Future<List<AzkarChapter>> _chapters = AzkarService.loadAll();
   String _query = '';
 
-  void _open(AzkarChapter c) =>
-      Navigator.push(context, MaterialPageRoute<void>(builder: (_) => AzkarView(chapterId: c.id)));
+  void _open(AzkarChapter c) => _openId(c.id);
+
+  void _openId(int id) => Navigator.push(
+    context,
+    MaterialPageRoute<void>(builder: (_) => AzkarView(chapterId: id)),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -37,9 +42,12 @@ class _AzkarIndexViewState extends State<AzkarIndexView> {
         final all = snap.data;
         if (all == null) return const Center(child: CircularProgressIndicator());
         // Counts saved in a chapter show here when the reader comes back.
-        return ValueListenableBuilder<int>(
-          valueListenable: AzkarProgress.changes,
-          builder: (context, _, _) => _content(all),
+        return ListenableBuilder(
+          listenable: Listenable.merge([
+            AzkarProgress.changes,
+            AzkarFavourites.notifier,
+          ]),
+          builder: (context, _) => _content(all),
         );
       },
     );
@@ -56,6 +64,10 @@ class _AzkarIndexViewState extends State<AzkarIndexView> {
     final byId = {for (final c in all) c.id: c};
     final featured = [for (final id in FeaturedAzkar.all) ?byId[id]];
     final now = DateTime.now();
+    final favourites = AzkarService.favourites(
+      all,
+      AzkarFavourites.notifier.value,
+    );
     // Two lines of label plus padding, at whatever size the reader set, so
     // the cards grow with a large font instead of clipping it.
     final labelLine = MediaQuery.textScalerOf(context).scale(14) * 1.45;
@@ -83,6 +95,31 @@ class _AzkarIndexViewState extends State<AzkarIndexView> {
           ),
         ),
         if (q.isEmpty) ...[
+          if (favourites.items.isNotEmpty)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                0,
+                AppSpacing.lg,
+                AppSpacing.lg,
+              ),
+              sliver: SliverToBoxAdapter(
+                child: Card(
+                  color: scheme.surfaceContainer,
+                  child: ListTile(
+                    leading: Icon(Icons.favorite, color: scheme.error),
+                    title: Text(l10n.favourites),
+                    trailing: Text(
+                      '${favourites.items.length}',
+                      style: context.texts.labelLarge?.copyWith(
+                        color: scheme.primary,
+                      ),
+                    ),
+                    onTap: () => _openId(AzkarService.favouritesId),
+                  ),
+                ),
+              ),
+            ),
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             sliver: SliverToBoxAdapter(child: Text(l10n.featuredAzkar, style: context.texts.titleMedium)),
@@ -144,8 +181,13 @@ class _AzkarIndexViewState extends State<AzkarIndexView> {
             final c = filtered[i];
             final done = AzkarProgress.doneCount(c, now);
             final total = c.items.length;
+            final title = azkarTitle(context, c);
             return ListTile(
-              title: Text(c.title, textDirection: TextDirection.rtl),
+              title: Text(title),
+              // In English the book's own Arabic title stays in view.
+              subtitle: title == c.title
+                  ? null
+                  : Text(c.title, textDirection: TextDirection.rtl),
               trailing: done == total
                   ? Icon(Icons.check_circle, color: scheme.primary, semanticLabel: l10n.azkarSessionDone)
                   : Text(

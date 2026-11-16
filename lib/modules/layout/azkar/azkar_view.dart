@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../core/services/azkar_favourites.dart';
 import '../../../core/services/azkar_progress.dart';
 import '../../../core/services/azkar_service.dart';
 import '../../../core/theme/app_colors.dart';
@@ -162,6 +163,7 @@ class _AzkarViewState extends State<AzkarView> {
   Future<void> _showActions(ZikrModel zikr) async {
     final l10n = context.l10n;
     final canUndo = (_remaining[zikr.id] ?? zikr.count) < zikr.count;
+    final favourite = AzkarFavourites.contains(zikr.id);
     final picked = await showFittedSheet<String>(
       context,
       builder: (context) => SafeArea(
@@ -174,6 +176,15 @@ class _AzkarViewState extends State<AzkarView> {
               title: Text(l10n.azkarUndoOne),
               enabled: canUndo,
               onTap: () => Navigator.pop(context, 'undo'),
+            ),
+            ListTile(
+              leading: Icon(
+                favourite ? Icons.favorite : Icons.favorite_border,
+              ),
+              title: Text(
+                favourite ? l10n.removeFavourite : l10n.addFavourite,
+              ),
+              onTap: () => Navigator.pop(context, 'favourite'),
             ),
             ListTile(
               leading: const Icon(Icons.copy),
@@ -194,6 +205,8 @@ class _AzkarViewState extends State<AzkarView> {
     switch (picked) {
       case 'undo':
         _undo(zikr);
+      case 'favourite':
+        await AzkarFavourites.toggle(zikr.id);
       case 'copy':
         await Clipboard.setData(ClipboardData(text: text));
         if (!mounted) return;
@@ -203,7 +216,13 @@ class _AzkarViewState extends State<AzkarView> {
     }
   }
 
-  String _shareText(ZikrModel zikr) => '${zikr.text}\n\n${_chapter!.title} · ${context.l10n.hisnTitle}';
+  String _shareText(ZikrModel zikr) {
+    // The favourites gather adhkar from many chapters and have no title of
+    // their own in the book.
+    final title = _chapter!.title;
+    final source = title.isEmpty ? '' : '$title · ';
+    return '${zikr.text}\n\n$source${context.l10n.hisnTitle}';
+  }
 
   Future<void> _pickFontScale() async {
     await showFittedSheet<void>(
@@ -275,7 +294,7 @@ class _AzkarViewState extends State<AzkarView> {
             onPressed: chapter == null || !_started ? null : _confirmReset,
           ),
         ],
-        bottom: chapter == null
+        bottom: chapter == null || chapter.items.isEmpty
             ? null
             : PreferredSize(
                 preferredSize: const Size.fromHeight(4),
@@ -304,6 +323,12 @@ class _AzkarViewState extends State<AzkarView> {
       );
     }
     final chapter = _chapter!;
+    if (chapter.items.isEmpty) {
+      return AppStateMessage(
+        icon: Icons.favorite_border,
+        message: l10n.azkarNoFavourites,
+      );
+    }
     final allDone = _doneCount == chapter.items.length;
     final twiceDaily = chapter.id == FeaturedAzkar.morningEvening;
 
@@ -441,6 +466,7 @@ class _ZikrCard extends StatelessWidget {
                         icon: const Icon(Icons.more_horiz),
                         onPressed: onMore,
                       ),
+                      _FavouriteButton(id: zikr.id),
                       const Spacer(),
                       // Wraps rather than overflows with a large font.
                       Flexible(
@@ -499,6 +525,31 @@ class _Counter extends StatelessWidget {
               : const Icon(Icons.touch_app_outlined, size: 18),
       label: Text(done ? l10n.azkarDone : l10n.azkarRemaining(remaining)),
       backgroundColor: done ? scheme.primaryContainer : scheme.secondaryContainer,
+    );
+  }
+}
+
+/// A heart that keeps the dhikr in the reader's favourites.
+class _FavouriteButton extends StatelessWidget {
+  const _FavouriteButton({required this.id});
+
+  final int id;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return ValueListenableBuilder<Set<int>>(
+      valueListenable: AzkarFavourites.notifier,
+      builder: (context, ids, _) {
+        final on = ids.contains(id);
+        return IconButton(
+          tooltip: on ? l10n.removeFavourite : l10n.addFavourite,
+          isSelected: on,
+          icon: const Icon(Icons.favorite_border),
+          selectedIcon: Icon(Icons.favorite, color: context.colors.error),
+          onPressed: () => AzkarFavourites.toggle(id),
+        );
+      },
     );
   }
 }

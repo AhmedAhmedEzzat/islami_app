@@ -15,6 +15,7 @@ import 'core/state/verse_notes_cubit.dart';
 import 'core/widgets/app_restart.dart';
 import 'core/state/quran_player_cubit.dart';
 import 'core/state/radio_cubit.dart';
+import 'core/services/azkar_favourites.dart';
 import 'core/services/khatma.dart';
 import 'core/services/notification_refresh.dart';
 import 'core/services/prayer_notification_service.dart';
@@ -44,6 +45,7 @@ Future<void> main() async {
   await QuranMeta.load();
   // Its notifier was built before storage was ready.
   HadethFavourites.reload();
+  AzkarFavourites.reload();
   await PrayerNotificationService.init();
   ReviewPrompt.noteLaunch();
   // Recitation and radio are "music" to the OS: they pause for a phone call
