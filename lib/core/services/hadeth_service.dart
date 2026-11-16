@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
+import 'package:sakina/core/constants/daily_verses.dart';
 import 'package:sakina/core/utils/arabic_text.dart';
 import 'package:sakina/models/hadeth_data_model.dart';
 
@@ -30,6 +31,10 @@ abstract class HadethService {
     _cache = parse(await rootBundle.loadString(asset));
     return _cache;
   }
+
+  /// The hadith of [day]: one a day, through the whole collection in turn.
+  static HadethDataModel? ofDay(List<HadethDataModel> all, DateTime day) =>
+      all.isEmpty ? null : all[dayNumber(day) % all.length];
 
   static void clearCache() => _cache = [];
 }

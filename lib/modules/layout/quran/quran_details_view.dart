@@ -22,6 +22,8 @@ import '../../../core/state/quran_player_state.dart';
 import '../../../core/state/settings_cubit.dart';
 import '../../../core/state/settings_state.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_tokens.dart';
+import '../../../core/widgets/fitted_sheet.dart';
 import '../../../core/widgets/app_background.dart';
 import '../../../core/widgets/text_prompt_dialog.dart';
 import '../../../models/quran_open_request.dart';
@@ -271,6 +273,47 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
     context.read<SettingsCubit>().setMushafView(mushaf);
   }
 
+  /// The Quran text size, changed without leaving the page being read.
+  Future<void> _pickTextSize() async {
+    final cubit = context.read<SettingsCubit>();
+    await showFittedSheet<void>(
+      context,
+      builder: (context) => BlocBuilder<SettingsCubit, SettingsState>(
+        bloc: cubit,
+        buildWhen: (a, b) => a.quranFontScale != b.quranFontScale,
+        builder: (context, state) => SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(context.l10n.quranTextSize, style: context.texts.titleMedium),
+                Row(
+                  children: [
+                    const Icon(Icons.text_decrease),
+                    Expanded(
+                      child: Slider(
+                        value: state.quranFontScale,
+                        min: SettingsState.minFontScale,
+                        max: SettingsState.maxFontScale,
+                        divisions: 12,
+                        label: '${(state.quranFontScale * 100).round()}%',
+                        onChanged: cubit.setQuranFontScale,
+                      ),
+                    ),
+                    const Icon(Icons.text_increase),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _askForPage() async {
     final text = await showTextPrompt(
       context,
@@ -336,6 +379,12 @@ class _QuranDetailsViewState extends State<QuranDetailsView> {
                         tooltip: context.l10n.goToPage,
                         icon: const Icon(Icons.find_in_page_outlined),
                         onPressed: _askForPage,
+                      ),
+                    if (ready)
+                      IconButton(
+                        tooltip: context.l10n.quranTextSize,
+                        icon: const Icon(Icons.format_size),
+                        onPressed: _pickTextSize,
                       ),
                     if (ready)
                       IconButton(

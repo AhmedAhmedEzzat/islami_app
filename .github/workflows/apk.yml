@@ -1,0 +1,67 @@
+name: Android APK
+
+# Builds an installable release APK for testing on a phone. Run it by hand
+# from the Actions tab, or push to a claude/ branch. The APK is kept as a
+# workflow artifact and published as a pre-release, so it can be downloaded
+# straight onto the phone.
+on:
+  workflow_dispatch:
+  push:
+    branches: ['claude/**']
+
+concurrency:
+  group: apk-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          # Android lint in AGP 9 needs a Java 21 runtime (it calls List.removeLast).
+          java-version: '21'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Signed with the debug key (see android/app/build.gradle.kts), which is
+      # fine for installing by hand but not for the Play Store.
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Name the APK
+        id: apk
+        run: |
+          short=$(git rev-parse --short HEAD)
+          name="sakina-${short}.apk"
+          mv build/app/outputs/flutter-apk/app-release.apk "$name"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "tag=test-build-${short}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sakina-apk
+          path: ${{ steps.apk.outputs.name }}
+
+      - name: Publish as a pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.apk.outputs.tag }}" "${{ steps.apk.outputs.name }}" \
+            --target "${{ github.sha }}" \
+            --prerelease \
+            --title "Test build ${{ steps.apk.outputs.tag }}" \
+            --notes "Release APK built from ${{ github.ref_name }} at ${{ github.sha }} for testing. Signed with the debug key: install by hand, not for the Play Store."

@@ -71,6 +71,7 @@ class SettingsCubit extends Cubit<SettingsState> {
         customAdhan: _decodeSound(LocalStorageServices.getString(PrefsKeys.customAdhan)),
         customFajrAdhan: _decodeSound(LocalStorageServices.getString(PrefsKeys.customFajrAdhan)),
         dhikrHours: LocalStorageServices.getInt(PrefsKeys.dhikrHours) ?? 0,
+        dailyHadith: LocalStorageServices.getBool(PrefsKeys.dailyHadith) ?? true,
       ),
     );
   }
@@ -173,6 +174,11 @@ class SettingsCubit extends Cubit<SettingsState> {
   Future<void> setMushafView(bool on) async {
     emit(state.copyWith(mushafView: on));
     await LocalStorageServices.setBool(PrefsKeys.mushafView, on);
+  }
+
+  Future<void> setDailyHadith(bool on) async {
+    emit(state.copyWith(dailyHadith: on));
+    await LocalStorageServices.setBool(PrefsKeys.dailyHadith, on);
   }
 
   Future<void> setAdhkarReminders(bool on) async {

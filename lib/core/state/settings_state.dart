@@ -39,6 +39,7 @@ class SettingsState {
     this.customAdhan,
     this.customFajrAdhan,
     this.dhikrHours = 0,
+    this.dailyHadith = true,
   });
 
   final ThemeMode themeMode;
@@ -116,6 +117,10 @@ class SettingsState {
   /// A short dhikr every this many hours through the day; 0 is off.
   final int dhikrHours;
 
+  /// The hadith of the day as a notification late each morning. Posts only
+  /// while [prayerNotifications] is on.
+  final bool dailyHadith;
+
   /// The muezzin the prayer alert plays: the user's own recording when that
   /// is chosen and still set, otherwise a bundled one.
   Muezzin get muezzin => muezzinId == Muezzins.customId && customAdhan != null
@@ -180,6 +185,7 @@ class SettingsState {
     CustomSound? customAdhan,
     CustomSound? customFajrAdhan,
     int? dhikrHours,
+    bool? dailyHadith,
     // Distinguishes "leave unchanged" from "back to the system language".
     bool clearLocale = false,
     bool clearCustomAdhan = false,
@@ -212,6 +218,7 @@ class SettingsState {
       customAdhan: clearCustomAdhan ? null : (customAdhan ?? this.customAdhan),
       customFajrAdhan: clearCustomFajrAdhan ? null : (customFajrAdhan ?? this.customFajrAdhan),
       dhikrHours: dhikrHours ?? this.dhikrHours,
+      dailyHadith: dailyHadith ?? this.dailyHadith,
     );
   }
 
@@ -243,7 +250,8 @@ class SettingsState {
         other.mushafPaper == mushafPaper &&
         other.customAdhan == customAdhan &&
         other.customFajrAdhan == customFajrAdhan &&
-        other.dhikrHours == dhikrHours;
+        other.dhikrHours == dhikrHours &&
+        other.dailyHadith == dailyHadith;
   }
 
   @override
@@ -274,5 +282,6 @@ class SettingsState {
     customAdhan,
     customFajrAdhan,
     dhikrHours,
+    dailyHadith,
   ]);
 }
