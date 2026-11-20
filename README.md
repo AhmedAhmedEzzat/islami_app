@@ -11,11 +11,11 @@ The bottom bar is **Home · Quran · Prayer · Adhkar · More**.
 
 | Tab | What it does |
 | --- | --- |
-| **Home** | Greeting with today's Hijri and Gregorian dates, the next prayer with a live countdown, all five prayer times at a glance, a **Ramadan card** (Imsak, Iftar, countdown to Iftar) during Ramadan, a **khatma planner** (finish the Quran in 7 to 90 days, with today's pages and progress), a **daily good-deeds checklist** (adhkar, Quran, sunnah prayers, witr, charity, or your own, with a streak), reminders for the Monday/Thursday and White Days fasts, *continue reading*, a quick-access grid, a **verse of the day** and **hadith of the day**, and a countdown to the next Islamic occasion. |
+| **Home** | A greeting with today's Hijri and Gregorian dates; one card with the next prayer, a live countdown and all five of today's times; at most one notice (Ramadan's Imsak and Iftar during Ramadan, otherwise an invitation to turn the reminders on, otherwise a fasting day coming up); four quick actions (Qibla, the morning or evening adhkar, tasbeh, duas); one Quran card (the **khatma** while one is under way, otherwise *continue reading*); and the **verse of the day** or **hadith of the day**. Cards ease in one after another when Home opens. |
 | **Quran** | All 114 suras plus Juz and hizb-quarter indexes, **reading stats** (pages today, this week and the streak), bookmarks, and **full-text search** in Arabic (diacritics-insensitive) and English. The Quran opens as the **printed Madinah mushaf**: all 604 pages, 15 lines each, every page starting and ending on the same word as the print, with the juz and sura at the head, framed sura titles, hizb-quarter marks in the margin and the page number at the foot. Pages turn right to left straight through from one sura to the next, and you can jump to any page. Choose the **paper**: automatic, white, sepia or night. Tap the page to read **full screen**; on a tablet or in landscape it shows **two facing pages** like an open book. For larger text, switch to the **flowing view**, which reflows the sura at any size. Your place is remembered in both. Tap a verse for **tafsir** (Al-Muyassar, Al-Jalalayn), the English translation, bookmarking, copying, **sharing as an image**, a **highlighter** (five colours, shown on the page) and a **personal note**; the Bookmarks tab lists bookmarks and notes and highlights. A **memorisation tracker** (More > Memorisation) marks suras as being learnt or memorised, shows the share of the Quran known by heart, and schedules **spaced revision**: the next day, then after 2, 4, 7, 14 and 30 days while it goes well, and the next day again after a hard one. Recitation by 12 reciters plays verse by verse, highlights the verse being recited, and can repeat a verse or the sura. For **memorising**, each verse can be repeated 2 to 10 times before the next, and a **passage** (from one verse to another) can be looped 2 to 20 times. Recitation **plays on into the next sura** (or stops, as you choose), and a **sleep timer** (15 to 90 minutes, or the end of the sura) stops it and the radio by itself. The **Listen** screen (headphones on the Quran tab, or More) plays any sura with any reciter, carrying on in the now-playing bar. Any sura, or the whole Quran, can be **downloaded per reciter** for offline listening, from there or the player bar; downloaded verses play from the phone, with the same highlighting and page-following. Both tafsirs can be **saved for offline reading** from Settings. Sajda verses are marked. |
 | **Prayer** | Prayer times for your location or a city you pick: 12 calculation methods, Shafi'i/Hanafi Asr, high-latitude rules and per-prayer minute adjustments. Day-by-day browsing, a monthly timetable (shareable as text), a **Qibla compass**, a **prayer tracker** with a streak, the last 30 days per prayer and a **qada counter** for missed prayers and fasts to make up, and adhkar shortcuts. |
 | **Adhkar** | The full **Hisn al-Muslim** (132 chapters, 267 adhkar) with counters, plus the **tasbeh**: a progress ring, the three classic dhikr and your own, a target of 33, 99, 100 or 1000, rounds, today's total, undo, haptics and a confirmed reset. |
-| **More** | **Hadith**: An-Nawawi's Forty with Ibn Rajab's 8 additions, and the **Forty Hadith Qudsi**, in Arabic and English (search and favourites), Duas from the Quran (Rabbana and the prophets' supplications), the **99 Names of Allah** with flashcards and a quiz to learn them (their meanings, or in Arabic their order), **Quran radio** (10 live stations), the **Islamic calendar** with occasions, White Days and a **Hijri ⇄ Gregorian date converter**, Qibla, prayer tracker, Listen and download, Settings, Rate, About and Share. |
+| **More** | The **khatma planner** (finish the Quran in 7 to 90 days, with today's pages and progress), the **daily good-deeds checklist** (adhkar, Quran, sunnah prayers, witr, charity, or your own, with a streak), **Hadith**: An-Nawawi's Forty with Ibn Rajab's 8 additions, and the **Forty Hadith Qudsi**, in Arabic and English (search and favourites), Duas from the Quran (Rabbana and the prophets' supplications), the **99 Names of Allah** with flashcards and a quiz to learn them (their meanings, or in Arabic their order), **Quran radio** (10 live stations), the **Islamic calendar** with occasions, White Days and a **Hijri ⇄ Gregorian date converter**, Qibla, prayer tracker, Listen and download, Settings, Rate, About and Share. |
 
 **First run** ends with a setup page that sets your location and turns on the adhan,
 each with its permission prompt.
@@ -78,7 +78,7 @@ iOS and desktop configuration is written but **has not been built or tested**,
 because the development machine has no Xcode.
 
 ```bash
-flutter test      # 266 tests
+flutter test      # 500+ tests
 flutter analyze   # clean
 ```
 
@@ -279,8 +279,68 @@ battery optimisation can also delay alarms for apps it considers idle.
   schedule.
 - **Location** (coarse or fine): prayer times and Qibla. This is optional. If
   it is denied, you can pick a city, and otherwise the app falls back to Cairo
-  and says so.
+  and says so. The position stays on the phone; only the phone's own geocoder
+  is asked for the city's name.
 - **Vibrate**: tasbeh haptics.
+
+## Publishing to Google Play
+
+Google Play takes an **app bundle** (`.aab`) signed with your own **upload
+key**. A build signed with the debug key, as the test APKs are until the key
+is set up, is refused.
+
+1. **Create the upload key**, once. Keep the file and its password safe and
+   backed up, and never commit them (`android/.gitignore` already ignores
+   them):
+
+   ```bash
+   keytool -genkey -v -keystore upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+   ```
+
+   `keytool` comes with Java; on Windows it is in Android Studio, for example
+   `"C:\Program Files\Android\Android Studio\jbr\bin\keytool.exe"`.
+
+2. **Build the bundle on GitHub.** Add these repository secrets (Settings >
+   Secrets and variables > Actions):
+
+   | Secret | Value |
+   | --- | --- |
+   | `UPLOAD_KEYSTORE_BASE64` | the keystore file as base64: `base64 -w0 upload-keystore.jks` on Linux, `[Convert]::ToBase64String([IO.File]::ReadAllBytes("upload-keystore.jks"))` in PowerShell |
+   | `UPLOAD_KEYSTORE_PASSWORD` | the keystore password |
+   | `UPLOAD_KEY_ALIAS` | `upload` |
+   | `UPLOAD_KEY_PASSWORD` | the key password (the same as the keystore's unless you chose another) |
+
+   Then run **Actions > Android APK > Run workflow** on `master`. Its
+   pre-release has `sakina-<commit>.aab` for Google Play next to the APK.
+
+   **Or build it on your own computer**: create `android/key.properties`
+
+   ```properties
+   storePassword=...
+   keyPassword=...
+   keyAlias=upload
+   storeFile=C:/path/to/upload-keystore.jks
+   ```
+
+   and run `flutter build appbundle --release`. The bundle is
+   `build/app/outputs/bundle/release/app-release.aab`.
+
+3. In Play Console, create the app with Play App Signing (the default), and
+   upload the bundle to **Internal testing** first.
+
+4. Each upload needs a higher build number: raise the number after `+` in
+   `version:` in `pubspec.yaml`.
+
+Once the key is set up, the test APKs are signed with it too. A phone that has
+a debug-signed test build has to uninstall it before installing one of these.
+
+Play Console also asks for a privacy policy link (the app asks for location),
+the Data safety form, the content rating questionnaire and the store listing
+(a 512×512 icon, a 1024×500 feature graphic and phone screenshots). The app
+has no server or account: nothing the user does leaves the phone, apart from
+streaming recitations, radio and tafsir, and asking the phone's geocoder for
+the city's name. It starts no foreground service of its own; the ones in the
+manifest belong to WorkManager and geolocator and are never started.
 
 ## Packages
 
