@@ -180,10 +180,28 @@ class _TimeViewState extends State<TimeView> {
                 NextPrayerCard(result: result, now: _now),
                 const SizedBox(height: AppSpacing.md),
               ],
-              _PrayerList(
-                result: result,
-                highlightNext: _isToday,
-                settings: settings,
+              // Swipe sideways for the day before or after, as with the
+              // arrows above; the list cross-fades to the new day.
+              GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onHorizontalDragEnd: (d) {
+                  final v = d.primaryVelocity ?? 0;
+                  if (v.abs() < 300) return;
+                  final rtl = Directionality.of(context) == TextDirection.rtl;
+                  // A swipe towards the start goes forward a day.
+                  _shiftDay((v < 0) != rtl ? 1 : -1);
+                },
+                child: AnimatedSwitcher(
+                  duration: AppDurations.normal,
+                  child: KeyedSubtree(
+                    key: ValueKey(DateUtils.dateOnly(_day)),
+                    child: _PrayerList(
+                      result: result,
+                      highlightNext: _isToday,
+                      settings: settings,
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(height: AppSpacing.lg),
               _Shortcuts(location: _location),
