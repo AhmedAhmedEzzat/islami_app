@@ -23,6 +23,7 @@ class NextPrayerCard extends StatelessWidget {
     required this.now,
     this.subtitle,
     this.onTap,
+    this.footer,
   });
 
   final PrayerTimesResult result;
@@ -31,6 +32,9 @@ class NextPrayerCard extends StatelessWidget {
   /// Shown under the label, e.g. the place the times are for.
   final String? subtitle;
   final VoidCallback? onTap;
+
+  /// Shown under the progress bar, inside the card.
+  final Widget? footer;
 
   @override
   Widget build(BuildContext context) {
@@ -121,6 +125,10 @@ class NextPrayerCard extends StatelessWidget {
                   color: scheme.onPrimaryContainer,
                 ),
               ),
+              if (footer != null) ...[
+                const SizedBox(height: AppSpacing.md),
+                footer!,
+              ],
             ],
           ),
         ),

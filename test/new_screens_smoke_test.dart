@@ -38,6 +38,7 @@ import 'package:sakina/modules/more/hifz_view.dart';
 import 'package:sakina/modules/more/names_learn_view.dart';
 import 'package:sakina/modules/more/listen_view.dart';
 import 'package:sakina/modules/more/more_view.dart';
+import 'package:sakina/modules/more/today_views.dart';
 import 'package:sakina/modules/settings/settings_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -116,6 +117,8 @@ void main() {
     'Onboarding': () => const OnBoardingScreen(),
     'Radio': () => const RadioView(),
     'Muezzin': () => const MuezzinView(),
+    'Khatma': () => const KhatmaView(),
+    'Daily deeds': () => const DailyDeedsView(),
   };
 
   const phones = [

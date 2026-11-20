@@ -39,8 +39,22 @@ class LayoutView extends StatefulWidget {
   State<LayoutView> createState() => _LayoutViewState();
 }
 
-class _LayoutViewState extends State<LayoutView> {
+class _LayoutViewState extends State<LayoutView>
+    with SingleTickerProviderStateMixin {
   int _selectedIndex = AppTab.home;
+
+  /// A short fade as one tab gives way to another, so the switch feels soft
+  /// rather than a hard cut.
+  late final AnimationController _tabFade = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 220),
+    value: 1,
+  );
+
+  void _fadeInTab() {
+    if (MediaQuery.disableAnimationsOf(context)) return;
+    _tabFade.forward(from: 0);
+  }
 
   // Order must match AppTab.
   static const List<Widget> _roots = [
@@ -97,7 +111,8 @@ class _LayoutViewState extends State<LayoutView> {
             ..popUntil((route) => route.isFirst)
             ..push(
               MaterialPageRoute<void>(
-                builder: (_) => const AzkarView(chapterId: FeaturedAzkar.morningEvening),
+                builder: (_) =>
+                    const AzkarView(chapterId: FeaturedAzkar.morningEvening),
               ),
             );
         });
@@ -110,7 +125,9 @@ class _LayoutViewState extends State<LayoutView> {
           navigator
             ..popUntil((route) => route.isFirst)
             ..push(
-              MaterialPageRoute<void>(builder: (_) => const AzkarView(chapterId: FeaturedAzkar.adhan)),
+              MaterialPageRoute<void>(
+                builder: (_) => const AzkarView(chapterId: FeaturedAzkar.adhan),
+              ),
             );
         });
       case AlertKind.reminder:
@@ -126,7 +143,11 @@ class _LayoutViewState extends State<LayoutView> {
           _withNavigator(AppTab.home, (navigator) {
             navigator
               ..popUntil((route) => route.isFirst)
-              ..push(MaterialPageRoute<void>(builder: (_) => HadethDetailsView(hadeth: hadeth)));
+              ..push(
+                MaterialPageRoute<void>(
+                  builder: (_) => HadethDetailsView(hadeth: hadeth),
+                ),
+              );
           });
         });
       case AlertKind.khatma:
@@ -139,6 +160,7 @@ class _LayoutViewState extends State<LayoutView> {
 
   @override
   void dispose() {
+    _tabFade.dispose();
     PrayerNotificationService.tapped.removeListener(_onNotificationTap);
     for (final observer in _observers) {
       observer
@@ -176,11 +198,13 @@ class _LayoutViewState extends State<LayoutView> {
       navigator.pop();
       return;
     }
+    _fadeInTab();
     setState(() => _selectedIndex = AppTab.home);
   }
 
   void _selectTab(int index) {
     if (index == _selectedIndex) return;
+    _fadeInTab();
     setState(() {
       _visited[index] = true;
       _selectedIndex = index;
@@ -276,24 +300,27 @@ class _LayoutViewState extends State<LayoutView> {
         selectTab: _selectTab,
         openSura: _openSura,
         child: Scaffold(
-          body: IndexedStack(
-            index: _selectedIndex,
-            children: [
-              for (var i = 0; i < _roots.length; i++)
-                if (_visited[i])
-                  // Hidden tabs stay built but still: no animations, and
-                  // their listeners know they are not the one on screen.
-                  TickerMode(
-                    enabled: i == _selectedIndex,
-                    child: TabNavigator(
-                      navigatorKey: _navKeys[i],
-                      observer: _observers[i],
-                      root: _roots[i],
-                    ),
-                  )
-                else
-                  const SizedBox.shrink(),
-            ],
+          body: FadeTransition(
+            opacity: CurvedAnimation(parent: _tabFade, curve: Curves.easeOut),
+            child: IndexedStack(
+              index: _selectedIndex,
+              children: [
+                for (var i = 0; i < _roots.length; i++)
+                  if (_visited[i])
+                    // Hidden tabs stay built but still: no animations, and
+                    // their listeners know they are not the one on screen.
+                    TickerMode(
+                      enabled: i == _selectedIndex,
+                      child: TabNavigator(
+                        navigatorKey: _navKeys[i],
+                        observer: _observers[i],
+                        root: _roots[i],
+                      ),
+                    )
+                  else
+                    const SizedBox.shrink(),
+              ],
+            ),
           ),
           bottomNavigationBar: ValueListenableBuilder<bool>(
             valueListenable: FocusMode.on,
