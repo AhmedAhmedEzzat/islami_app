@@ -34,6 +34,24 @@ void main() {
       expect(QiblaCompass.normalize(370), 10);
     });
 
+    test('only the bare -1 of an iPhone without a fix is thrown away', () {
+      const android = TargetPlatform.android;
+      const ios = TargetPlatform.iOS;
+      expect(QiblaCompass.isValidHeading(-1, platform: ios), isFalse);
+      // Held sideways, the plugin sends the true heading less 90: valid.
+      expect(QiblaCompass.isValidHeading(-45, platform: ios), isTrue);
+      expect(QiblaCompass.isValidHeading(120, platform: ios), isTrue);
+      expect(QiblaCompass.isValidHeading(-1, platform: android), isTrue);
+      expect(QiblaCompass.isValidHeading(-170, platform: android), isTrue);
+    });
+
+    test('a screen reader hears the turn in steps of ten degrees', () {
+      expect(QiblaCompass.spokenDegrees(37), 40);
+      expect(QiblaCompass.spokenDegrees(-33), 30);
+      expect(QiblaCompass.spokenDegrees(5), 10);
+      expect(QiblaCompass.spokenDegrees(-176), 180);
+    });
+
     test('calibration is asked for when the sensor is unsure', () {
       const android = TargetPlatform.android;
       const ios = TargetPlatform.iOS;
@@ -140,6 +158,43 @@ void main() {
       expect(find.text('You are facing the Qibla'), findsOneWidget);
 
       await tester.pump(const Duration(seconds: 3));
+      expect(find.text('Calibrate the compass'), findsNothing);
+    });
+
+    testWidgets('a screen reader is told the turn in steps, not every degree', (tester) async {
+      tallPhone(tester);
+      final compass = StreamController<CompassEvent>();
+      addTearDown(compass.close);
+      await tester.pumpWidget(host(QiblaView(location: cairo, compassEvents: compass.stream)));
+      final qibla = PrayerTimesService.qiblaBearing(cairo.coordinates);
+
+      compass.add(_event(qibla - 37));
+      await tester.pump();
+      expect(find.text('Turn right 37°'), findsOneWidget);
+      // The dial's live region, which is announced whenever it changes.
+      expect(find.semantics.byLabel(RegExp('^Turn right 40°')), findsOne);
+      expect(find.semantics.byLabel(RegExp('^Turn right 37°')), findsOne);
+    });
+
+    testWidgets('a phone without a compass says so, and ignores what the sensor sends', (tester) async {
+      tallPhone(tester);
+      final compass = StreamController<CompassEvent>();
+      addTearDown(compass.close);
+      await tester.pumpWidget(
+        host(
+          QiblaView(
+            location: cairo,
+            compassEvents: compass.stream,
+            hasCompass: () async => false,
+          ),
+        ),
+      );
+      await tester.pump();
+      // Phones with no magnetometer still stream a heading of 0.
+      compass.add(_event(0));
+      await tester.pump(const Duration(seconds: 3));
+      expect(find.text('This phone has no compass. Use the bearing above with a real compass.'), findsOneWidget);
+      expect(find.textContaining('Turn right'), findsNothing);
       expect(find.text('Calibrate the compass'), findsNothing);
     });
 
