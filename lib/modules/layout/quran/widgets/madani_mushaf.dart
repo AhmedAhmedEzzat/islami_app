@@ -144,6 +144,9 @@ class MadaniMushafState extends State<MadaniMushaf> {
 
   @override
   Widget build(BuildContext context) {
+    // Read here, in build: the pages below are built later, during layout,
+    // where a select would trip provider's "outside of build" assertion.
+    final zoom = context.select<SettingsCubit, double>((c) => c.state.quranFontScale);
     return LayoutBuilder(
       builder: (context, box) {
         final spread = showsSpread(box.biggest);
@@ -173,7 +176,7 @@ class MadaniMushafState extends State<MadaniMushaf> {
               child: spread
                   ? Row(
                       children: [
-                        Expanded(child: _sheet(i * 2 + 1)),
+                        Expanded(child: _sheet(i * 2 + 1, zoom)),
                         // The binding between the two pages.
                         Container(
                           width: 2,
@@ -186,10 +189,10 @@ class MadaniMushafState extends State<MadaniMushaf> {
                             ),
                           ),
                         ),
-                        Expanded(child: _sheet(i * 2 + 2)),
+                        Expanded(child: _sheet(i * 2 + 2, zoom)),
                       ],
                     )
-                  : _sheet(i + 1),
+                  : _sheet(i + 1, zoom),
             ),
           ),
         );
@@ -197,14 +200,14 @@ class MadaniMushafState extends State<MadaniMushaf> {
     );
   }
 
-  Widget _sheet(int page) {
+  Widget _sheet(int page, double zoom) {
     if (page > MushafLayout.pageCount) return const SizedBox.shrink();
     return MushafSheet(
       // A turned page opens at its top.
       key: ValueKey(page),
       layout: widget.layout,
       page: page,
-      zoom: context.select<SettingsCubit, double>((c) => c.state.quranFontScale),
+      zoom: zoom,
       words: _textFor(page),
       highlight: widget.highlight,
       isBookmarked: widget.isBookmarked,

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:sakina/core/constants/prefs_keys.dart';
 import 'package:sakina/core/services/mushaf_layout.dart';
 import 'package:sakina/core/services/quran_meta.dart';
 import 'package:sakina/core/services/shared_prefs_helper.dart';
@@ -89,4 +90,30 @@ void main() {
     await tester.tap(find.textContaining('۝').first);
     expect(tapped?.sura, 2);
   });
+
+  // The whole mushaf, as the Quran tab shows it, and not just one sheet: its
+  // pages are built during layout, where reading the text size with a select
+  // used to fail provider's assertion and show an error box on every page in
+  // debug builds.
+  for (final zoom in [1.0, 1.6]) {
+    testWidgets('the mushaf at ${(zoom * 100).round()}% builds its pages without errors', (tester) async {
+      tester.view.physicalSize = const Size(360 * 3, 640 * 3);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      SharedPreferences.setMockInitialValues({PrefsKeys.quranFontScale: zoom});
+      await LocalStorageServices.init();
+      await tester.pumpWidget(
+        BlocProvider(
+          create: (_) => SettingsCubit()..load(),
+          child: MaterialApp(
+            home: Scaffold(body: MadaniMushaf(layout: layout, initialPage: 3)),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+      expect(find.byType(MushafSheet), findsWidgets);
+      expect(tester.widget<MushafSheet>(find.byType(MushafSheet).first).zoom, zoom);
+    });
+  }
 }
