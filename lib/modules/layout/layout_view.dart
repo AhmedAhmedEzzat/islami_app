@@ -51,6 +51,13 @@ class _LayoutViewState extends State<LayoutView>
     value: 1,
   );
 
+  /// Made once: a CurvedAnimation listens to [_tabFade] until disposed, so
+  /// one made in build was a listener left behind on every rebuild.
+  late final CurvedAnimation _tabOpacity = CurvedAnimation(
+    parent: _tabFade,
+    curve: Curves.easeOut,
+  );
+
   void _fadeInTab() {
     if (MediaQuery.disableAnimationsOf(context)) return;
     _tabFade.forward(from: 0);
@@ -100,10 +107,10 @@ class _LayoutViewState extends State<LayoutView>
 
   /// Opens the screen that goes with a tapped notification.
   void _onNotificationTap() {
-    final kind = PrayerNotificationService.tapped.value;
-    if (kind == null || !mounted) return;
+    final tap = PrayerNotificationService.tapped.value;
+    if (tap == null || !mounted) return;
     PrayerNotificationService.tapped.value = null;
-    switch (kind) {
+    switch (tap.kind) {
       case AlertKind.morningAdhkar || AlertKind.eveningAdhkar:
         _selectTab(AppTab.azkar);
         _withNavigator(AppTab.azkar, (navigator) {
@@ -135,10 +142,11 @@ class _LayoutViewState extends State<LayoutView>
       case AlertKind.dhikr:
         _selectTab(AppTab.azkar);
       case AlertKind.dailyHadith:
-        // Today's hadith, over Home, which shows the same one.
+        // The hadith the notification showed, over Home. Tapped the same
+        // day, that is the one Home shows too.
         _selectTab(AppTab.home);
         HadethService.loadAll().then((all) {
-          final hadeth = HadethService.ofDay(all, DateTime.now());
+          final hadeth = HadethService.ofDay(all, tap.day ?? DateTime.now());
           if (hadeth == null || !mounted) return;
           _withNavigator(AppTab.home, (navigator) {
             navigator
@@ -160,6 +168,7 @@ class _LayoutViewState extends State<LayoutView>
 
   @override
   void dispose() {
+    _tabOpacity.dispose();
     _tabFade.dispose();
     PrayerNotificationService.tapped.removeListener(_onNotificationTap);
     for (final observer in _observers) {
@@ -301,7 +310,7 @@ class _LayoutViewState extends State<LayoutView>
         openSura: _openSura,
         child: Scaffold(
           body: FadeTransition(
-            opacity: CurvedAnimation(parent: _tabFade, curve: Curves.easeOut),
+            opacity: _tabOpacity,
             child: IndexedStack(
               index: _selectedIndex,
               children: [

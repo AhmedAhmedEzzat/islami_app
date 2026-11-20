@@ -239,6 +239,42 @@ void main() {
         [PrayerNotificationService.dhikrChannel],
       );
     });
+    test('a tap the next day still opens the hadith the notification showed', () {
+      final all = HadethService.parse(File('assets/hadeth/hadeth.json').readAsStringSync());
+      final alert = hadith(monday).first;
+      final tap = NotificationTap.parse(NotificationTap.payloadFor(alert))!;
+      expect(tap.kind, AlertKind.dailyHadith);
+      expect(tap.day, DateTime(alert.time.year, alert.time.month, alert.time.day));
+      // Opened on Tuesday: Monday's hadith, the one in the notification.
+      final tuesday = DateTime(alert.time.year, alert.time.month, alert.time.day + 1, 8);
+      expect(HadethService.ofDay(all, tap.day!)!.number, HadethService.ofDay(all, alert.time)!.number);
+      expect(HadethService.ofDay(all, tap.day!)!.number, isNot(HadethService.ofDay(all, tuesday)!.number));
+    });
+  });
+
+  group('notification taps', () {
+    test('every other kind carries just its name', () {
+      for (final kind in AlertKind.values.where((k) => k != AlertKind.dailyHadith)) {
+        final alert = ScheduledAlert(1, kind, null, DateTime(2026, 3, 9, 21));
+        expect(NotificationTap.payloadFor(alert), kind.name);
+        expect(NotificationTap.parse(kind.name), NotificationTap(kind));
+      }
+    });
+
+    test('a payload from before the date was added still opens the hadith', () {
+      expect(NotificationTap.parse('dailyHadith'), const NotificationTap(AlertKind.dailyHadith));
+    });
+
+    test('anything that is not ours is ignored', () {
+      expect(NotificationTap.parse(null), isNull);
+      expect(NotificationTap.parse(''), isNull);
+      expect(NotificationTap.parse('something@2026-01-01'), isNull);
+    });
+
+    test('the date is written in plain digits whatever the language', () {
+      final alert = ScheduledAlert(9000, AlertKind.dailyHadith, null, DateTime(2026, 3, 9, 11));
+      expect(NotificationTap.payloadFor(alert), 'dailyHadith@2026-03-09');
+    });
   });
 
   group('dhikr reminders', () {
