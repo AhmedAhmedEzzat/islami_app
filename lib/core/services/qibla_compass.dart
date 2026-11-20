@@ -42,6 +42,39 @@ abstract final class QiblaCompass {
     }
   }
 
+  /// Whether the phone has a magnetometer.
+  ///
+  /// Some budget Android phones have none, and on those the compass plugin
+  /// still streams a heading of 0, so the dial would sit frozen pointing
+  /// north. Anywhere the answer cannot be had it is taken to be yes, and the
+  /// stream itself decides.
+  static Future<bool> hasCompass() async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return true;
+    try {
+      return await _channel.invokeMethod<bool>('hasCompass') ?? true;
+    } catch (_) {
+      return true;
+    }
+  }
+
+  /// Whether a reading from the compass plugin can be used.
+  ///
+  /// On iOS the plugin passes on Core Location's true heading, which is -1
+  /// while there is no location fix. It adds 90 or 180 for a phone held
+  /// sideways or upside down, so other negative readings are real headings
+  /// and only the bare -1 of a phone held upright is thrown away. Android's
+  /// run from -180 to 180 and are all valid.
+  static bool isValidHeading(double heading, {TargetPlatform? platform}) =>
+      !((platform ?? defaultTargetPlatform) == TargetPlatform.iOS && heading == -1);
+
+  /// [turn] (see [turnNeeded]) in steps of [step] degrees, never 0, for a
+  /// screen reader: announcing every degree as the phone turns would talk
+  /// over everything else.
+  static int spokenDegrees(double turn, {int step = 10}) {
+    final d = (turn.abs() / step).round() * step;
+    return d < step ? step : d;
+  }
+
   /// Whether the reported accuracy says the compass should be calibrated.
   ///
   /// flutter_compass gives 15, 30 or 45 on Android for high, medium and low,

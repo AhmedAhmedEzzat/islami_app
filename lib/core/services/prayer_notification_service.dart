@@ -100,6 +100,43 @@ class ScheduledAlert {
 /// What happened when notifications were turned on.
 enum NotificationPermission { granted, grantedInexact, denied }
 
+/// A tapped notification: what it was about and, for the hadith of the day,
+/// which day's hadith it showed.
+@immutable
+class NotificationTap {
+  const NotificationTap(this.kind, [this.day]);
+
+  final AlertKind kind;
+  final DateTime? day;
+
+  /// What [alert] carries to its tap: its kind's name and, for the hadith of
+  /// the day, the date, as in `dailyHadith@2026-11-20`.
+  static String payloadFor(ScheduledAlert alert) {
+    if (alert.kind != AlertKind.dailyHadith) return alert.kind.name;
+    final t = alert.time;
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${alert.kind.name}@${t.year.toString().padLeft(4, '0')}-${two(t.month)}-${two(t.day)}';
+  }
+
+  /// [payloadFor] read back; null for anything else. A payload from before
+  /// the date was added is just the kind.
+  static NotificationTap? parse(String? payload) {
+    if (payload == null) return null;
+    final at = payload.indexOf('@');
+    final name = at < 0 ? payload : payload.substring(0, at);
+    final kind = AlertKind.values.where((k) => k.name == name).firstOrNull;
+    if (kind == null) return null;
+    return NotificationTap(kind, at < 0 ? null : DateTime.tryParse(payload.substring(at + 1)));
+  }
+
+  @override
+  bool operator ==(Object other) => other is NotificationTap && other.kind == kind && other.day == day;
+
+  @override
+  int get hashCode => Object.hash(kind, day);
+}
+
+
 /// Schedules a notification at each of the five daily prayers.
 ///
 /// Prayer times move by a minute or so every day, so a single repeating
@@ -173,14 +210,16 @@ abstract final class PrayerNotificationService {
     }
   }
 
-  /// The kind of notification the user tapped, until the layout opens the
-  /// screen that goes with it and clears it.
-  static final ValueNotifier<AlertKind?> tapped = ValueNotifier(null);
+  /// The notification the user tapped, until the layout opens the screen
+  /// that goes with it and clears it. [NotificationTap.day] is the date a
+  /// hadith of the day was for, so a tap the next morning still opens the
+  /// hadith the notification showed.
+  static final ValueNotifier<NotificationTap?> tapped = ValueNotifier(null);
 
   static void _onTap(NotificationResponse response) {
     // The Stop button only silences the adhan.
     if (response.actionId != null) return;
-    tapped.value = AlertKind.values.where((k) => k.name == response.payload).firstOrNull;
+    tapped.value = NotificationTap.parse(response.payload);
   }
 
   static AndroidFlutterLocalNotificationsPlugin? get _android =>
@@ -216,8 +255,8 @@ abstract final class PrayerNotificationService {
     return allowed ? NotificationPermission.granted : NotificationPermission.denied;
   }
 
-  /// Ids are partitioned by kind so the whole set can be cancelled without
-  /// touching any other notification the app posts:
+  /// Ids are partitioned by kind, so each alert replaces the one before it in
+  /// its slot and none collides with another kind:
   ///   prayers   1000 + day * 10 + prayer
   ///   reminders 2000 + day * 10 + prayer
   ///   Al-Kahf   3000 + day
@@ -281,30 +320,18 @@ abstract final class PrayerNotificationService {
   static const Duration imsakBeforeFajr = Duration(minutes: 10);
   static const Duration suhoorBeforeImsak = Duration(minutes: 30);
 
-  /// Cancels every notification this service scheduled.
+  /// Cancels every notification this service scheduled and has yet to post.
+  ///
+  /// One already on screen stays there, adhan and all, until the user clears
+  /// it. Cancelling id by id used to take it away too, so opening the app, or
+  /// the twice-daily background refresh, wiped the hadith or the fasting
+  /// reminder before it was read. This service is the only one in the app
+  /// that schedules, so every pending notification is its own, and one call
+  /// does what some six hundred did, each of which made the plugin load and
+  /// rewrite its whole saved list.
   static Future<void> cancelAll() async {
     await init();
-    for (var day = 0; day < daysAhead; day++) {
-      for (var p = 0; p < notifiedPrayers.length; p++) {
-        await _plugin.cancel(id: _idBase + day * 10 + p);
-        await _plugin.cancel(id: _reminderBase + day * 10 + p);
-      }
-      await _plugin.cancel(id: _kahfBase + day);
-      for (var slot = 0; slot < 3; slot++) {
-        await _plugin.cancel(id: _fastingBase + day * 10 + slot);
-      }
-      for (var slot = 0; slot < 2; slot++) {
-        await _plugin.cancel(id: _adhkarBase + day * 10 + slot);
-      }
-      await _plugin.cancel(id: _khatmaBase + day);
-      await _plugin.cancel(id: _hadithBase + day);
-      for (var slot = 0; slot < 4; slot++) {
-        await _plugin.cancel(id: _sunnahBase + day * 10 + slot);
-      }
-      for (var slot = 0; slot < _dhikrSlots; slot++) {
-        await _plugin.cancel(id: _dhikrBase + day * _dhikrSlots + slot);
-      }
-    }
+    await _plugin.cancelAllPendingNotifications();
   }
 
   /// Everything to schedule from [now] for [daysAhead] days, in time order.
@@ -640,7 +667,7 @@ abstract final class PrayerNotificationService {
             : AndroidScheduleMode.inexactAllowWhileIdle,
         title: title,
         body: body,
-        payload: alert.kind.name,
+        payload: NotificationTap.payloadFor(alert),
       );
 
       await _postWithFallback(

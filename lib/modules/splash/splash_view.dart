@@ -25,7 +25,10 @@ class SplashView extends StatefulWidget {
 
 class _SplashViewState extends State<SplashView>
     with SingleTickerProviderStateMixin {
-  static const Duration _total = Duration(milliseconds: 2400);
+  /// Long enough for the mark and both names to arrive and be seen, short
+  /// enough not to keep someone who opens the app to check a prayer time
+  /// waiting every time. It was 2.4 seconds.
+  static const Duration _total = Duration(milliseconds: 1400);
 
   late final AnimationController _controller;
   late final Animation<double> _markScale;

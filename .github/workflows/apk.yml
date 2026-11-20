@@ -4,6 +4,12 @@ name: Android APK
 # from the Actions tab, or push to a claude/ branch. The APK is kept as a
 # workflow artifact and published as a pre-release, so it can be downloaded
 # straight onto the phone.
+#
+# Once the Play upload key is stored in the repository's secrets (see
+# "Publishing to Google Play" in README.md), the same run also builds the
+# app bundle (.aab) to upload to Google Play, and both are signed with that
+# key. Without the secrets they are signed with the debug key, which phones
+# accept and Google Play refuses.
 on:
   workflow_dispatch:
   push:
@@ -20,6 +26,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      # Secrets cannot be tested in an `if:` directly, so this says whether
+      # the upload key is there.
+      HAS_UPLOAD_KEY: ${{ secrets.UPLOAD_KEYSTORE_BASE64 != '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -37,31 +47,74 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      # Signed with the debug key (see android/app/build.gradle.kts), which is
-      # fine for installing by hand but not for the Play Store.
+      # Writes android/key.properties and the keystore it names, which
+      # android/app/build.gradle.kts signs release builds with. Neither file
+      # leaves the runner.
+      - name: Use the Play upload key
+        if: env.HAS_UPLOAD_KEY == 'true'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.UPLOAD_KEY_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+          {
+            echo "storeFile=upload-keystore.jks"
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyAlias=${KEY_ALIAS:-upload}"
+            echo "keyPassword=${KEY_PASSWORD:-$KEYSTORE_PASSWORD}"
+          } > android/key.properties
+
       - name: Build APK
         run: flutter build apk --release
 
-      - name: Name the APK
-        id: apk
+      - name: Build app bundle for Google Play
+        if: env.HAS_UPLOAD_KEY == 'true'
+        run: flutter build appbundle --release
+
+      - name: Name the files
+        id: out
         run: |
           short=$(git rev-parse --short HEAD)
-          name="sakina-${short}.apk"
-          mv build/app/outputs/flutter-apk/app-release.apk "$name"
-          echo "name=$name" >> "$GITHUB_OUTPUT"
+          apk="sakina-${short}.apk"
+          mv build/app/outputs/flutter-apk/app-release.apk "$apk"
+          files="$apk"
+          if [ "$HAS_UPLOAD_KEY" = "true" ]; then
+            aab="sakina-${short}.aab"
+            mv build/app/outputs/bundle/release/app-release.aab "$aab"
+            files="$files $aab"
+            signed="Signed with the Play upload key. The .aab is the file to upload to Google Play."
+          else
+            signed="Signed with the debug key: install by hand, not for the Play Store."
+          fi
+          echo "files=$files" >> "$GITHUB_OUTPUT"
           echo "tag=test-build-${short}" >> "$GITHUB_OUTPUT"
+          echo "signed=$signed" >> "$GITHUB_OUTPUT"
 
       - uses: actions/upload-artifact@v4
         with:
           name: sakina-apk
-          path: ${{ steps.apk.outputs.name }}
+          path: |
+            sakina-*.apk
+            sakina-*.aab
+          if-no-files-found: error
 
+      # A second run for the same commit (a re-run, or the same commit on
+      # another branch) replaces the files instead of failing on the tag.
       - name: Publish as a pre-release
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.out.outputs.tag }}
+          FILES: ${{ steps.out.outputs.files }}
+          SIGNED: ${{ steps.out.outputs.signed }}
         run: |
-          gh release create "${{ steps.apk.outputs.tag }}" "${{ steps.apk.outputs.name }}" \
-            --target "${{ github.sha }}" \
-            --prerelease \
-            --title "Test build ${{ steps.apk.outputs.tag }}" \
-            --notes "Release APK built from ${{ github.ref_name }} at ${{ github.sha }} for testing. Signed with the debug key: install by hand, not for the Play Store."
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" $FILES --clobber
+          else
+            gh release create "$TAG" $FILES \
+              --target "${{ github.sha }}" \
+              --prerelease \
+              --title "Test build $TAG" \
+              --notes "Release build from ${{ github.ref_name }} at ${{ github.sha }} for testing. $SIGNED"
+          fi

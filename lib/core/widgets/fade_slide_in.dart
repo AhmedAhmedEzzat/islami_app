@@ -3,12 +3,22 @@ import 'package:material_ui/material_ui.dart';
 /// Fades [child] in while it rises a little, once, when it first appears.
 ///
 /// [index] staggers a column of cards so they arrive one after another. When
-/// the phone asks for reduced motion the child is shown straight away.
+/// the phone asks for reduced motion, or [animate] is false, the child is
+/// shown straight away.
 class FadeSlideIn extends StatefulWidget {
-  const FadeSlideIn({super.key, required this.child, this.index = 0});
+  const FadeSlideIn({
+    super.key,
+    required this.child,
+    this.index = 0,
+    this.animate = true,
+  });
 
   final Widget child;
   final int index;
+
+  /// Whether to play the entrance. A list builds its cards again when they
+  /// scroll back into view, and they should not arrive a second time then.
+  final bool animate;
 
   /// The gap between one card and the next. Kept short so nothing waits.
   static const stagger = Duration(milliseconds: 60);
@@ -37,7 +47,7 @@ class _FadeSlideInState extends State<FadeSlideIn>
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_c.isAnimating || _c.isCompleted) return;
-    if (MediaQuery.disableAnimationsOf(context)) {
+    if (!widget.animate || MediaQuery.disableAnimationsOf(context)) {
       _c.value = 1;
     } else {
       _c.forward();

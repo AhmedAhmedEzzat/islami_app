@@ -3,7 +3,6 @@ import 'dart:math' as math;
 
 import 'package:adhan/adhan.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_compass/flutter_compass.dart';
@@ -23,12 +22,20 @@ import 'location_sheet.dart';
 /// the dial at the Qibla bearing. The marker at the top is the direction the
 /// phone is pointing: turn until the Kaaba is under it.
 class QiblaView extends StatefulWidget {
-  const QiblaView({super.key, required this.location, this.compassEvents});
+  const QiblaView({
+    super.key,
+    required this.location,
+    this.compassEvents,
+    this.hasCompass,
+  });
 
   final PrayerLocation location;
 
   /// For tests; the phone's compass otherwise.
   final Stream<CompassEvent>? compassEvents;
+
+  /// For tests; asks the phone otherwise.
+  final Future<bool> Function()? hasCompass;
 
   /// Great-circle distance to the Kaaba, kilometres.
   static double distanceToKaabaKm(Coordinates from) {
@@ -66,6 +73,10 @@ class _QiblaViewState extends State<QiblaView> {
   double? _heading;
   double? _accuracy;
   bool _noSensor = false;
+
+  /// The phone has no magnetometer, so whatever the stream sends is not a
+  /// heading.
+  bool _noMagnetometer = false;
   bool _facing = false;
   bool _locating = false;
 
@@ -92,10 +103,24 @@ class _QiblaViewState extends State<QiblaView> {
     _sub = events.listen(_onCompass, onError: (_) {
       if (mounted) setState(() => _noSensor = true);
     });
+    _checkMagnetometer();
+  }
+
+  Future<void> _checkMagnetometer() async {
+    final hasCompass = await (widget.hasCompass ?? QiblaCompass.hasCompass)();
+    if (hasCompass || !mounted) return;
+    _sub?.cancel();
+    _sub = null;
+    setState(() {
+      _noMagnetometer = true;
+      _noSensor = true;
+      _heading = null;
+      _facing = false;
+    });
   }
 
   void _onCompass(CompassEvent e) {
-    if (!mounted) return;
+    if (!mounted || _noMagnetometer) return;
     final raw = e.heading;
     if (raw == null) {
       // Some phones send one empty reading before the first real one; only
@@ -103,9 +128,7 @@ class _QiblaViewState extends State<QiblaView> {
       if (_heading == null) setState(() => _noSensor = true);
       return;
     }
-    // iOS sends a negative true heading while it has no location fix;
-    // Android's run from -180 to 180 and are all valid.
-    if (raw < 0 && defaultTargetPlatform == TargetPlatform.iOS) return;
+    if (!QiblaCompass.isValidHeading(raw)) return;
     final heading = _filter.add(raw + _declination);
     final off = QiblaCompass.turnNeeded(heading, _qibla).abs();
     final facing = _facing ? off <= QiblaView.leaveBeyond : off <= QiblaView.enterWithin;
@@ -128,6 +151,7 @@ class _QiblaViewState extends State<QiblaView> {
   }
 
   Future<void> _refreshLocation() async {
+    final before = _location.coordinates;
     setState(() => _locating = true);
     final fresh = await PrayerTimesService.refreshLocation();
     if (!mounted) return;
@@ -136,6 +160,17 @@ class _QiblaViewState extends State<QiblaView> {
       _location = fresh;
     });
     _loadDeclination();
+    // A new fix is saved for the whole app, so the adhan and the home screen
+    // widget move with it, as they do when Home or the Prayer tab finds one.
+    if (!_samePlace(before, fresh.coordinates)) _reschedule();
+  }
+
+  static bool _samePlace(Coordinates a, Coordinates b) =>
+      (a.latitude - b.latitude).abs() < 1e-4 && (a.longitude - b.longitude).abs() < 1e-4;
+
+  void _reschedule() {
+    final settings = context.read<SettingsCubit>().state;
+    NotificationRefresh.reschedule(settings, Localizations.localeOf(context));
   }
 
   Future<void> _changeLocation() async {
@@ -146,8 +181,7 @@ class _QiblaViewState extends State<QiblaView> {
     if (!_location.isManual) await _refreshLocation();
     if (!mounted) return;
     // Prayer times moved with the place, so the alerts follow.
-    final settings = context.read<SettingsCubit>().state;
-    NotificationRefresh.reschedule(settings, Localizations.localeOf(context));
+    _reschedule();
   }
 
   @override
@@ -171,16 +205,21 @@ class _QiblaViewState extends State<QiblaView> {
         QiblaCompass.needsCalibration(_accuracy);
 
     final String status;
+    // What a screen reader announces as the phone turns: the same, but in
+    // steps of ten degrees, so it is not read out again at every degree.
+    final String spoken;
     if (_noSensor) {
-      status = l10n.qiblaNoSensor;
+      status = spoken = l10n.qiblaNoSensor;
     } else if (turn == null) {
-      status = l10n.qiblaTurn;
+      status = spoken = l10n.qiblaTurn;
     } else if (_facing) {
-      status = l10n.qiblaFacing;
+      status = spoken = l10n.qiblaFacing;
     } else if (turn > 0) {
       status = l10n.qiblaTurnRight(turn.round());
+      spoken = l10n.qiblaTurnRight(QiblaCompass.spokenDegrees(turn));
     } else {
       status = l10n.qiblaTurnLeft((-turn).round());
+      spoken = l10n.qiblaTurnLeft(QiblaCompass.spokenDegrees(turn));
     }
 
     return Scaffold(
@@ -218,7 +257,7 @@ class _QiblaViewState extends State<QiblaView> {
                 child: SizedBox.square(
                   dimension: dial,
                   child: Semantics(
-                    label: status,
+                    label: spoken,
                     liveRegion: true,
                     child: _Compass(
                       heading: heading ?? 0,
@@ -531,6 +570,7 @@ class _Compass extends StatelessWidget {
                         qiblaColor: scheme.primary,
                         textStyle: context.texts.titleSmall!,
                         textDirection: Directionality.of(context),
+                        letters: context.isArabic ? _DialPainter.arabicLetters : _DialPainter.latinLetters,
                       ),
                     ),
                     // The Kaaba on the ring, kept upright as the dial turns.
@@ -593,7 +633,12 @@ class _DialPainter extends CustomPainter {
     required this.qiblaColor,
     required this.textStyle,
     required this.textDirection,
+    required this.letters,
   });
+
+  /// North, east, south and west, in that order.
+  static const latinLetters = ['N', 'E', 'S', 'W'];
+  static const arabicLetters = ['ش', 'ق', 'ج', 'غ'];
 
   final Color ticks;
   final Color north;
@@ -601,6 +646,7 @@ class _DialPainter extends CustomPainter {
   final Color qiblaColor;
   final TextStyle textStyle;
   final TextDirection textDirection;
+  final List<String> letters;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -635,7 +681,6 @@ class _DialPainter extends CustomPainter {
         ..strokeCap = StrokeCap.round,
     );
 
-    const letters = ['N', 'E', 'S', 'W'];
     for (var i = 0; i < 4; i++) {
       final a = i * math.pi / 2;
       final dir = Offset(math.sin(a), -math.cos(a));
@@ -664,5 +709,6 @@ class _DialPainter extends CustomPainter {
       old.ticks != ticks ||
       old.north != north ||
       old.qiblaColor != qiblaColor ||
-      old.textStyle != textStyle;
+      old.textStyle != textStyle ||
+      old.letters != letters;
 }
