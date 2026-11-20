@@ -168,9 +168,9 @@
   "qiblaTitle": "القبلة",
   "qiblaBearing": "القبلة على بعد {degrees}° من الشمال",
   "qiblaFacing": "أنت تتجه نحو القبلة",
-  "qiblaTurn": "استدر حتى يشير السهم إلى الأعلى",
+  "qiblaTurn": "استدر حتى تصبح الكعبة تحت العلامة",
   "qiblaNoSensor": "لا توجد بوصلة في هذا الهاتف. استخدم الاتجاه أعلاه مع بوصلة حقيقية.",
-  "qiblaCalibrate": "حرّك هاتفك على شكل رقم 8 لمعايرة البوصلة.",
+  "qiblaCalibrate": "حرّك هاتفك على شكل رقم 8 عدة مرات، ثم ضعه مستويًا مرة أخرى.",
   "qiblaDistance": "{km} كم إلى الكعبة",
   "monthlyTimetable": "جدول الشهر",
   "prayerTracker": "متابعة الصلاة",
@@ -587,5 +587,14 @@
   "azkarCardActions": "خيارات أخرى",
   "azkarMorningNow": "العدّ لأذكار هذا الصباح",
   "azkarEveningNow": "العدّ لأذكار هذا المساء",
-  "azkarSessionDone": "أُنجزت اليوم"
+  "azkarSessionDone": "أُنجزت اليوم",
+  "qiblaTurnRight": "استدر يمينًا {degrees}°",
+  "qiblaTurnLeft": "استدر يسارًا {degrees}°",
+  "qiblaLocating": "جارٍ تحديد موقعك…",
+  "qiblaChangeLocation": "تغيير",
+  "qiblaSetLocation": "تحديد الموقع",
+  "qiblaFallbackTitle": "لم يتم تحديد موقعك",
+  "qiblaFallbackBody": "الاتجاه المعروض من القاهرة وليس من مكانك. حدد موقعك لتحصل على قبلة دقيقة.",
+  "qiblaCalibrateTitle": "معايرة البوصلة",
+  "qiblaTips": "ضع هاتفك مستويًا بعيدًا عن المعادن والمغناطيس والسماعات والهواتف الأخرى."
 }

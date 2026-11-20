@@ -27,6 +27,9 @@ class MainActivity : FlutterActivity() {
         // Restoring a backup.
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "sakina/files")
             .setMethodCallHandler(files)
+        // Magnetic declination, so the Qibla compass points from true north.
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "sakina/compass")
+            .setMethodCallHandler(Compass())
     }
 
     @Deprecated("Deprecated in Java")

@@ -371,9 +371,9 @@
     }
   },
   "qiblaFacing": "You are facing the Qibla",
-  "qiblaTurn": "Turn until the arrow points up",
+  "qiblaTurn": "Turn until the Kaaba is under the marker",
   "qiblaNoSensor": "This phone has no compass. Use the bearing above with a real compass.",
-  "qiblaCalibrate": "Wave your phone in a figure 8 to calibrate the compass.",
+  "qiblaCalibrate": "Move your phone in a figure 8 a few times, then lay it flat again.",
   "qiblaDistance": "{km} km to the Kaaba",
   "@qiblaDistance": {
     "placeholders": {
@@ -1044,5 +1044,16 @@
   "azkarCardActions": "More options",
   "azkarMorningNow": "Counting for this morning",
   "azkarEveningNow": "Counting for this evening",
-  "azkarSessionDone": "Done for today"
+  "azkarSessionDone": "Done for today",
+  "qiblaTurnRight": "Turn right {degrees}°",
+  "@qiblaTurnRight": {"placeholders": {"degrees": {"type": "int"}}},
+  "qiblaTurnLeft": "Turn left {degrees}°",
+  "@qiblaTurnLeft": {"placeholders": {"degrees": {"type": "int"}}},
+  "qiblaLocating": "Finding your location…",
+  "qiblaChangeLocation": "Change",
+  "qiblaSetLocation": "Set location",
+  "qiblaFallbackTitle": "Your location is not set",
+  "qiblaFallbackBody": "The direction shown is from Cairo, not from where you are. Set your location for an accurate Qibla.",
+  "qiblaCalibrateTitle": "Calibrate the compass",
+  "qiblaTips": "Lay your phone flat, away from metal, magnets, speakers and other phones."
 }
