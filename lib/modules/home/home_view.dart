@@ -60,6 +60,10 @@ class _HomeViewState extends State<HomeView> {
   Timer? _ticker;
   late Future<HadethDataModel?> _hadeth = _hadethOfTheDay();
   bool _remindersDismissed = LocalStorageServices.getBool(PrefsKeys.remindersCardDismissed) ?? false;
+
+  /// When Home was first built, and how long after that its cards ease in.
+  final DateTime _openedAt = DateTime.now();
+  static const Duration _entrance = Duration(seconds: 1);
   int _hadethDay = dayNumber(DateTime.now());
 
   @override
@@ -189,9 +193,11 @@ class _HomeViewState extends State<HomeView> {
           // stretching edge to edge.
           final side = ((MediaQuery.sizeOf(context).width - 720) / 2)
               .clamp(AppSpacing.lg, double.infinity);
-          // Each card arrives a moment after the one above it, once.
+          // Each card arrives a moment after the one above it, once: when
+          // Home first opens, not again as a card scrolls back into view.
           var order = 0;
-          Widget enter(Widget child) => FadeSlideIn(index: order++, child: child);
+          final entering = DateTime.now().difference(_openedAt) < _entrance;
+          Widget enter(Widget child) => FadeSlideIn(index: order++, animate: entering, child: child);
 
           return ListView(
             padding: EdgeInsets.fromLTRB(side, 0, side, AppSpacing.xl),
