@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:adhan/adhan.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_compass/flutter_compass.dart';
@@ -102,6 +103,9 @@ class _QiblaViewState extends State<QiblaView> {
       if (_heading == null) setState(() => _noSensor = true);
       return;
     }
+    // iOS sends a negative true heading while it has no location fix;
+    // Android's run from -180 to 180 and are all valid.
+    if (raw < 0 && defaultTargetPlatform == TargetPlatform.iOS) return;
     final heading = _filter.add(raw + _declination);
     final off = QiblaCompass.turnNeeded(heading, _qibla).abs();
     final facing = _facing ? off <= QiblaView.leaveBeyond : off <= QiblaView.enterWithin;

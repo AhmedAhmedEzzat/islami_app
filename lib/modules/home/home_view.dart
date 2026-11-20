@@ -753,7 +753,7 @@ class _VerseOfTheDayState extends State<_VerseOfTheDay> {
 }
 
 /// The reader's Quran in one card: today's khatma portion while a khatma is
-/// under way, otherwise the sura they were last reading, otherwise an
+/// under way (or its celebration once finished), otherwise the sura they were last reading, otherwise an
 /// invitation to start a khatma.
 class _QuranCard extends StatelessWidget {
   const _QuranCard({
@@ -774,7 +774,7 @@ class _QuranCard extends StatelessWidget {
         valueListenable: RecentSuras.notifier,
         builder: (context, recent, _) {
           final Widget child;
-          if ((plan != null && !plan.isComplete) || recent.isEmpty) {
+          if (plan != null || recent.isEmpty) {
             child = KhatmaCard(now: now, onOpenPage: onOpenPage);
           } else {
             final sura = recent.first;
