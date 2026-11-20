@@ -11,6 +11,7 @@ import '../../core/state/radio_cubit.dart';
 import '../../core/state/radio_state.dart';
 import '../../models/quran_open_request.dart';
 import '../../models/radio_channel.dart';
+import '../../core/services/hadeth_service.dart';
 import '../../core/services/recent_suras.dart';
 import '../../models/sura_data_model.dart';
 import '../home/home_view.dart';
@@ -19,6 +20,7 @@ import '../../core/services/prayer_notification_service.dart';
 import '../../models/zikr_model.dart';
 import 'azkar/azkar_tab_view.dart';
 import 'azkar/azkar_view.dart';
+import 'hadeth/hadeth_details_view.dart';
 import 'layout_scope.dart';
 import 'quran/quran_details_view.dart';
 import 'quran/quran_view.dart';
@@ -37,8 +39,22 @@ class LayoutView extends StatefulWidget {
   State<LayoutView> createState() => _LayoutViewState();
 }
 
-class _LayoutViewState extends State<LayoutView> {
+class _LayoutViewState extends State<LayoutView>
+    with SingleTickerProviderStateMixin {
   int _selectedIndex = AppTab.home;
+
+  /// A short fade as one tab gives way to another, so the switch feels soft
+  /// rather than a hard cut.
+  late final AnimationController _tabFade = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 220),
+    value: 1,
+  );
+
+  void _fadeInTab() {
+    if (MediaQuery.disableAnimationsOf(context)) return;
+    _tabFade.forward(from: 0);
+  }
 
   // Order must match AppTab.
   static const List<Widget> _roots = [
@@ -95,7 +111,8 @@ class _LayoutViewState extends State<LayoutView> {
             ..popUntil((route) => route.isFirst)
             ..push(
               MaterialPageRoute<void>(
-                builder: (_) => const AzkarView(chapterId: FeaturedAzkar.morningEvening),
+                builder: (_) =>
+                    const AzkarView(chapterId: FeaturedAzkar.morningEvening),
               ),
             );
         });
@@ -108,13 +125,31 @@ class _LayoutViewState extends State<LayoutView> {
           navigator
             ..popUntil((route) => route.isFirst)
             ..push(
-              MaterialPageRoute<void>(builder: (_) => const AzkarView(chapterId: FeaturedAzkar.adhan)),
+              MaterialPageRoute<void>(
+                builder: (_) => const AzkarView(chapterId: FeaturedAzkar.adhan),
+              ),
             );
         });
       case AlertKind.reminder:
         _selectTab(AppTab.prayer);
       case AlertKind.dhikr:
         _selectTab(AppTab.azkar);
+      case AlertKind.dailyHadith:
+        // Today's hadith, over Home, which shows the same one.
+        _selectTab(AppTab.home);
+        HadethService.loadAll().then((all) {
+          final hadeth = HadethService.ofDay(all, DateTime.now());
+          if (hadeth == null || !mounted) return;
+          _withNavigator(AppTab.home, (navigator) {
+            navigator
+              ..popUntil((route) => route.isFirst)
+              ..push(
+                MaterialPageRoute<void>(
+                  builder: (_) => HadethDetailsView(hadeth: hadeth),
+                ),
+              );
+          });
+        });
       case AlertKind.khatma:
         // Home holds the khatma card, with today's pages and a Read button.
         _selectTab(AppTab.home);
@@ -125,6 +160,7 @@ class _LayoutViewState extends State<LayoutView> {
 
   @override
   void dispose() {
+    _tabFade.dispose();
     PrayerNotificationService.tapped.removeListener(_onNotificationTap);
     for (final observer in _observers) {
       observer
@@ -162,11 +198,13 @@ class _LayoutViewState extends State<LayoutView> {
       navigator.pop();
       return;
     }
+    _fadeInTab();
     setState(() => _selectedIndex = AppTab.home);
   }
 
   void _selectTab(int index) {
     if (index == _selectedIndex) return;
+    _fadeInTab();
     setState(() {
       _visited[index] = true;
       _selectedIndex = index;
@@ -262,24 +300,27 @@ class _LayoutViewState extends State<LayoutView> {
         selectTab: _selectTab,
         openSura: _openSura,
         child: Scaffold(
-          body: IndexedStack(
-            index: _selectedIndex,
-            children: [
-              for (var i = 0; i < _roots.length; i++)
-                if (_visited[i])
-                  // Hidden tabs stay built but still: no animations, and
-                  // their listeners know they are not the one on screen.
-                  TickerMode(
-                    enabled: i == _selectedIndex,
-                    child: TabNavigator(
-                      navigatorKey: _navKeys[i],
-                      observer: _observers[i],
-                      root: _roots[i],
-                    ),
-                  )
-                else
-                  const SizedBox.shrink(),
-            ],
+          body: FadeTransition(
+            opacity: CurvedAnimation(parent: _tabFade, curve: Curves.easeOut),
+            child: IndexedStack(
+              index: _selectedIndex,
+              children: [
+                for (var i = 0; i < _roots.length; i++)
+                  if (_visited[i])
+                    // Hidden tabs stay built but still: no animations, and
+                    // their listeners know they are not the one on screen.
+                    TickerMode(
+                      enabled: i == _selectedIndex,
+                      child: TabNavigator(
+                        navigatorKey: _navKeys[i],
+                        observer: _observers[i],
+                        root: _roots[i],
+                      ),
+                    )
+                  else
+                    const SizedBox.shrink(),
+              ],
+            ),
           ),
           bottomNavigationBar: ValueListenableBuilder<bool>(
             valueListenable: FocusMode.on,

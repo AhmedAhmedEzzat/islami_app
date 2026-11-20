@@ -369,6 +369,13 @@ class SettingsView extends StatelessWidget {
                 },
               ),
               SwitchListTile(
+                value: state.dailyHadith,
+                title: Text(context.l10n.dailyHadithSetting),
+                subtitle: Text(context.l10n.dailyHadithSubtitle),
+                secondary: const Icon(Icons.format_quote_outlined),
+                onChanged: state.prayerNotifications ? cubit.setDailyHadith : null,
+              ),
+              SwitchListTile(
                 value: state.adhkarReminders,
                 title: Text(context.l10n.adhkarRemindersSetting),
                 subtitle: Text(context.l10n.adhkarRemindersSubtitle),

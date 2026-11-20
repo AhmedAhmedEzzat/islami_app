@@ -20,7 +20,7 @@ import 'hifz_view.dart';
 import 'listen_view.dart';
 import 'duas_view.dart';
 import 'names_view.dart';
-import 'zakat_view.dart';
+import 'today_views.dart';
 
 /// Everything that is not a daily destination of its own.
 class MoreView extends StatelessWidget {
@@ -39,6 +39,16 @@ class MoreView extends StatelessWidget {
     );
 
     final tiles = <(IconData, String, VoidCallback)>[
+      (
+        Icons.flag_outlined,
+        l10n.khatmaTitle,
+        () => push(const KhatmaView()),
+      ),
+      (
+        Icons.task_alt,
+        l10n.deedsTitle,
+        () => push(const DailyDeedsView()),
+      ),
       (
         Icons.format_quote_outlined,
         l10n.hadethTitle,
@@ -73,11 +83,6 @@ class MoreView extends StatelessWidget {
         Icons.check_circle_outline,
         l10n.prayerTracker,
         () => push(const TrackerView()),
-      ),
-      (
-        Icons.calculate_outlined,
-        l10n.zakatTitle,
-        () => push(const ZakatView()),
       ),
       (
         Icons.psychology_outlined,

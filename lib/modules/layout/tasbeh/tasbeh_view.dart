@@ -81,8 +81,12 @@ class _TasbehViewState extends State<TasbehView> {
     rounds = LocalStorageServices.getInt(PrefsKeys.tasbehRounds) ?? 0;
     target = LocalStorageServices.getInt(PrefsKeys.tasbehTarget) ?? 33;
     custom = LocalStorageServices.getStringList(PrefsKeys.tasbehCustom) ?? [];
-    index = (LocalStorageServices.getInt(PrefsKeys.tasbehZikrIndex) ?? 0).clamp(0, azkar.length - 1);
-    today = LocalStorageServices.getString(PrefsKeys.tasbehTodayDate) == _todayKey()
+    index = (LocalStorageServices.getInt(PrefsKeys.tasbehZikrIndex) ?? 0).clamp(
+      0,
+      azkar.length - 1,
+    );
+    today =
+        LocalStorageServices.getString(PrefsKeys.tasbehTodayDate) == _todayKey()
         ? LocalStorageServices.getInt(PrefsKeys.tasbehToday) ?? 0
         : 0;
   }
@@ -142,7 +146,9 @@ class _TasbehViewState extends State<TasbehView> {
           for (final t in targetChoices)
             ListTile(
               title: Text('$t'),
-              trailing: t == target ? Icon(Icons.check, color: context.colors.primary) : null,
+              trailing: t == target
+                  ? Icon(Icons.check, color: context.colors.primary)
+                  : null,
               onTap: () => Navigator.pop(context, t),
             ),
         ],
@@ -189,8 +195,14 @@ class _TasbehViewState extends State<TasbehView> {
       builder: (context) => AlertDialog(
         content: Text(context.l10n.tasbehRemove(azkar[i])),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(context.l10n.cancel)),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(context.l10n.delete)),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(context.l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(context.l10n.delete),
+          ),
         ],
       ),
     );
@@ -343,7 +355,7 @@ class _TasbehViewState extends State<TasbehView> {
 
 /// The tap target. Deliberately bounded rather than full-screen, so the chips
 /// and the undo/reset buttons are not swallowed by the counter's gesture.
-class _CounterRing extends StatelessWidget {
+class _CounterRing extends StatefulWidget {
   const _CounterRing({
     super.key,
     required this.counter,
@@ -358,62 +370,96 @@ class _CounterRing extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<_CounterRing> createState() => _CounterRingState();
+}
+
+class _CounterRingState extends State<_CounterRing> {
+  /// The ring sinks a little under the finger, like a real bead being moved.
+  bool _pressed = false;
+
+  void _press(bool down) {
+    if (_pressed != down) setState(() => _pressed = down);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final scheme = context.colors;
+    final counter = widget.counter;
+    final total = widget.total;
+    final zikr = widget.zikr;
 
     return Semantics(
       button: true,
       label: context.l10n.countOf(counter, total),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: SizedBox(
-          width: 260,
-          height: 260,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              SizedBox.expand(
-                child: TweenAnimationBuilder<double>(
-                  duration: AppDurations.fast,
-                  curve: Curves.easeOut,
-                  tween: Tween(begin: 0, end: counter / total),
-                  builder: (context, value, _) => CircularProgressIndicator(
-                    value: value,
-                    strokeWidth: 14,
-                    strokeCap: StrokeCap.round,
-                    backgroundColor: scheme.surfaceContainerHighest,
+        onTap: widget.onTap,
+        onTapDown: (_) => _press(true),
+        onTapUp: (_) => _press(false),
+        onTapCancel: () => _press(false),
+        child: AnimatedScale(
+          scale: _pressed ? 0.96 : 1,
+          duration: const Duration(milliseconds: 90),
+          curve: Curves.easeOut,
+          child: SizedBox(
+            width: 260,
+            height: 260,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // A soft disc behind the numbers that deepens under the finger.
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 90),
+                  margin: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _pressed
+                        ? scheme.primaryContainer
+                        : scheme.primaryContainer.withValues(alpha: 0.35),
                   ),
                 ),
-              ),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    zikr,
-                    textDirection: TextDirection.rtl,
-                    style: context.texts.titleMedium?.copyWith(
-                      color: scheme.primary,
+                SizedBox.expand(
+                  child: TweenAnimationBuilder<double>(
+                    duration: AppDurations.fast,
+                    curve: Curves.easeOut,
+                    tween: Tween(begin: 0, end: counter / total),
+                    builder: (context, value, _) => CircularProgressIndicator(
+                      value: value,
+                      strokeWidth: 14,
+                      strokeCap: StrokeCap.round,
+                      backgroundColor: scheme.surfaceContainerHighest,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    key: TasbehView.countValueKey,
-                    '$counter',
-                    style: context.texts.displayMedium?.copyWith(
-                      color: scheme.onSurface,
-                      fontWeight: FontWeight.w700,
+                ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      zikr,
+                      textDirection: TextDirection.rtl,
+                      style: context.texts.titleMedium?.copyWith(
+                        color: scheme.primary,
+                      ),
                     ),
-                  ),
-                  Text(
-                    context.l10n.ofTotal(total),
-                    style: context.texts.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      key: TasbehView.countValueKey,
+                      '$counter',
+                      style: context.texts.displayMedium?.copyWith(
+                        color: scheme.onSurface,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                    Text(
+                      context.l10n.ofTotal(total),
+                      style: context.texts.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -9,7 +9,9 @@ import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../l10n/gen/app_localizations.dart';
+import '../../models/hadeth_data_model.dart';
 import '../constants/dhikr_reminders.dart';
+import 'hadeth_service.dart';
 import '../constants/muezzins.dart';
 import 'islamic_calendar.dart';
 import 'prayer_config.dart';
@@ -58,6 +60,9 @@ enum AlertKind {
 
   /// A short dhikr, every few hours between sunrise and Isha.
   dhikr,
+
+  /// The hadith of the day, at [PrayerNotificationService.dailyHadithHour].
+  dailyHadith,
 }
 
 /// Optional reminders of sunnah acts, each with its own switch.
@@ -222,6 +227,7 @@ abstract final class PrayerNotificationService {
   ///   sunnah    7000 + day * 10 + slot (0 duha, 1 qiyam, 2 jumuah,
   ///             3 the qiyam of the night already under way, on day 0)
   ///   dhikr     8000 + day * 20 + slot
+  ///   hadith    9000 + day
   static const int _reminderBase = 2000;
   static const int _kahfBase = 3000;
   static const int _fastingBase = 4000;
@@ -230,6 +236,11 @@ abstract final class PrayerNotificationService {
   static const int _sunnahBase = 7000;
   static const int _dhikrBase = 8000;
   static const int _dhikrSlots = 20;
+  static const int _hadithBase = 9000;
+
+  /// The hadith of the day arrives late in the morning, clear of Fajr and
+  /// well before Dhuhr in most places and seasons.
+  static const int dailyHadithHour = 11;
 
   /// Dhikr reminders start this long after sunrise, and none comes this close
   /// to a prayer, so they never talk over the adhan.
@@ -240,6 +251,14 @@ abstract final class PrayerNotificationService {
   /// the day and from one day to the next.
   static (String, String) dhikrFor(int id) =>
       DhikrReminders.all[(id - _dhikrBase) % DhikrReminders.all.length];
+
+  /// What the notification says for [hadeth]: its text in the reader's
+  /// language, without the title, which is a number. Null when there is none.
+  static String? hadithBody(HadethDataModel? hadeth, {required bool arabic}) {
+    if (hadeth == null) return null;
+    final text = arabic ? hadeth.content.join('\n') : (hadeth.english ?? hadeth.content.join('\n'));
+    return text.trim().isEmpty ? null : text.trim();
+  }
 
   /// The Friday reminder comes this long before Dhuhr, in time to prepare
   /// and go early.
@@ -278,6 +297,7 @@ abstract final class PrayerNotificationService {
         await _plugin.cancel(id: _adhkarBase + day * 10 + slot);
       }
       await _plugin.cancel(id: _khatmaBase + day);
+      await _plugin.cancel(id: _hadithBase + day);
       for (var slot = 0; slot < 4; slot++) {
         await _plugin.cancel(id: _sunnahBase + day * 10 + slot);
       }
@@ -309,6 +329,7 @@ abstract final class PrayerNotificationService {
     bool khatma = false,
     Set<SunnahAlert> sunnah = const {},
     int dhikrHours = 0,
+    bool dailyHadith = false,
   }) {
     final result = <ScheduledAlert>[];
     final today = DateTime(now.year, now.month, now.day);
@@ -406,6 +427,13 @@ abstract final class PrayerNotificationService {
         }
       }
 
+      if (dailyHadith) {
+        final time = DateTime(date.year, date.month, date.day, dailyHadithHour);
+        if (time.isAfter(now)) {
+          result.add(ScheduledAlert(_hadithBase + day, AlertKind.dailyHadith, null, time));
+        }
+      }
+
       if (khatma) {
         final time = times.entry(PrayerName.isha).time.add(khatmaAfterIsha);
         if (time.isAfter(now)) {
@@ -458,7 +486,7 @@ abstract final class PrayerNotificationService {
     PrayerSound sound, [
     Muezzin muezzin = Muezzins.standard,
   ]) {
-    if (kind == AlertKind.dhikr) return [dhikrChannel];
+    if (kind == AlertKind.dhikr || kind == AlertKind.dailyHadith) return [dhikrChannel];
     if (kind != AlertKind.prayer) return [standardChannel];
     return switch (sound) {
       PrayerSound.adhan => [
@@ -521,6 +549,7 @@ abstract final class PrayerNotificationService {
     bool khatma = false,
     Set<SunnahAlert> sunnah = const {},
     int dhikrHours = 0,
+    bool dailyHadith = false,
     bool Function()? superseded,
   }) async {
     if (kIsWeb) return;
@@ -551,7 +580,10 @@ abstract final class PrayerNotificationService {
       khatma: khatma,
       sunnah: sunnah,
       dhikrHours: dhikrHours,
+      dailyHadith: dailyHadith,
     );
+    // Each day's notification carries that day's hadith, the one Home shows.
+    final ahadeth = dailyHadith ? await HadethService.loadAll() : const <HadethDataModel>[];
 
     final missingSounds = <String>{};
     for (final alert in alerts) {
@@ -588,12 +620,17 @@ abstract final class PrayerNotificationService {
           l10n.dhikrTitle,
           l10n.localeName == 'ar' ? dhikrFor(alert.id).$1 : '${dhikrFor(alert.id).$1}\n${dhikrFor(alert.id).$2}',
         ),
+        AlertKind.dailyHadith => (
+          l10n.hadethOfTheDay,
+          hadithBody(HadethService.ofDay(ahadeth, alert.time), arabic: l10n.localeName == 'ar') ??
+              l10n.dailyHadithBody,
+        ),
       };
       Future<void> schedule(String channel) => _plugin.zonedSchedule(
         id: alert.id,
         scheduledDate: tz.TZDateTime.from(alert.time, tz.local),
         // A dhikr runs to several lines, so it unfolds to show them all.
-        notificationDetails: alert.kind == AlertKind.dhikr
+        notificationDetails: alert.kind == AlertKind.dhikr || alert.kind == AlertKind.dailyHadith
             ? _dhikrDetails(l10n, body)
             : details[channel]!,
         // Exact when the user has allowed it; otherwise Android batches the

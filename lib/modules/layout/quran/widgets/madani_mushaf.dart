@@ -13,9 +13,9 @@ import '../../../../core/utils/arabic_text.dart';
 /// The 604-page Madinah mushaf, turned page by page like the printed copy.
 ///
 /// Every page holds exactly the lines of the print, so each one starts and
-/// ends on the same word as the mushaf on the reader's shelf. Text cannot be
-/// enlarged here, since that would break the lines; the flowing view in
-/// MushafPage is for that.
+/// ends on the same word as the mushaf on the reader's shelf. With the Quran
+/// text size above 100% a page keeps its words but sets them larger, on as
+/// many lines as that takes, and scrolls.
 class MadaniMushaf extends StatefulWidget {
   const MadaniMushaf({
     super.key,
@@ -200,8 +200,11 @@ class MadaniMushafState extends State<MadaniMushaf> {
   Widget _sheet(int page) {
     if (page > MushafLayout.pageCount) return const SizedBox.shrink();
     return MushafSheet(
+      // A turned page opens at its top.
+      key: ValueKey(page),
       layout: widget.layout,
       page: page,
+      zoom: context.select<SettingsCubit, double>((c) => c.state.quranFontScale),
       words: _textFor(page),
       highlight: widget.highlight,
       isBookmarked: widget.isBookmarked,
@@ -276,6 +279,7 @@ class MushafSheet extends StatelessWidget {
     required this.layout,
     required this.page,
     required this.words,
+    this.zoom = 1,
     this.highlight,
     this.isBookmarked,
     this.verseTint,
@@ -284,6 +288,14 @@ class MushafSheet extends StatelessWidget {
 
   final MushafLayout layout;
   final int page;
+
+  /// The reader's Quran text size. Up to 1 the page is set line for line as
+  /// printed, filling the screen. Above it the same words are set that much
+  /// larger and the page scrolls.
+  final double zoom;
+
+  /// Whether the page is enlarged, and so scrolls instead of fitting.
+  bool get enlarged => zoom > 1.01;
 
   /// Null while the text is loading.
   final Map<int, List<List<String>>>? words;
@@ -376,57 +388,88 @@ class MushafSheet extends StatelessWidget {
     // Odd pages are right-hand pages; their outer margin is on the left.
     final outerIsLeft = page.isOdd;
 
+    // Running heads: juz on the right, sura on the left.
+    final heads = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 28),
+      child: Row(
+        textDirection: TextDirection.rtl,
+        children: [
+          if (meta != null) Text(juzName(meta.juzOf(firstWord.verse)), style: head),
+          const Spacer(),
+          if (meta != null) Text('سورة ${_plainName(meta.sura(lastText.sura).nameAr)}', style: head),
+        ],
+      ),
+    );
+    const padding = EdgeInsets.fromLTRB(6, AppSpacing.sm, 6, AppSpacing.xs);
+
+    if (enlarged) {
+      return ColoredBox(
+        color: paper.paper,
+        child: SafeArea(
+          top: false,
+          bottom: false,
+          child: LayoutBuilder(
+            builder: (context, box) => SingleChildScrollView(
+              child: ConstrainedBox(
+                // A short page still fills the screen with paper.
+                constraints: BoxConstraints(minHeight: box.maxHeight),
+                child: Padding(
+                  padding: padding,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      heads,
+                      const SizedBox(height: AppSpacing.xs),
+                      _Frame(
+                        color: paper.frame,
+                        child: words == null
+                            ? SizedBox(
+                                height: box.maxHeight * 0.7,
+                                child: Center(child: CircularProgressIndicator(color: paper.frame)),
+                              )
+                            : _FlowingLines(
+                                lines: lines,
+                                paper: paper,
+                                zoom: zoom,
+                                center: page <= 2,
+                                itemsOf: (line) => _Lines.itemsOf(line, words!, isBookmarked, verseTint),
+                                highlight: highlight,
+                                onVerseTap: onVerseTap,
+                              ),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      _PageNumber(page: page, paper: paper),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return ColoredBox(
       color: paper.paper,
       child: SafeArea(
         top: false,
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            6,
-            AppSpacing.sm,
-            6,
-            AppSpacing.xs,
-          ),
+          padding: padding,
           child: Column(
             children: [
-              // Running heads: juz on the right, sura on the left.
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 28),
-                child: Row(
-                  textDirection: TextDirection.rtl,
-                  children: [
-                    if (meta != null)
-                      Text(juzName(meta.juzOf(firstWord.verse)), style: head),
-                    const Spacer(),
-                    if (meta != null)
-                      Text(
-                        'سورة ${_plainName(meta.sura(lastText.sura).nameAr)}',
-                        style: head,
-                      ),
-                  ],
-                ),
-              ),
+              heads,
               const SizedBox(height: AppSpacing.xs),
               Expanded(
                 child: Row(
                   textDirection: TextDirection.ltr,
                   children: [
-                    _Margin(
-                      show: outerIsLeft,
-                      marks: marks,
-                      lineCount: lines.length,
-                      paper: paper,
-                    ),
+                    _Margin(show: outerIsLeft, marks: marks, lineCount: lines.length, paper: paper),
                     Expanded(
                       child: _Frame(
                         color: paper.frame,
                         child: words == null
-                            ? Center(
-                                child: CircularProgressIndicator(
-                                  color: paper.frame,
-                                ),
-                              )
+                            ? Center(child: CircularProgressIndicator(color: paper.frame))
                             : _Lines(
                                 layout: layout,
                                 page: page,
@@ -440,12 +483,7 @@ class MushafSheet extends StatelessWidget {
                               ),
                       ),
                     ),
-                    _Margin(
-                      show: !outerIsLeft,
-                      marks: marks,
-                      lineCount: lines.length,
-                      paper: paper,
-                    ),
+                    _Margin(show: !outerIsLeft, marks: marks, lineCount: lines.length, paper: paper),
                   ],
                 ),
               ),
@@ -678,7 +716,7 @@ class _Lines extends StatelessWidget {
                   ),
                 ),
                 MushafLineKind.text => _TextLine(
-                  items: _items(line),
+                  items: itemsOf(line, words, isBookmarked, verseTint),
                   style: style,
                   width: box.maxWidth,
                   center: _opening,
@@ -701,7 +739,12 @@ class _Lines extends StatelessWidget {
   }
 
   /// The words of [line], each verse closed by its numbered rosette.
-  List<_Item> _items(MushafLine line) {
+  static List<_Item> itemsOf(
+    MushafLine line,
+    Map<int, List<List<String>>> words,
+    bool Function(VerseRef verse)? isBookmarked,
+    Color? Function(VerseRef verse)? verseTint,
+  ) {
     final items = <_Item>[];
     var w = line.first!;
     while (true) {
@@ -723,12 +766,140 @@ class _Lines extends StatelessWidget {
       }
       if (w == line.last) break;
       w = endsVerse
-          ? (w.ayah < words[w.sura]!.length
-                ? WordRef(w.sura, w.ayah + 1, 1)
-                : WordRef(w.sura + 1, 1, 1))
+          ? (w.ayah < words[w.sura]!.length ? WordRef(w.sura, w.ayah + 1, 1) : WordRef(w.sura + 1, 1, 1))
           : WordRef(w.sura, w.ayah, w.word + 1);
     }
     return items;
+  }
+}
+
+/// The words of a page set larger than the print allows on one screen: the
+/// printed lines are joined and broken again wherever the larger type needs,
+/// so the page grows downwards and scrolls. Sura titles and the basmala keep
+/// lines of their own.
+class _FlowingLines extends StatelessWidget {
+  const _FlowingLines({
+    required this.lines,
+    required this.paper,
+    required this.zoom,
+    required this.center,
+    required this.itemsOf,
+    this.highlight,
+    this.onVerseTap,
+  });
+
+  final List<MushafLine> lines;
+  final _Paper paper;
+  final double zoom;
+
+  /// Al-Fatiha and the opening of Al-Baqarah are set as centred lines.
+  final bool center;
+  final List<_Item> Function(MushafLine line) itemsOf;
+  final VerseRef? highlight;
+  final ValueChanged<VerseRef>? onVerseTap;
+
+  /// Breaks [items] into lines no wider than [width], never splitting a verse
+  /// rosette from the word it closes.
+  static List<List<_Item>> breakLines(List<_Item> items, List<double> widths, double gap, double width) {
+    final out = <List<_Item>>[];
+    var line = <_Item>[];
+    var used = 0.0;
+    for (var i = 0; i < items.length; i++) {
+      // A word and the rosette after it travel together.
+      final group = [items[i]];
+      var need = widths[i];
+      if (i + 1 < items.length && items[i + 1].rosette) {
+        group.add(items[i + 1]);
+        need += gap + widths[i + 1];
+        i++;
+      }
+      if (line.isNotEmpty && used + gap + need > width) {
+        out.add(line);
+        line = <_Item>[];
+        used = 0;
+      }
+      used += (line.isEmpty ? 0 : gap) + need;
+      line.addAll(group);
+    }
+    if (line.isNotEmpty) out.add(line);
+    return out;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, box) {
+        final fontSize = box.maxWidth / MushafSheet.lineEm * zoom;
+        final lineHeight = fontSize * 2.1;
+        final gap = fontSize * 0.25;
+        final style = TextStyle(fontFamily: 'AmiriQuran', fontSize: fontSize, height: 1.0, color: paper.ink);
+
+        double measure(String text) => (TextPainter(
+          text: TextSpan(text: text, style: style),
+          textDirection: TextDirection.rtl,
+          textScaler: TextScaler.noScaling,
+        )..layout()).width;
+
+        final children = <Widget>[];
+        var run = <_Item>[];
+        void flush() {
+          if (run.isEmpty) return;
+          final widths = [for (final item in run) measure(item.text)];
+          for (final line in breakLines(run, widths, gap, box.maxWidth)) {
+            children.add(
+              SizedBox(
+                height: lineHeight,
+                child: _TextLine(
+                  items: line,
+                  style: style,
+                  width: box.maxWidth,
+                  center: center,
+                  paper: paper,
+                  highlight: highlight,
+                  onVerseTap: onVerseTap,
+                ),
+              ),
+            );
+          }
+          run = <_Item>[];
+        }
+
+        for (final line in lines) {
+          switch (line.kind) {
+            case MushafLineKind.text:
+              run.addAll(itemsOf(line));
+            case MushafLineKind.suraTitle:
+              flush();
+              children.add(
+                SizedBox(
+                  height: lineHeight,
+                  child: _SuraTitle(sura: line.sura, style: style, paper: paper),
+                ),
+              );
+            case MushafLineKind.basmala:
+              flush();
+              children.add(
+                SizedBox(
+                  height: lineHeight,
+                  child: Center(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        MushafSheet.basmala,
+                        style: style,
+                        textDirection: TextDirection.rtl,
+                        textScaler: TextScaler.noScaling,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+          }
+        }
+        flush();
+        return Column(mainAxisSize: MainAxisSize.min, children: children);
+      },
+    );
   }
 }
 

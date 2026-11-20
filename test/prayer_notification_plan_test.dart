@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:adhan/adhan.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakina/core/constants/muezzins.dart';
+import 'package:sakina/core/services/hadeth_service.dart';
 import 'package:sakina/core/services/prayer_config.dart';
 import 'package:sakina/core/services/prayer_notification_service.dart';
 import 'package:sakina/core/services/prayer_times_service.dart';
@@ -195,6 +196,51 @@ void main() {
     expect(ids.toSet().length, ids.length);
   });
 
+  group('hadith of the day', () {
+    List<ScheduledAlert> hadith(DateTime now, {bool on = true}) => PrayerNotificationService.plan(
+      coordinates: place,
+      now: now,
+      prayers: const {},
+      dailyHadith: on,
+    );
+
+    test('none unless asked for', () => expect(hadith(monday, on: false), isEmpty));
+
+    test('one a day at 11 in the morning, by the phone\'s clock', () {
+      final alerts = hadith(monday);
+      expect(alerts, hasLength(days));
+      expect(alerts.every((a) => a.kind == AlertKind.dailyHadith), isTrue);
+      expect(alerts.map((a) => a.id).toSet(), hasLength(days));
+      for (final (i, a) in alerts.indexed) {
+        expect(a.time, DateTime(monday.year, monday.month, monday.day + i, 11));
+      }
+    });
+
+    test('today\'s is skipped once 11 has passed', () {
+      final alerts = hadith(DateTime(2026, 6, 15, 11, 30));
+      expect(alerts, hasLength(days - 1));
+      expect(alerts.first.time, DateTime(2026, 6, 16, 11));
+    });
+
+    test('each day brings a different hadith, in the reader\'s language', () {
+      final all = HadethService.parse(File('assets/hadeth/hadeth.json').readAsStringSync());
+      final alerts = hadith(monday);
+      final first = HadethService.ofDay(all, alerts[0].time)!;
+      final second = HadethService.ofDay(all, alerts[1].time)!;
+      expect(first.number, isNot(second.number));
+      expect(PrayerNotificationService.hadithBody(first, arabic: true), first.content.join('\n').trim());
+      expect(PrayerNotificationService.hadithBody(first, arabic: false), (first.english ?? first.content.join('\n')).trim());
+      expect(PrayerNotificationService.hadithBody(null, arabic: true), isNull);
+    });
+
+    test('it posts on the gentle channel, not the adhan\'s', () {
+      expect(
+        PrayerNotificationService.channelsFor(AlertKind.dailyHadith, null, PrayerSound.adhan),
+        [PrayerNotificationService.dhikrChannel],
+      );
+    });
+  });
+
   group('dhikr reminders', () {
     List<ScheduledAlert> dhikr(int hours) => PrayerNotificationService.plan(
       coordinates: place,
@@ -339,7 +385,9 @@ void main() {
         for (final sound in PrayerSound.values) {
           expect(
             channel(kind, PrayerName.fajr, sound),
-            kind == AlertKind.dhikr ? PrayerNotificationService.dhikrChannel : PrayerNotificationService.standardChannel,
+            kind == AlertKind.dhikr || kind == AlertKind.dailyHadith
+                ? PrayerNotificationService.dhikrChannel
+                : PrayerNotificationService.standardChannel,
           );
         }
       }

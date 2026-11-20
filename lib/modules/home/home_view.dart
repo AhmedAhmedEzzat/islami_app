@@ -9,6 +9,7 @@ import 'package:intl/intl.dart' hide TextDirection;
 import '../../core/constants/assets.dart';
 import '../../core/constants/constants.dart';
 import '../../core/constants/daily_verses.dart';
+import '../../core/constants/prefs_keys.dart';
 import '../../core/constants/quran_duas.dart';
 import '../../core/services/azkar_progress.dart';
 import '../../core/services/hadeth_service.dart';
@@ -18,6 +19,7 @@ import '../../core/services/notification_refresh.dart';
 import '../../core/services/prayer_times_service.dart';
 import '../../core/services/quran_service.dart';
 import '../../core/services/recent_suras.dart';
+import '../../core/services/shared_prefs_helper.dart';
 import '../../core/state/settings_cubit.dart';
 import '../../core/state/settings_state.dart';
 import '../../core/theme/app_colors.dart';
@@ -25,7 +27,10 @@ import '../../core/theme/app_tokens.dart';
 import '../../core/utils/arabic_text.dart';
 import '../../core/utils/l10n_ext.dart';
 import '../../core/utils/prayer_labels.dart';
+import '../../core/services/khatma.dart';
 import '../../core/widgets/app_background.dart';
+import '../../core/widgets/fade_slide_in.dart';
+import '../../l10n/gen/app_localizations.dart';
 import '../../models/hadeth_data_model.dart';
 import '../../models/sura_data_model.dart';
 import '../../models/zikr_model.dart';
@@ -33,16 +38,12 @@ import '../layout/azkar/azkar_view.dart';
 import '../layout/hadeth/hadeth_details_view.dart';
 import '../layout/layout_scope.dart';
 import '../layout/quran/quran_view.dart';
-import '../layout/radio/radio_view.dart';
 import '../layout/tasbeh/tasbeh_view.dart';
 import '../layout/time/next_prayer_card.dart';
 import '../layout/time/qibla_view.dart';
-import '../layout/time/tracker_view.dart';
-import '../more/calendar_view.dart';
 import '../more/duas_view.dart';
-import '../more/names_view.dart';
+import '../settings/prayer_notifications_prompt.dart';
 import '../settings/settings_view.dart';
-import 'daily_deeds_card.dart';
 import 'khatma_card.dart';
 
 /// The first tab: today at a glance and one tap to everything daily.
@@ -58,6 +59,7 @@ class _HomeViewState extends State<HomeView> {
   DateTime _now = DateTime.now();
   Timer? _ticker;
   late Future<HadethDataModel?> _hadeth = _hadethOfTheDay();
+  bool _remindersDismissed = LocalStorageServices.getBool(PrefsKeys.remindersCardDismissed) ?? false;
   int _hadethDay = dayNumber(DateTime.now());
 
   @override
@@ -127,9 +129,7 @@ class _HomeViewState extends State<HomeView> {
   }
 
   static Future<HadethDataModel?> _hadethOfTheDay() async {
-    final all = await HadethService.loadAll();
-    if (all.isEmpty) return null;
-    return all[dayNumber(DateTime.now()) % all.length];
+    return HadethService.ofDay(await HadethService.loadAll(), DateTime.now());
   }
 
   void _push(Widget page, {String? name}) => Navigator.push(
@@ -189,161 +189,123 @@ class _HomeViewState extends State<HomeView> {
           // stretching edge to edge.
           final side = ((MediaQuery.sizeOf(context).width - 720) / 2)
               .clamp(AppSpacing.lg, double.infinity);
+          // Each card arrives a moment after the one above it, once.
+          var order = 0;
+          Widget enter(Widget child) => FadeSlideIn(index: order++, child: child);
+
           return ListView(
             padding: EdgeInsets.fromLTRB(side, 0, side, AppSpacing.xl),
             children: [
-              _DateHeader(now: _now, hijriOffset: offset),
+              enter(_DateHeader(now: _now, hijriOffset: offset)),
+              const SizedBox(height: AppSpacing.sm),
+              // The next prayer and the rest of today's, in one card.
+              enter(
+                NextPrayerCard(
+                  result: result,
+                  now: _now,
+                  subtitle: _location.isFallback
+                      ? l10n.defaultLocation
+                      : _location.name,
+                  onTap: () =>
+                      LayoutScope.maybeOf(context)?.selectTab(AppTab.prayer),
+                  footer: _TodayPrayers(result: result, now: _now),
+                ),
+              ),
+              // At most one notice at a time, the most pressing first.
+              enter(
+                AnimatedSize(
+                  duration: AppDurations.normal,
+                  curve: Curves.easeOut,
+                  alignment: Alignment.topCenter,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: _notice(context, settings, result, ramadanDay, offset),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              enter(
+                _QuickGrid(
+                  tiles: [
+                    _Tile(
+                      Icons.explore_outlined,
+                      l10n.qiblaTitle,
+                      () => _push(QiblaView(location: _location)),
+                    ),
+                    _Tile(
+                      AzkarProgress.isMorning(_now)
+                          ? Icons.wb_sunny_outlined
+                          : Icons.nights_stay_outlined,
+                      AzkarProgress.isMorning(_now)
+                          ? l10n.morningAzkarNow
+                          : l10n.eveningAzkarNow,
+                      () => _push(
+                        const AzkarView(chapterId: FeaturedAzkar.morningEvening),
+                      ),
+                    ),
+                    _Tile(
+                      Icons.radio_button_checked_outlined,
+                      l10n.tasbehTitle,
+                      () => _push(const TasbehView()),
+                    ),
+                    _Tile(
+                      Icons.volunteer_activism_outlined,
+                      l10n.duasTitle,
+                      () => _push(const DuasView()),
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: AppSpacing.md),
-              NextPrayerCard(
-                result: result,
-                now: _now,
-                subtitle: _location.isFallback
-                    ? l10n.defaultLocation
-                    : _location.name,
-                onTap: () =>
-                    LayoutScope.maybeOf(context)?.selectTab(AppTab.prayer),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              _TodayPrayers(result: result, now: _now),
-              if (ramadanDay != null) ...[
-                const SizedBox(height: AppSpacing.md),
-                _RamadanCard(day: ramadanDay, result: result, now: _now),
-              ],
-              ..._fastingHint(context, offset),
-              const SizedBox(height: AppSpacing.md),
-              ValueListenableBuilder<List<SuraDataModel>>(
-                valueListenable: RecentSuras.notifier,
-                builder: (context, recent, _) {
-                  if (recent.isEmpty) return const SizedBox.shrink();
-                  final sura = recent.first;
-                  return Card(
-                    color: context.colors.surfaceContainer,
-                    child: ListTile(
-                      leading: Icon(
-                        Icons.auto_stories_outlined,
-                        color: context.colors.primary,
-                      ),
-                      title: Text(l10n.continueWhereLeft),
-                      subtitle: Text(
-                        context.isArabic ? sura.suraNameAR : sura.suraNameEN,
-                      ),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => _openSura(sura),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              KhatmaCard(now: _now, onOpenPage: _openPage),
-              const SizedBox(height: AppSpacing.sm),
-              DailyDeedsCard(now: _now),
+              enter(_QuranCard(now: _now, onOpenSura: _openSura, onOpenPage: _openPage)),
               const SizedBox(height: AppSpacing.lg),
-              _SectionTitle(l10n.quickAccess),
-              _QuickGrid(
-                tiles: [
-                  _Tile(
-                    Icons.explore_outlined,
-                    l10n.qiblaTitle,
-                    () => _push(QiblaView(location: _location)),
+              enter(
+                _DailyInspiration(
+                  verse: _VerseOfTheDay(
+                    // Keyed by the verse so a new day loads a new one.
+                    key: ValueKey(DailyVerses.forDay(_now).label),
+                    dua: DailyVerses.forDay(_now),
+                    onOpen: (sura, ayah) => _openSura(sura, ayah: ayah),
                   ),
-                  _Tile(
-                    Icons.radio_button_checked_outlined,
-                    l10n.tasbehTitle,
-                    () => _push(const TasbehView()),
+                  hadith: _HadithOfTheDay(
+                    hadeth: _hadeth,
+                    onOpen: (h) => _push(HadethDetailsView(hadeth: h)),
                   ),
-                  _Tile(
-                    AzkarProgress.isMorning(_now)
-                        ? Icons.wb_sunny_outlined
-                        : Icons.nights_stay_outlined,
-                    AzkarProgress.isMorning(_now)
-                        ? l10n.morningAzkarNow
-                        : l10n.eveningAzkarNow,
-                    () => _push(
-                      const AzkarView(chapterId: FeaturedAzkar.morningEvening),
-                    ),
-                  ),
-                  _Tile(
-                    Icons.volunteer_activism_outlined,
-                    l10n.duasTitle,
-                    () => _push(const DuasView()),
-                  ),
-                  _Tile(
-                    Icons.auto_awesome_outlined,
-                    l10n.namesTitle,
-                    () => _push(const NamesView()),
-                  ),
-                  _Tile(
-                    Icons.calendar_month_outlined,
-                    l10n.calendarTitle,
-                    () => _push(const CalendarView()),
-                  ),
-                  _Tile(
-                    Icons.radio_outlined,
-                    l10n.radioTitle,
-                    () => _push(const RadioView(), name: RadioView.routeName),
-                  ),
-                  _Tile(
-                    Icons.check_circle_outline,
-                    l10n.prayerTracker,
-                    () => _push(const TrackerView()),
-                  ),
-                ],
+                ),
               ),
-              const SizedBox(height: AppSpacing.lg),
-              _SectionTitle(l10n.verseOfTheDay),
-              _VerseOfTheDay(
-                // Keyed by the verse so a new day loads a new one.
-                key: ValueKey(DailyVerses.forDay(_now).label),
-                dua: DailyVerses.forDay(_now),
-                onOpen: (sura, ayah) => _openSura(sura, ayah: ayah),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              _SectionTitle(l10n.hadethOfTheDay),
-              FutureBuilder<HadethDataModel?>(
-                future: _hadeth,
-                builder: (context, snap) {
-                  final h = snap.data;
-                  if (h == null) return const SizedBox(height: 80);
-                  return Card(
-                    color: context.colors.surfaceContainerLow,
-                    child: InkWell(
-                      borderRadius: AppRadius.cardRadius,
-                      onTap: () => _push(HadethDetailsView(hadeth: h)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(AppSpacing.lg),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(
-                              h.title,
-                              textDirection: TextDirection.rtl,
-                              style: context.texts.titleMedium?.copyWith(
-                                color: context.colors.primary,
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.sm),
-                            Text(
-                              h.content.join(' '),
-                              textDirection: TextDirection.rtl,
-                              maxLines: 4,
-                              overflow: TextOverflow.ellipsis,
-                              style: context.texts.bodyLarge?.copyWith(
-                                height: 1.7,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-              ..._nextEvent(context, offset),
             ],
           );
         },
       ),
     );
+  }
+
+  /// The one notice Home shows, if any: Ramadan's times, then the invitation
+  /// to turn reminders on, then a fasting day coming up.
+  List<Widget> _notice(
+    BuildContext context,
+    SettingsState settings,
+    PrayerTimesResult result,
+    int? ramadanDay,
+    int offset,
+  ) {
+    if (ramadanDay != null) {
+      return [
+        const SizedBox(height: AppSpacing.md),
+        _RamadanCard(day: ramadanDay, result: result, now: _now),
+      ];
+    }
+    if (!settings.prayerNotifications && !_remindersDismissed) {
+      return [
+        _RemindersCard(
+          onDismiss: () {
+            setState(() => _remindersDismissed = true);
+            LocalStorageServices.setBool(PrefsKeys.remindersCardDismissed, true);
+          },
+        ),
+      ];
+    }
+    return _fastingHint(context, offset);
   }
 
   /// Sunday and Wednesday evenings remind of the Monday/Thursday fast; the
@@ -384,41 +346,71 @@ class _HomeViewState extends State<HomeView> {
     ];
   }
 
-  List<Widget> _nextEvent(BuildContext context, int offset) {
-    final upcoming = IslamicCalendar.upcoming(_now, offset: offset, count: 1);
-    if (upcoming.isEmpty) return const [];
-    final next = upcoming.first;
-    return [
-      const SizedBox(height: AppSpacing.md),
-      Card(
-        color: context.colors.surfaceContainer,
-        child: ListTile(
-          leading: Icon(Icons.event_outlined, color: context.colors.primary),
-          title: Text(eventLabel(context, next.event)),
-          subtitle: Text(context.l10n.inDays(next.daysFrom(_now))),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => _push(const CalendarView()),
-        ),
-      ),
-    ];
-  }
 }
 
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle(this.text);
+/// Morning until noon, afternoon until five, evening after that.
+String greetingFor(AppLocalizations l10n, DateTime now) => switch (now.hour) {
+  < 12 => l10n.greetingMorning,
+  < 17 => l10n.greetingAfternoon,
+  _ => l10n.greetingEvening,
+};
 
-  final String text;
+/// Invites a reader whose reminders are off to turn them on: without them
+/// there is no adhan and no hadith of the day. Put away for good by "Not now";
+/// Settings still has the switch.
+class _RemindersCard extends StatelessWidget {
+  const _RemindersCard({required this.onDismiss});
+
+  final VoidCallback onDismiss;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-    child: Text(
-      text,
-      style: context.texts.titleMedium?.copyWith(
-        color: context.colors.onSurface,
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final scheme = context.colors;
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.md),
+      child: Card(
+        color: scheme.primaryContainer,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.sm),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.notifications_active_outlined, color: scheme.onPrimaryContainer),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      l10n.remindersCardTitle,
+                      style: context.texts.titleMedium?.copyWith(color: scheme.onPrimaryContainer),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                l10n.remindersCardBody,
+                style: context.texts.bodyMedium?.copyWith(color: scheme.onPrimaryContainer),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              OverflowBar(
+                alignment: MainAxisAlignment.end,
+                spacing: AppSpacing.sm,
+                children: [
+                  TextButton(onPressed: onDismiss, child: Text(l10n.remindersCardLater)),
+                  FilledButton(
+                    onPressed: () => turnOnPrayerNotifications(context),
+                    child: Text(l10n.remindersCardAction),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _DateHeader extends StatelessWidget {
@@ -443,7 +435,7 @@ class _DateHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            now.hour < 12 ? l10n.greetingMorning : l10n.greetingEvening,
+            greetingFor(l10n, now),
             style: context.texts.bodyMedium?.copyWith(
               color: scheme.onSurfaceVariant,
             ),
@@ -749,6 +741,162 @@ class _VerseOfTheDayState extends State<_VerseOfTheDay> {
                     style: context.texts.labelMedium?.copyWith(
                       color: scheme.primary,
                     ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// The reader's Quran in one card: today's khatma portion while a khatma is
+/// under way (or its celebration once finished), otherwise the sura they were last reading, otherwise an
+/// invitation to start a khatma.
+class _QuranCard extends StatelessWidget {
+  const _QuranCard({
+    required this.now,
+    required this.onOpenSura,
+    required this.onOpenPage,
+  });
+
+  final DateTime now;
+  final void Function(SuraDataModel sura) onOpenSura;
+  final ValueChanged<int> onOpenPage;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<KhatmaPlan?>(
+      valueListenable: Khatma.notifier,
+      builder: (context, plan, _) => ValueListenableBuilder<List<SuraDataModel>>(
+        valueListenable: RecentSuras.notifier,
+        builder: (context, recent, _) {
+          final Widget child;
+          if (plan != null || recent.isEmpty) {
+            child = KhatmaCard(now: now, onOpenPage: onOpenPage);
+          } else {
+            final sura = recent.first;
+            child = Card(
+              color: context.colors.surfaceContainer,
+              child: ListTile(
+                leading: Icon(
+                  Icons.auto_stories_outlined,
+                  color: context.colors.primary,
+                ),
+                title: Text(context.l10n.continueWhereLeft),
+                subtitle: Text(
+                  context.isArabic ? sura.suraNameAR : sura.suraNameEN,
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => onOpenSura(sura),
+              ),
+            );
+          }
+          return AnimatedSwitcher(duration: AppDurations.normal, child: child);
+        },
+      ),
+    );
+  }
+}
+
+/// The verse and the hadith of the day, one at a time, swapped with a tap.
+class _DailyInspiration extends StatefulWidget {
+  const _DailyInspiration({required this.verse, required this.hadith});
+
+  final Widget verse;
+  final Widget hadith;
+
+  @override
+  State<_DailyInspiration> createState() => _DailyInspirationState();
+}
+
+class _DailyInspirationState extends State<_DailyInspiration> {
+  bool _hadith = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SegmentedButton<bool>(
+          showSelectedIcon: false,
+          segments: [
+            ButtonSegment(
+              value: false,
+              icon: const Icon(Icons.menu_book_outlined),
+              label: Text(l10n.verseOfTheDay, maxLines: 1, overflow: TextOverflow.ellipsis),
+            ),
+            ButtonSegment(
+              value: true,
+              icon: const Icon(Icons.format_quote_outlined),
+              label: Text(l10n.hadethOfTheDay, maxLines: 1, overflow: TextOverflow.ellipsis),
+            ),
+          ],
+          selected: {_hadith},
+          onSelectionChanged: (s) => setState(() => _hadith = s.first),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        AnimatedSize(
+          duration: AppDurations.normal,
+          curve: Curves.easeOut,
+          alignment: Alignment.topCenter,
+          child: AnimatedSwitcher(
+            duration: AppDurations.normal,
+            layoutBuilder: (current, previous) => Stack(
+              alignment: Alignment.topCenter,
+              children: [...previous, ?current],
+            ),
+            child: KeyedSubtree(
+              key: ValueKey(_hadith),
+              child: _hadith ? widget.hadith : widget.verse,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _HadithOfTheDay extends StatelessWidget {
+  const _HadithOfTheDay({required this.hadeth, required this.onOpen});
+
+  final Future<HadethDataModel?> hadeth;
+  final ValueChanged<HadethDataModel> onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<HadethDataModel?>(
+      future: hadeth,
+      builder: (context, snap) {
+        final h = snap.data;
+        if (h == null) return const SizedBox(height: 120);
+        return Card(
+          color: context.colors.surfaceContainerLow,
+          child: InkWell(
+            borderRadius: AppRadius.cardRadius,
+            onTap: () => onOpen(h),
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    h.title,
+                    textDirection: TextDirection.rtl,
+                    style: context.texts.titleMedium?.copyWith(
+                      color: context.colors.primary,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    h.content.join(' '),
+                    textDirection: TextDirection.rtl,
+                    maxLines: 5,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.texts.bodyLarge?.copyWith(height: 1.7),
                   ),
                 ],
               ),
