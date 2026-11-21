@@ -7,7 +7,6 @@ import '../../core/constants/reciters.dart';
 import '../../core/services/prayer_config.dart';
 import '../../core/services/prayer_times_service.dart';
 import '../../core/utils/prayer_labels.dart';
-import '../../core/constants/dhikr_reminders.dart';
 import '../../core/constants/muezzins.dart';
 import '../../core/services/notification_refresh.dart';
 import '../../core/services/prayer_notification_service.dart';
@@ -16,6 +15,8 @@ import '../more/listen_view.dart';
 import 'backup_tiles.dart';
 import 'muezzin_view.dart';
 import 'prayer_notifications_prompt.dart';
+import 'reminders_view.dart';
+import 'settings_section.dart';
 import 'tafsir_download_tile.dart';
 import '../../core/state/settings_cubit.dart';
 import '../../core/state/settings_state.dart';
@@ -37,466 +38,424 @@ class SettingsView extends StatelessWidget {
         builder: (context, state) {
           final cubit = context.read<SettingsCubit>();
 
+          final l10n = context.l10n;
+          final notificationsOn = state.prayerNotifications;
+
           return ListView(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+            padding: const EdgeInsets.only(bottom: AppSpacing.xxl),
             children: [
-              _SectionHeader(context.l10n.appearance),
-              Padding(
-                padding: AppSpacing.pageH,
-                child: SegmentedButton<ThemeMode>(
-                  segments: [
-                    ButtonSegment(
-                      value: ThemeMode.light,
-                      icon: const Icon(Icons.light_mode_outlined),
-                      label: Text(context.l10n.themeLight),
-                    ),
-                    ButtonSegment(
-                      value: ThemeMode.system,
-                      icon: const Icon(Icons.brightness_auto_outlined),
-                      label: Text(context.l10n.themeAuto),
-                    ),
-                    ButtonSegment(
-                      value: ThemeMode.dark,
-                      icon: const Icon(Icons.dark_mode_outlined),
-                      label: Text(context.l10n.themeDark),
-                    ),
-                  ],
-                  selected: {state.themeMode},
-                  onSelectionChanged: (s) => cubit.setThemeMode(s.first),
-                ),
-              ),
-
-              _SectionHeader(context.l10n.quranTextSize),
-              Padding(
-                padding: AppSpacing.pageH,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(AppSpacing.lg),
-                      decoration: BoxDecoration(
-                        color: context.sakina.versePanel,
-                        borderRadius: AppRadius.cardRadius,
-                      ),
-                      child: Text(
-                        'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
-                        textAlign: TextAlign.center,
-                        textDirection: TextDirection.rtl,
-                        style: AppTheme.quranVerse(
-                          context,
-                          state.quranFontScale,
-                        ),
-                      ),
-                    ),
-                    Slider(
-                      value: state.quranFontScale,
-                      min: SettingsState.minFontScale,
-                      max: SettingsState.maxFontScale,
-                      divisions: 12,
-                      label: '${(state.quranFontScale * 100).round()}%',
-                      onChanged: cubit.setQuranFontScale,
-                    ),
-                  ],
-                ),
-              ),
-
-              ListTile(
-                leading: const Icon(Icons.auto_stories_outlined),
-                title: Text(context.l10n.mushafPaperSetting),
-                subtitle: Text(_paperLabel(context, state.mushafPaper)),
-                onTap: () async {
-                  final picked = await _pick<MushafPaper>(
-                    context,
-                    context.l10n.mushafPaperSetting,
-                    {for (final p in MushafPaper.values) p: _paperLabel(context, p)},
-                    state.mushafPaper,
-                  );
-                  if (picked != null) cubit.setMushafPaper(picked);
-                },
-              ),
-              const TafsirDownloadTile(),
-
-              _SectionHeader(context.l10n.recitationSection),
-              ListTile(
-                leading: const Icon(Icons.record_voice_over_outlined),
-                title: Text(context.l10n.reciterLabel),
-                subtitle: Text(
-                  context.isArabic
-                      ? Reciters.byId(state.reciterId).nameAr
-                      : Reciters.byId(state.reciterId).nameEn,
-                ),
-                onTap: () async {
-                  final picked =
-                      await _pick<String>(context, context.l10n.reciterLabel, {
-                        for (final r in Reciters.all)
-                          r.id: context.isArabic ? r.nameAr : r.nameEn,
-                      }, state.reciterId);
-                  if (picked != null) cubit.setReciter(picked);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.headphones_outlined),
-                title: Text(context.l10n.listenTitle),
-                subtitle: Text(
-                  RecitationDownloads.supported
-                      ? context.l10n.offlineRecitationsSubtitle
-                      : context.l10n.listenSubtitleWeb,
-                ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute<void>(builder: (_) => const ListenView()),
-                ),
-              ),
-
-              _SectionHeader(context.l10n.prayerTimesSection),
-              ListTile(
-                leading: const Icon(Icons.calculate_outlined),
-                title: Text(context.l10n.prayerSettingsSection),
-                subtitle: Text(methodLabel(context, state.calculationMethod)),
-                onTap: () async {
-                  final picked = await _pick<String>(
-                    context,
-                    context.l10n.prayerSettingsSection,
-                    {
-                      for (final m in PrayerConfig.methods)
-                        m: methodLabel(context, m),
-                    },
-                    state.calculationMethod,
-                  );
-                  if (picked != null) cubit.setCalculationMethod(picked);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.wb_cloudy_outlined),
-                title: Text(context.l10n.madhabTitle),
-                subtitle: Text(
-                  state.madhab == 'hanafi'
-                      ? context.l10n.madhabHanafi
-                      : context.l10n.madhabShafi,
-                ),
-                onTap: () async {
-                  final picked =
-                      await _pick<String>(context, context.l10n.madhabTitle, {
-                        'shafi': context.l10n.madhabShafi,
-                        'hanafi': context.l10n.madhabHanafi,
-                      }, state.madhab);
-                  if (picked != null) cubit.setMadhab(picked);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.public),
-                title: Text(context.l10n.highLatitudeTitle),
-                subtitle: Text(_highLatLabel(context, state.highLatitude)),
-                onTap: () async {
-                  final picked = await _pick<String>(
-                    context,
-                    context.l10n.highLatitudeTitle,
-                    {
-                      for (final r in const ['middle', 'seventh', 'twilight'])
-                        r: _highLatLabel(context, r),
-                    },
-                    state.highLatitude,
-                  );
-                  if (picked != null) cubit.setHighLatitude(picked);
-                },
-              ),
-              ExpansionTile(
-                leading: const Icon(Icons.tune),
-                title: Text(context.l10n.adjustmentsTitle),
-                subtitle: Text(context.l10n.adjustmentsHint),
+              SettingsSection(
+                title: l10n.generalSection,
+                icon: Icons.palette_outlined,
                 children: [
-                  for (final p in PrayerName.values)
-                    ListTile(
-                      title: Text(prayerLabel(context, p)),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            tooltip: context.l10n.minuteEarlier,
-                            icon: const Icon(Icons.remove_circle_outline),
-                            onPressed: () => cubit.setAdjustment(
+                  SettingsLabel(l10n.themeLabel),
+                  Padding(
+                    padding: AppSpacing.pageH,
+                    child: SegmentedButton<ThemeMode>(
+                      showSelectedIcon: false,
+                      segments: [
+                        ButtonSegment(
+                          value: ThemeMode.light,
+                          icon: const Icon(Icons.light_mode_outlined),
+                          label: Text(l10n.themeLight),
+                        ),
+                        ButtonSegment(
+                          value: ThemeMode.system,
+                          icon: const Icon(Icons.brightness_auto_outlined),
+                          label: Text(l10n.themeAuto),
+                        ),
+                        ButtonSegment(
+                          value: ThemeMode.dark,
+                          icon: const Icon(Icons.dark_mode_outlined),
+                          label: Text(l10n.themeDark),
+                        ),
+                      ],
+                      selected: {state.themeMode},
+                      onSelectionChanged: (s) => cubit.setThemeMode(s.first),
+                    ),
+                  ),
+                  SettingsLabel(l10n.languageSection),
+                  Padding(
+                    padding: const EdgeInsetsDirectional.fromSTEB(
+                      AppSpacing.lg,
+                      0,
+                      AppSpacing.lg,
+                      AppSpacing.md,
+                    ),
+                    child: SegmentedButton<String>(
+                      showSelectedIcon: false,
+                      segments: [
+                        ButtonSegment(
+                          value: 'system',
+                          label: Text(l10n.languageSystem),
+                        ),
+                        ButtonSegment(
+                          value: 'en',
+                          label: Text(l10n.languageEnglish),
+                        ),
+                        ButtonSegment(
+                          value: 'ar',
+                          label: Text(l10n.languageArabic),
+                        ),
+                      ],
+                      selected: {state.locale?.languageCode ?? 'system'},
+                      onSelectionChanged: (s) => cubit.setLocale(
+                        s.first == 'system' ? null : Locale(s.first),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              SettingsSection(
+                title: l10n.quranTitle,
+                icon: Icons.menu_book_outlined,
+                children: [
+                  SettingsLabel(l10n.quranTextSize),
+                  Padding(
+                    padding: AppSpacing.pageH,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(AppSpacing.lg),
+                          decoration: BoxDecoration(
+                            color: context.sakina.versePanel,
+                            borderRadius: AppRadius.cardRadius,
+                          ),
+                          child: Text(
+                            'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
+                            textAlign: TextAlign.center,
+                            textDirection: TextDirection.rtl,
+                            style: AppTheme.quranVerse(
+                              context,
+                              state.quranFontScale,
+                            ),
+                          ),
+                        ),
+                        Slider(
+                          value: state.quranFontScale,
+                          min: SettingsState.minFontScale,
+                          max: SettingsState.maxFontScale,
+                          divisions: 12,
+                          label: '${(state.quranFontScale * 100).round()}%',
+                          onChanged: cubit.setQuranFontScale,
+                        ),
+                      ],
+                    ),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.auto_stories_outlined),
+                    title: Text(l10n.mushafPaperSetting),
+                    subtitle: Text(_paperLabel(context, state.mushafPaper)),
+                    onTap: () async {
+                      final picked = await showSettingsPicker<MushafPaper>(
+                        context,
+                        l10n.mushafPaperSetting,
+                        {
+                          for (final p in MushafPaper.values)
+                            p: _paperLabel(context, p),
+                        },
+                        state.mushafPaper,
+                      );
+                      if (picked != null) cubit.setMushafPaper(picked);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.record_voice_over_outlined),
+                    title: Text(l10n.reciterLabel),
+                    subtitle: Text(
+                      context.isArabic
+                          ? Reciters.byId(state.reciterId).nameAr
+                          : Reciters.byId(state.reciterId).nameEn,
+                    ),
+                    onTap: () async {
+                      final picked = await showSettingsPicker<String>(
+                        context,
+                        l10n.reciterLabel,
+                        {
+                          for (final r in Reciters.all)
+                            r.id: context.isArabic ? r.nameAr : r.nameEn,
+                        },
+                        state.reciterId,
+                      );
+                      if (picked != null) cubit.setReciter(picked);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.headphones_outlined),
+                    title: Text(l10n.listenTitle),
+                    subtitle: Text(
+                      RecitationDownloads.supported
+                          ? l10n.offlineRecitationsSubtitle
+                          : l10n.listenSubtitleWeb,
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute<void>(
+                        builder: (_) => const ListenView(),
+                      ),
+                    ),
+                  ),
+                  const TafsirDownloadTile(),
+                ],
+              ),
+
+              SettingsSection(
+                title: l10n.prayerTimesSection,
+                icon: Icons.schedule_outlined,
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.calculate_outlined),
+                    title: Text(l10n.prayerSettingsSection),
+                    subtitle: Text(
+                      methodLabel(context, state.calculationMethod),
+                    ),
+                    onTap: () async {
+                      final picked = await showSettingsPicker<String>(
+                        context,
+                        l10n.prayerSettingsSection,
+                        {
+                          for (final m in PrayerConfig.methods)
+                            m: methodLabel(context, m),
+                        },
+                        state.calculationMethod,
+                      );
+                      if (picked != null) cubit.setCalculationMethod(picked);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.wb_cloudy_outlined),
+                    title: Text(l10n.madhabTitle),
+                    subtitle: Text(
+                      state.madhab == 'hanafi'
+                          ? l10n.madhabHanafi
+                          : l10n.madhabShafi,
+                    ),
+                    onTap: () async {
+                      final picked = await showSettingsPicker<String>(
+                        context,
+                        l10n.madhabTitle,
+                        {
+                          'shafi': l10n.madhabShafi,
+                          'hanafi': l10n.madhabHanafi,
+                        },
+                        state.madhab,
+                      );
+                      if (picked != null) cubit.setMadhab(picked);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.calendar_month_outlined),
+                    title: Text(l10n.hijriAdjustment),
+                    // Today's date with the adjustment applied, so the effect
+                    // of each tap is visible right here.
+                    subtitle: Builder(
+                      builder: (context) {
+                        final h = IslamicCalendar.of(
+                          DateTime.now(),
+                          offset: state.hijriOffset,
+                        );
+                        return Text('${h.hDay} ${h.longMonthName} ${h.hYear}');
+                      },
+                    ),
+                    trailing: _Stepper(
+                      value: state.hijriOffset > 0
+                          ? '+${state.hijriOffset}'
+                          : '${state.hijriOffset}',
+                      valueWidth: 32,
+                      lessTooltip: l10n.dayEarlier,
+                      moreTooltip: l10n.dayLater,
+                      onLess: state.hijriOffset <= -2
+                          ? null
+                          : () => cubit.setHijriOffset(state.hijriOffset - 1),
+                      onMore: state.hijriOffset >= 2
+                          ? null
+                          : () => cubit.setHijriOffset(state.hijriOffset + 1),
+                    ),
+                  ),
+                  // Rarely needed, so folded away: most people only ever
+                  // pick a method and a madhab.
+                  ExpansionTile(
+                    shape: const Border(),
+                    collapsedShape: const Border(),
+                    leading: const Icon(Icons.tune),
+                    title: Text(l10n.prayerMoreOptions),
+                    subtitle: Text(l10n.prayerMoreOptionsHint),
+                    children: [
+                      ListTile(
+                        leading: const Icon(Icons.public),
+                        title: Text(l10n.highLatitudeTitle),
+                        subtitle: Text(
+                          _highLatLabel(context, state.highLatitude),
+                        ),
+                        onTap: () async {
+                          final picked = await showSettingsPicker<String>(
+                            context,
+                            l10n.highLatitudeTitle,
+                            {
+                              for (final r in const [
+                                'middle',
+                                'seventh',
+                                'twilight',
+                              ])
+                                r: _highLatLabel(context, r),
+                            },
+                            state.highLatitude,
+                          );
+                          if (picked != null) cubit.setHighLatitude(picked);
+                        },
+                      ),
+                      SettingsLabel(l10n.adjustmentsHint),
+                      for (final p in PrayerName.values)
+                        ListTile(
+                          dense: true,
+                          contentPadding: const EdgeInsetsDirectional.only(
+                            start: AppSpacing.xxl + AppSpacing.lg,
+                            end: AppSpacing.sm,
+                          ),
+                          title: Text(prayerLabel(context, p)),
+                          trailing: _Stepper(
+                            value: l10n.minutesShort(state.adjustments[p] ?? 0),
+                            valueWidth: 56,
+                            lessTooltip: l10n.minuteEarlier,
+                            moreTooltip: l10n.minuteLater,
+                            onLess: () => cubit.setAdjustment(
                               p,
                               (state.adjustments[p] ?? 0) - 1,
                             ),
-                          ),
-                          SizedBox(
-                            width: 56,
-                            child: Text(
-                              context.l10n.minutesShort(
-                                state.adjustments[p] ?? 0,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                          IconButton(
-                            tooltip: context.l10n.minuteLater,
-                            icon: const Icon(Icons.add_circle_outline),
-                            onPressed: () => cubit.setAdjustment(
+                            onMore: () => cubit.setAdjustment(
                               p,
                               (state.adjustments[p] ?? 0) + 1,
                             ),
                           ),
-                        ],
-                      ),
-                    ),
+                        ),
+                      const SizedBox(height: AppSpacing.sm),
+                    ],
+                  ),
                 ],
               ),
-              ListTile(
-                leading: const Icon(Icons.calendar_month_outlined),
-                title: Text(context.l10n.hijriAdjustment),
-                // Today's date with the adjustment applied, so the effect of
-                // each tap is visible right here.
-                subtitle: Builder(
-                  builder: (context) {
-                    final h = IslamicCalendar.of(
-                      DateTime.now(),
-                      offset: state.hijriOffset,
-                    );
-                    return Text('${h.hDay} ${h.longMonthName} ${h.hYear}');
-                  },
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      tooltip: context.l10n.dayEarlier,
-                      icon: const Icon(Icons.remove_circle_outline),
-                      onPressed: state.hijriOffset <= -2
-                          ? null
-                          : () => cubit.setHijriOffset(state.hijriOffset - 1),
+
+              SettingsSection(
+                title: l10n.notificationsSection,
+                icon: Icons.notifications_outlined,
+                children: [
+                  SwitchListTile(
+                    value: notificationsOn,
+                    title: Text(l10n.prayerNotificationsToggle),
+                    subtitle: Text(
+                      notificationsOn
+                          ? l10n.prayerNotificationsSubtitle
+                          : l10n.notificationsOffHint,
                     ),
-                    SizedBox(
-                      width: 32,
-                      child: Text(
-                        state.hijriOffset > 0
-                            ? '+${state.hijriOffset}'
-                            : '${state.hijriOffset}',
-                        textAlign: TextAlign.center,
-                        textDirection: TextDirection.ltr,
+                    secondary: const Icon(Icons.notifications_active_outlined),
+                    onChanged: (on) => _togglePrayerNotifications(context, on),
+                  ),
+                  // Every other notification option only does something while
+                  // the switch above is on, so they are shown only then
+                  // instead of as a long greyed-out list.
+                  if (notificationsOn) ...[
+                    ListTile(
+                      leading: const Icon(Icons.volume_up_outlined),
+                      title: Text(l10n.prayerSoundSetting),
+                      subtitle: Text(
+                        _prayerSoundLabel(context, state.prayerSound),
+                      ),
+                      onTap: () async {
+                        final picked = await showSettingsPicker<PrayerSound>(
+                          context,
+                          l10n.prayerSoundSetting,
+                          {
+                            for (final s in PrayerSound.values)
+                              s: _prayerSoundLabel(context, s),
+                          },
+                          state.prayerSound,
+                        );
+                        if (picked != null) cubit.setPrayerSound(picked);
+                      },
+                    ),
+                    if (state.prayerSound == PrayerSound.adhan)
+                      ListTile(
+                        leading: const Icon(Icons.mosque_outlined),
+                        title: Text(l10n.muezzinSetting),
+                        subtitle: Text(_muezzinName(context, state.muezzin)),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute<void>(
+                            builder: (_) => const MuezzinView(),
+                          ),
+                        ),
+                      ),
+                    ListTile(
+                      leading: const Icon(Icons.alarm),
+                      title: Text(l10n.reminderTitleSetting),
+                      subtitle: Text(
+                        state.reminderMinutes == 0
+                            ? l10n.reminderOff
+                            : l10n.minutesShort(state.reminderMinutes),
+                      ),
+                      onTap: () async {
+                        final picked = await showSettingsPicker<int>(
+                          context,
+                          l10n.reminderTitleSetting,
+                          {
+                            for (final m in SettingsState.reminderChoices)
+                              m: m == 0
+                                  ? l10n.reminderOff
+                                  : l10n.minutesShort(m),
+                          },
+                          state.reminderMinutes,
+                        );
+                        if (picked != null) cubit.setReminderMinutes(picked);
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.notifications_none_outlined),
+                      title: Text(l10n.otherRemindersTitle),
+                      subtitle: Text(
+                        l10n.otherRemindersSubtitle(
+                          RemindersView.enabledCount(state),
+                        ),
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute<void>(
+                          builder: (_) => const RemindersView(),
+                        ),
                       ),
                     ),
-                    IconButton(
-                      tooltip: context.l10n.dayLater,
-                      icon: const Icon(Icons.add_circle_outline),
-                      onPressed: state.hijriOffset >= 2
-                          ? null
-                          : () => cubit.setHijriOffset(state.hijriOffset + 1),
+                    ListTile(
+                      leading: const Icon(Icons.play_circle_outline),
+                      title: Text(l10n.testAdhan),
+                      subtitle: Text(l10n.testAdhanSubtitle),
+                      onTap: () async {
+                        final locale = Localizations.localeOf(context);
+                        await PrayerNotificationService.showTest(
+                          locale: locale,
+                          sound: state.prayerSound,
+                          muezzin:
+                              await NotificationRefresh.playableMuezzin(state),
+                        );
+                      },
                     ),
                   ],
-                ),
-              ),
-
-              _SectionHeader(context.l10n.notificationsSection),
-              SwitchListTile(
-                value: state.prayerNotifications,
-                title: Text(context.l10n.prayerNotificationsToggle),
-                subtitle: Text(context.l10n.prayerNotificationsSubtitle),
-                secondary: const Icon(Icons.notifications_active_outlined),
-                onChanged: (on) => _togglePrayerNotifications(context, on),
-              ),
-              ListTile(
-                enabled: state.prayerNotifications,
-                leading: const Icon(Icons.volume_up_outlined),
-                title: Text(context.l10n.prayerSoundSetting),
-                subtitle: Text(_prayerSoundLabel(context, state.prayerSound)),
-                onTap: () async {
-                  final picked = await _pick<PrayerSound>(
-                    context,
-                    context.l10n.prayerSoundSetting,
-                    {
-                      for (final s in PrayerSound.values)
-                        s: _prayerSoundLabel(context, s),
-                    },
-                    state.prayerSound,
-                  );
-                  if (picked != null) cubit.setPrayerSound(picked);
-                },
-              ),
-              if (state.prayerSound == PrayerSound.adhan)
-                ListTile(
-                  enabled: state.prayerNotifications,
-                  leading: const Icon(Icons.mosque_outlined),
-                  title: Text(context.l10n.muezzinSetting),
-                  subtitle: Text(_muezzinName(context, state.muezzin)),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute<void>(builder: (_) => const MuezzinView()),
+                  ListTile(
+                    leading: const Icon(Icons.help_outline),
+                    title: Text(l10n.adhanHelpTitle),
+                    onTap: () => _showAdhanHelp(context),
                   ),
-                ),
-              ListTile(
-                enabled: state.prayerNotifications,
-                leading: const Icon(Icons.play_circle_outline),
-                title: Text(context.l10n.testAdhan),
-                subtitle: Text(context.l10n.testAdhanSubtitle),
-                onTap: () async {
-                  final locale = Localizations.localeOf(context);
-                  await PrayerNotificationService.showTest(
-                    locale: locale,
-                    sound: state.prayerSound,
-                    muezzin: await NotificationRefresh.playableMuezzin(state),
-                  );
-                },
+                ],
               ),
-              ListTile(
-                leading: const Icon(Icons.help_outline),
-                title: Text(context.l10n.adhanHelpTitle),
-                onTap: () => _showAdhanHelp(context),
-              ),
-              ListTile(
-                enabled: state.prayerNotifications,
-                leading: const Icon(Icons.alarm),
-                title: Text(context.l10n.reminderTitleSetting),
-                subtitle: Text(
-                  state.reminderMinutes == 0
-                      ? context.l10n.reminderOff
-                      : context.l10n.minutesShort(state.reminderMinutes),
-                ),
-                onTap: () async {
-                  final picked = await _pick<int>(
-                    context,
-                    context.l10n.reminderTitleSetting,
-                    {
-                      for (final m in SettingsState.reminderChoices)
-                        m: m == 0
-                            ? context.l10n.reminderOff
-                            : context.l10n.minutesShort(m),
-                    },
-                    state.reminderMinutes,
-                  );
-                  if (picked != null) cubit.setReminderMinutes(picked);
-                },
-              ),
-              SwitchListTile(
-                value: state.dailyHadith,
-                title: Text(context.l10n.dailyHadithSetting),
-                subtitle: Text(context.l10n.dailyHadithSubtitle),
-                secondary: const Icon(Icons.format_quote_outlined),
-                onChanged: state.prayerNotifications ? cubit.setDailyHadith : null,
-              ),
-              SwitchListTile(
-                value: state.adhkarReminders,
-                title: Text(context.l10n.adhkarRemindersSetting),
-                subtitle: Text(context.l10n.adhkarRemindersSubtitle),
-                secondary: const Icon(Icons.wb_twilight),
-                onChanged: state.prayerNotifications
-                    ? cubit.setAdhkarReminders
-                    : null,
-              ),
-              ListTile(
-                enabled: state.prayerNotifications,
-                leading: const Icon(Icons.favorite_border),
-                title: Text(context.l10n.dhikrRemindersSetting),
-                subtitle: Text(
-                  state.dhikrHours == 0 ? context.l10n.dhikrOff : context.l10n.dhikrEvery(state.dhikrHours),
-                ),
-                onTap: () async {
-                  final picked = await _pick<int>(
-                    context,
-                    context.l10n.dhikrRemindersSetting,
-                    {
-                      for (final h in DhikrReminders.intervals)
-                        h: h == 0 ? context.l10n.dhikrOff : context.l10n.dhikrEvery(h),
-                    },
-                    state.dhikrHours,
-                  );
-                  if (picked != null) cubit.setDhikrHours(picked);
-                },
-              ),
-              SwitchListTile(
-                value: state.khatmaReminders,
-                title: Text(context.l10n.khatmaReminderSetting),
-                subtitle: Text(context.l10n.khatmaReminderSubtitle),
-                secondary: const Icon(Icons.flag_outlined),
-                onChanged: state.prayerNotifications
-                    ? cubit.setKhatmaReminders
-                    : null,
-              ),
-              Padding(
-                padding: const EdgeInsetsDirectional.fromSTEB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 0),
-                child: Text(
-                  context.l10n.sunnahRemindersHeader,
-                  style: context.texts.labelLarge?.copyWith(color: context.colors.onSurfaceVariant),
-                ),
-              ),
-              for (final (alert, icon, title, subtitle) in [
-                (SunnahAlert.jumuah, Icons.mosque_outlined, context.l10n.jumuahSetting, context.l10n.jumuahSubtitle),
-                (SunnahAlert.duha, Icons.wb_sunny_outlined, context.l10n.duhaSetting, context.l10n.duhaSubtitle),
-                (SunnahAlert.qiyam, Icons.nightlight_outlined, context.l10n.qiyamSetting, context.l10n.qiyamSubtitle),
-              ])
-                SwitchListTile(
-                  value: state.sunnahAlerts.contains(alert),
-                  title: Text(title),
-                  subtitle: Text(subtitle),
-                  secondary: Icon(icon),
-                  onChanged: state.prayerNotifications ? (_) => cubit.toggleSunnahAlert(alert) : null,
-                ),
-              SwitchListTile(
-                value: state.fridayKahf,
-                title: Text(context.l10n.fridayKahfSetting),
-                secondary: const Icon(Icons.menu_book_outlined),
-                onChanged: state.prayerNotifications
-                    ? cubit.setFridayKahf
-                    : null,
-              ),
-              Padding(
-                padding: const EdgeInsetsDirectional.fromSTEB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 0),
-                child: Text(
-                  context.l10n.fastingNotificationsHeader,
-                  style: context.texts.labelLarge?.copyWith(color: context.colors.onSurfaceVariant),
-                ),
-              ),
-              for (final (alert, icon, title, subtitle) in [
-                (
-                  FastingAlert.mondayThursday,
-                  Icons.event_repeat_outlined,
-                  context.l10n.fastMondayThursdaySetting,
-                  context.l10n.fastMondayThursdaySubtitle,
-                ),
-                (FastingAlert.whiteDays, Icons.brightness_3_outlined, context.l10n.fastWhiteDaysSetting, null),
-                (FastingAlert.ramadan, Icons.restaurant_outlined, context.l10n.fastRamadanSetting, null),
-                (FastingAlert.arafahAshura, Icons.wb_twilight_outlined, context.l10n.fastArafahAshuraSetting, null),
-              ])
-                SwitchListTile(
-                  value: state.fastingAlerts.contains(alert),
-                  title: Text(title),
-                  subtitle: subtitle == null ? null : Text(subtitle),
-                  secondary: Icon(icon),
-                  onChanged: state.prayerNotifications
-                      ? (_) => cubit.toggleFastingAlert(alert)
-                      : null,
-                ),
 
-              if (BackupTiles.supported) ...[
-                _SectionHeader(context.l10n.backupSection),
-                const BackupTiles(),
-              ],
-
-              _SectionHeader(context.l10n.languageSection),
-              Padding(
-                padding: AppSpacing.pageH,
-                child: SegmentedButton<String>(
-                  segments: [
-                    ButtonSegment(
-                      value: 'system',
-                      label: Text(context.l10n.languageSystem),
-                    ),
-                    ButtonSegment(
-                      value: 'en',
-                      label: Text(context.l10n.languageEnglish),
-                    ),
-                    ButtonSegment(
-                      value: 'ar',
-                      label: Text(context.l10n.languageArabic),
-                    ),
-                  ],
-                  selected: {state.locale?.languageCode ?? 'system'},
-                  onSelectionChanged: (s) => cubit.setLocale(
-                    s.first == 'system' ? null : Locale(s.first),
-                  ),
+              if (BackupTiles.supported)
+                SettingsSection(
+                  title: l10n.backupSection,
+                  icon: Icons.cloud_sync_outlined,
+                  children: const [BackupTiles()],
                 ),
-              ),
 
               const SizedBox(height: AppSpacing.xl),
               Center(
@@ -507,7 +466,6 @@ class SettingsView extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: AppSpacing.xxl),
             ],
           );
         },
@@ -586,35 +544,6 @@ class SettingsView extends StatelessWidget {
     );
   }
 
-  /// A single-choice dialog. Returns the picked value, or null if dismissed.
-  static Future<T?> _pick<T>(
-    BuildContext context,
-    String title,
-    Map<T, String> options,
-    T current,
-  ) {
-    return showDialog<T>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-        content: SingleChildScrollView(
-          child: RadioGroup<T>(
-            groupValue: current,
-            onChanged: (v) => Navigator.pop(context, v),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (final e in options.entries)
-                  RadioListTile<T>(value: e.key, title: Text(e.value)),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   /// Permission is asked for here, in response to the user flipping the
   /// switch — Android 13+ may ignore a prompt nobody asked for.
   static Future<void> _togglePrayerNotifications(
@@ -629,27 +558,48 @@ class SettingsView extends StatelessWidget {
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader(this.title);
+/// A − value + control, for small numeric offsets.
+class _Stepper extends StatelessWidget {
+  const _Stepper({
+    required this.value,
+    required this.valueWidth,
+    required this.lessTooltip,
+    required this.moreTooltip,
+    required this.onLess,
+    required this.onMore,
+  });
 
-  final String title;
+  final String value;
+  final double valueWidth;
+  final String lessTooltip;
+  final String moreTooltip;
+  final VoidCallback? onLess;
+  final VoidCallback? onMore;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(
-        AppSpacing.lg,
-        AppSpacing.xl,
-        AppSpacing.lg,
-        AppSpacing.sm,
-      ),
-      child: Text(
-        title,
-        style: context.texts.labelLarge?.copyWith(
-          color: context.colors.primary,
-          fontWeight: FontWeight.w700,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          tooltip: lessTooltip,
+          icon: const Icon(Icons.remove_circle_outline),
+          onPressed: onLess,
         ),
-      ),
+        SizedBox(
+          width: valueWidth,
+          child: Text(
+            value,
+            textAlign: TextAlign.center,
+            textDirection: TextDirection.ltr,
+          ),
+        ),
+        IconButton(
+          tooltip: moreTooltip,
+          icon: const Icon(Icons.add_circle_outline),
+          onPressed: onMore,
+        ),
+      ],
     );
   }
 }

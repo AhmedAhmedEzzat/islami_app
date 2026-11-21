@@ -22,6 +22,15 @@ void main() {
     expect(cubit.state.reciterId, 'alafasy');
   });
 
+  test('dhikr reminders start every 3 hours, and off stays off', () async {
+    final cubit = SettingsCubit()..load();
+    expect(cubit.state.dhikrHours, 3);
+
+    await cubit.setDhikrHours(0);
+    final reloaded = SettingsCubit()..load();
+    expect(reloaded.state.dhikrHours, 0);
+  });
+
   test('a saved theme mode survives a reload', () async {
     final first = SettingsCubit()..load();
     await first.setThemeMode(ThemeMode.dark);

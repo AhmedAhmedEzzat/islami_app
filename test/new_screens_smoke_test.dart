@@ -39,6 +39,7 @@ import 'package:sakina/modules/more/names_learn_view.dart';
 import 'package:sakina/modules/more/listen_view.dart';
 import 'package:sakina/modules/more/more_view.dart';
 import 'package:sakina/modules/more/today_views.dart';
+import 'package:sakina/modules/settings/reminders_view.dart';
 import 'package:sakina/modules/settings/settings_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -97,6 +98,7 @@ void main() {
     'Home': () => const HomeView(),
     'More': () => const MoreView(),
     'Settings': () => const SettingsView(),
+    'Reminders': () => const RemindersView(),
     'Listen': () => const ListenView(),
     'Memorisation': () => const HifzView(),
     'Date converter': () => const DateConverterView(),

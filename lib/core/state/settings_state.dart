@@ -38,7 +38,7 @@ class SettingsState {
     this.mushafPaper = MushafPaper.auto,
     this.customAdhan,
     this.customFajrAdhan,
-    this.dhikrHours = 0,
+    this.dhikrHours = defaultDhikrHours,
     this.dailyHadith = true,
   });
 
@@ -116,6 +116,10 @@ class SettingsState {
 
   /// A short dhikr every this many hours through the day; 0 is off.
   final int dhikrHours;
+
+  /// On from the start, every three hours. Someone who turned it off keeps
+  /// it off, because only a missing preference falls back to this.
+  static const int defaultDhikrHours = 3;
 
   /// The hadith of the day as a notification late each morning. Posts only
   /// while [prayerNotifications] is on.

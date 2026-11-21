@@ -25,18 +25,20 @@ class SakinaColors extends ThemeExtension<SakinaColors> {
   /// Tint applied to the decorative PNG ornaments.
   final Color ornamentTint;
 
+  /// A pale sage page for the verses, with ink a shade darker than body
+  /// text; the ornaments are gold so they read as decoration, not content.
   static const light = SakinaColors(
-    versePanel: Color(0xFFE8F5E9),
-    verseText: Color(0xFF1B3B1E),
-    nextPrayer: Color(0xFF2E7D32),
-    ornamentTint: Color(0xFF2E7D32),
+    versePanel: Color(0xFFEEF4EF),
+    verseText: Color(0xFF0F3328),
+    nextPrayer: Color(0xFF1F6B57),
+    ornamentTint: Color(0xFF9A7426),
   );
 
   static const dark = SakinaColors(
-    versePanel: Color(0xFF1E3322),
-    verseText: Color(0xFFDCEFDD),
-    nextPrayer: Color(0xFF81C784),
-    ornamentTint: Color(0xFF81C784),
+    versePanel: Color(0xFF16221D),
+    verseText: Color(0xFFE2EEE7),
+    nextPrayer: Color(0xFF86D5B9),
+    ornamentTint: Color(0xFFE3BE78),
   );
 
   @override
