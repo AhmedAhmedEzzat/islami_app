@@ -1055,5 +1055,14 @@
   "qiblaFallbackTitle": "Your location is not set",
   "qiblaFallbackBody": "The direction shown is from Cairo, not from where you are. Set your location for an accurate Qibla.",
   "qiblaCalibrateTitle": "Calibrate the compass",
-  "qiblaTips": "Lay your phone flat, away from metal, magnets, speakers and other phones."
+  "qiblaTips": "Lay your phone flat, away from metal, magnets, speakers and other phones.",
+  "generalSection": "General",
+  "themeLabel": "Theme",
+  "prayerMoreOptions": "More prayer options",
+  "prayerMoreOptionsHint": "Far north or south, and minute-by-minute corrections",
+  "otherRemindersTitle": "Other reminders",
+  "otherRemindersSubtitle": "{count, plural, =0{All off} =1{1 on} other{{count} on}} · hadith, adhkar, sunnah and fasting",
+  "@otherRemindersSubtitle": {"placeholders": {"count": {"type": "int"}}},
+  "dailyRemindersHeader": "Every day",
+  "notificationsOffHint": "Turn this on for the adhan and for daily reminders. Everything else here appears once it is on."
 }

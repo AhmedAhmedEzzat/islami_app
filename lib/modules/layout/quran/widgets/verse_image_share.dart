@@ -109,8 +109,8 @@ class _VerseCard extends StatelessWidget {
   final String text;
   final String citation;
 
-  static const Color _green = Color(0xFF1B5E20);
-  static const Color _paper = Color(0xFFF1F8E9);
+  static const Color _green = Color(0xFF1F6B57);
+  static const Color _paper = Color(0xFFFAF8F3);
 
   @override
   Widget build(BuildContext context) {
@@ -132,7 +132,7 @@ class _VerseCard extends StatelessWidget {
               fontFamily: 'AmiriQuran',
               fontSize: 22,
               height: 2.0,
-              color: Color(0xFF1B3B1E),
+              color: Color(0xFF0F3328),
             ),
           ),
           const SizedBox(height: AppSpacing.lg),

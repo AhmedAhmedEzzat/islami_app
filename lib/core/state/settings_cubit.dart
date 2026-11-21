@@ -70,7 +70,8 @@ class SettingsCubit extends Cubit<SettingsState> {
         ),
         customAdhan: _decodeSound(LocalStorageServices.getString(PrefsKeys.customAdhan)),
         customFajrAdhan: _decodeSound(LocalStorageServices.getString(PrefsKeys.customFajrAdhan)),
-        dhikrHours: LocalStorageServices.getInt(PrefsKeys.dhikrHours) ?? 0,
+        dhikrHours: LocalStorageServices.getInt(PrefsKeys.dhikrHours) ??
+            SettingsState.defaultDhikrHours,
         dailyHadith: LocalStorageServices.getBool(PrefsKeys.dailyHadith) ?? true,
       ),
     );
